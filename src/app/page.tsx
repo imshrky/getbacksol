@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
   Wallet,
@@ -141,8 +140,8 @@ export default function HomePage() {
 
   return (
     <div className="fade-in">
-      {/* Hero */}
-      <section className="pb-16 pt-6 text-center sm:pb-20">
+      {/* Hero + tool */}
+      <section id="reclaim" className="scroll-mt-24 pb-16 pt-6 text-center sm:pb-20">
         <span className="eyebrow mx-auto mb-3 justify-center">
           <span className="index">01</span>
           GetBackSOL
@@ -155,81 +154,12 @@ export default function HomePage() {
           your wallet, close them in one transaction, and reclaim what's yours — minus a small
           service fee.
         </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link href="#reclaim" className="btn-primary">
-            Scan my wallet
-          </Link>
-          <Link href="#how-it-works" className="btn-outline">
-            How it works
-          </Link>
-        </div>
-        <p className="pill mx-auto mt-8 inline-flex w-fit items-center gap-1.5">
-          <ShieldCheck className="h-3.5 w-3.5" />
-          Devnet preview — non-custodial, no funds at risk
+
+        <p className="mx-auto mt-8 max-w-2xl text-xs text-[var(--muted)]">
+          Live amounts pulled from your wallet — a standard account returns ~
+          {RENT_PER_ACCOUNT.toFixed(6)} SOL.
         </p>
-        <ImpactStats />
-      </section>
-
-      {/* How it works */}
-      <section id="how-it-works" className="scroll-mt-24 pb-16 sm:pb-20">
-        <SectionTitle
-          index="02"
-          eyebrow="How it works"
-          title="Three steps, one transaction"
-          description="No accounts, no sign-up — just your wallet."
-        />
-        <div className="grid gap-4 sm:grid-cols-3">
-          {STEPS.map((step, i) => (
-            <Card key={step.title} className="text-left">
-              <span className="eyebrow mb-4">
-                <span className="index">{`0${i + 1}`}</span>
-              </span>
-              <step.icon className="mb-4 h-5 w-5 text-[var(--accent)]" />
-              <h3 className="text-sm font-semibold">{step.title}</h3>
-              <p className="mt-1.5 text-sm text-[var(--muted)]">{step.body}</p>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Security */}
-      <section id="security" className="scroll-mt-24 pb-16 sm:pb-20">
-        <SectionTitle
-          index="03"
-          eyebrow="Security"
-          title="Built to be verifiable, not just trusted"
-          description="No custody, no hidden steps — and we're upfront about what hasn't happened yet."
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          {SECURITY_POINTS.map((point) => (
-            <Card key={point.title} className="text-left">
-              <point.icon className="mb-4 h-5 w-5 text-[var(--accent)]" />
-              <h3 className="text-sm font-semibold">{point.title}</h3>
-              <p className="mt-1.5 text-sm text-[var(--muted)]">{point.body}</p>
-            </Card>
-          ))}
-        </div>
-        <div className="mx-auto mt-4 max-w-2xl">
-          <a
-            href="#"
-            className="flex items-center gap-2 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--foreground)]"
-          >
-            <Code2 className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-            Verify the code yourself — source link coming soon
-          </a>
-        </div>
-      </section>
-
-      {/* The tool */}
-      <section id="reclaim" className="scroll-mt-24 pb-16 sm:pb-20">
-        <SectionTitle
-          index="04"
-          eyebrow="Reclaim Rent"
-          title="Close dead accounts, reclaim SOL"
-          description={`Live amounts pulled from your wallet — a standard account returns ~${RENT_PER_ACCOUNT.toFixed(6)} SOL.`}
-        />
-
-        <Card className="mx-auto max-w-2xl !p-0 overflow-hidden">
+        <Card className="mx-auto mt-3 max-w-2xl !p-0 overflow-hidden text-left">
           {!connected ? (
             <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
               <Wallet className="h-6 w-6 text-[var(--muted)]" />
@@ -387,11 +317,67 @@ export default function HomePage() {
             </>
           )}
         </Card>
+
+        <p className="pill mx-auto mt-8 inline-flex w-fit items-center gap-1.5">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Devnet preview — non-custodial, no funds at risk
+        </p>
+        <ImpactStats />
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="scroll-mt-24 pb-16 sm:pb-20">
+        <SectionTitle
+          index="02"
+          eyebrow="How it works"
+          title="Three steps, one transaction"
+          description="No accounts, no sign-up — just your wallet."
+        />
+        <div className="grid gap-4 sm:grid-cols-3">
+          {STEPS.map((step, i) => (
+            <Card key={step.title} className="text-left">
+              <span className="eyebrow mb-4">
+                <span className="index">{`0${i + 1}`}</span>
+              </span>
+              <step.icon className="mb-4 h-5 w-5 text-[var(--accent)]" />
+              <h3 className="text-sm font-semibold">{step.title}</h3>
+              <p className="mt-1.5 text-sm text-[var(--muted)]">{step.body}</p>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Security */}
+      <section id="security" className="scroll-mt-24 pb-16 sm:pb-20">
+        <SectionTitle
+          index="03"
+          eyebrow="Security"
+          title="Built to be verifiable, not just trusted"
+          description="No custody, no hidden steps — and we're upfront about what hasn't happened yet."
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          {SECURITY_POINTS.map((point) => (
+            <Card key={point.title} className="text-left">
+              <point.icon className="mb-4 h-5 w-5 text-[var(--accent)]" />
+              <h3 className="text-sm font-semibold">{point.title}</h3>
+              <p className="mt-1.5 text-sm text-[var(--muted)]">{point.body}</p>
+            </Card>
+          ))}
+        </div>
+        <div className="mx-auto mt-4 max-w-2xl">
+          <a
+            href="#"
+            className="flex items-center gap-2 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--foreground)]"
+          >
+            <Code2 className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+            Verify the code yourself — source link coming soon
+          </a>
+        </div>
       </section>
 
       {/* FAQ */}
       <section id="faq" className="scroll-mt-24">
-        <SectionTitle index="05" eyebrow="FAQ" title="Questions you might have" />
+        <SectionTitle index="04" eyebrow="FAQ" title="Questions you might have" />
         <div className="mx-auto max-w-2xl">
           <Faq items={FAQ_ITEMS} />
         </div>
