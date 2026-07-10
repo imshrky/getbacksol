@@ -1,0 +1,226 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: toggling .dark on <html> switches theme */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --surface: #fafafa;
+  --surface-2: #f2f2f3;
+  --border: #e2e2e5;
+  --border-strong: #c9c9ce;
+  --foreground: #0a0a0b;
+  --muted: #6c6c74;
+  --accent: #e30613;
+  --accent-ink: #ffffff;
+  --hover: rgba(10, 10, 11, 0.04);
+  --header-bg: rgba(255, 255, 255, 0.86);
+  --grid-line: rgba(10, 10, 11, 0.05);
+  --shadow: 0 1px 2px rgba(10, 10, 11, 0.04);
+}
+
+.dark {
+  --background: #09090b;
+  --surface: #131316;
+  --surface-2: #1a1a1e;
+  --border: #2a2a2f;
+  --border-strong: #3c3c42;
+  --foreground: #f5f5f7;
+  --muted: #9a9aa3;
+  --accent: #ff4d4d;
+  --accent-ink: #0a0a0b;
+  --hover: rgba(255, 255, 255, 0.05);
+  --header-bg: rgba(9, 9, 11, 0.82);
+  --grid-line: rgba(255, 255, 255, 0.06);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.02em;
+}
+
+/* ---- Editorial building blocks ---- */
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.eyebrow .index {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.rule {
+  border-top: 1px solid var(--border);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+.field-input {
+  width: 100%;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.65rem 0.9rem;
+  color: var(--foreground);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.field-input:focus {
+  border-color: var(--accent);
+}
+
+.field-input::placeholder {
+  color: var(--muted);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--accent);
+  transition: opacity 0.15s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.88;
+}
+
+.btn-primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 0.75rem 1.25rem;
+  color: var(--foreground);
+  background: transparent;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.btn-outline:hover {
+  border-color: var(--accent);
+  background: var(--hover);
+}
+
+.pill {
+  border-radius: 2px;
+  border: 1px solid var(--border-strong);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.surface-hover:hover {
+  background: var(--hover);
+}
+
+/* Minimal, restrained motion only */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: fadeIn 0.4s ease both;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+/* Wallet adapter button theming */
+.wallet-adapter-button {
+  background: var(--accent) !important;
+  color: var(--accent-ink) !important;
+  font-family: inherit !important;
+  border-radius: 4px !important;
+  height: 40px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+}
+
+.wallet-adapter-button:not([disabled]):hover {
+  background: var(--accent) !important;
+  opacity: 0.88;
+}
+
+.wallet-adapter-modal-wrapper {
+  background: var(--surface) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border);
+}
+
+.wallet-adapter-modal-title {
+  color: var(--foreground) !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+}
