@@ -30,4 +30,6 @@ export const MOCK_LEADERBOARD = [
 // useRentAccounts.ts) — this constant is only used for illustrative copy.
 export const RENT_PER_ACCOUNT = 0.00203928;
 
-export const RECLAIM_FEE_RATE = 0.15;
+export const RECLAIM_FEE_RATE = process.env.NEXT_PUBLIC_RECLAIM_FEE_RATE
+  ? Number(process.env.NEXT_PUBLIC_RECLAIM_FEE_RATE)
+  : 0.15;
