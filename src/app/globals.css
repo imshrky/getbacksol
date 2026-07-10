@@ -220,17 +220,29 @@ h1, h2, h3 {
   color: var(--foreground) !important;
   border: 1px solid var(--border);
   border-radius: 16px !important;
-  box-shadow: 0 20px 50px rgba(10, 10, 11, 0.25) !important;
+  box-shadow: 0 24px 60px rgba(10, 10, 11, 0.3) !important;
   font-family: inherit !important;
   overflow: hidden;
+  position: relative;
+}
+
+.wallet-adapter-modal-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent);
 }
 
 .wallet-adapter-modal-title {
   color: var(--foreground) !important;
   font-family: inherit !important;
   font-weight: 600 !important;
-  font-size: 1.15rem !important;
-  padding: 32px 28px 16px !important;
+  font-size: 1.05rem !important;
+  letter-spacing: -0.01em;
+  padding: 38px 28px 18px !important;
   line-height: 1.4 !important;
 }
 
@@ -254,11 +266,11 @@ h1, h2, h3 {
 }
 
 .wallet-adapter-modal-list {
-  padding: 0 16px 20px !important;
+  padding: 0 20px 24px !important;
   margin: 0 !important;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .wallet-adapter-modal-list .wallet-adapter-button {
@@ -266,38 +278,41 @@ h1, h2, h3 {
   color: var(--foreground) !important;
   border: 1px solid var(--border) !important;
   border-radius: 10px !important;
-  height: 56px !important;
-  padding: 0 14px !important;
+  height: 60px !important;
+  padding: 0 16px !important;
   font-size: 0.85rem !important;
   font-weight: 500 !important;
   font-family: inherit !important;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
 
 .wallet-adapter-modal-list .wallet-adapter-button:hover {
-  background: var(--hover) !important;
+  background: var(--surface) !important;
   border-color: var(--accent) !important;
+  box-shadow: 0 6px 16px rgba(10, 10, 11, 0.08);
+  transform: translateY(-1px);
   opacity: 1 !important;
 }
 
 .wallet-adapter-modal-list .wallet-adapter-button-start-icon,
 .wallet-adapter-modal-list .wallet-adapter-button-start-icon img {
-  width: 30px !important;
-  height: 30px !important;
-  border-radius: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 9px !important;
 }
 
 .wallet-adapter-modal-list .wallet-adapter-button span {
   margin-left: auto !important;
-  font-size: 0.65rem !important;
+  font-size: 0.62rem !important;
   font-weight: 700 !important;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--accent) !important;
-  background: var(--surface-2);
-  border-radius: 999px;
-  padding: 3px 9px;
-  opacity: 1 !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  opacity: 0.85 !important;
 }
 
 .wallet-adapter-modal-list-more {
