@@ -23,6 +23,9 @@ import { ImpactStats } from "@/components/ui/ImpactStats";
 import { useRentAccounts } from "@/lib/useRentAccounts";
 import { useReclaimRent } from "@/lib/useReclaimRent";
 import { RECLAIM_FEE_RATE, RENT_PER_ACCOUNT } from "@/lib/mockTokens";
+import { NETWORK } from "@/app/providers";
+
+const IS_MAINNET = NETWORK === "mainnet-beta";
 
 function accountLabel(count: number) {
   return `${count} account${count === 1 ? "" : "s"}`;
@@ -69,7 +72,9 @@ const SECURITY_POINTS = [
   {
     icon: ShieldAlert,
     title: "Not yet audited",
-    body: "GetBackSOL is currently a devnet preview and hasn't had an external security audit. We won't move real funds on mainnet until that review is done.",
+    body: IS_MAINNET
+      ? "GetBackSOL is live on mainnet but hasn't had an external security audit yet. The instructions are standard Token Program calls, not a custom program, but you're using it before that review is complete — use at your own risk."
+      : "GetBackSOL is currently a devnet preview and hasn't had an external security audit. We won't move real funds on mainnet until that review is done.",
   },
 ];
 
@@ -96,7 +101,9 @@ const FAQ_ITEMS = [
   },
   {
     q: "Is this live on mainnet?",
-    a: "GetBackSOL is currently in devnet testing ahead of a mainnet launch. Connect a devnet wallet to try the full flow — nothing here touches real funds yet.",
+    a: IS_MAINNET
+      ? "Yes. GetBackSOL is live on Solana mainnet — every transaction moves real SOL and the 15% fee is real. There's no test mode here anymore."
+      : "GetBackSOL is currently in devnet testing ahead of a mainnet launch. Connect a devnet wallet to try the full flow — nothing here touches real funds yet.",
   },
 ];
 
@@ -320,7 +327,9 @@ export default function HomePage() {
 
         <p className="pill mx-auto mt-8 inline-flex w-fit items-center gap-1.5">
           <ShieldCheck className="h-3.5 w-3.5" />
-          Devnet preview — non-custodial, no funds at risk
+          {IS_MAINNET
+            ? "Live on Solana mainnet — non-custodial, not yet audited"
+            : "Devnet preview — non-custodial, no funds at risk"}
         </p>
         <ImpactStats />
       </section>

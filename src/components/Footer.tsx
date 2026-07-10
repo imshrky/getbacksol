@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { AtSign, MessageCircle, Code2 } from "lucide-react";
 import { RpcStatus } from "./ui/RpcStatus";
+import { NETWORK } from "@/app/providers";
+
+const IS_MAINNET = NETWORK === "mainnet-beta";
 
 // TODO: swap these placeholder hrefs for the real profile/repo URLs.
 const LINKS = [
@@ -25,8 +28,9 @@ export default function Footer() {
             </span>
           </Link>
           <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
-            GetBackSOL is currently a devnet preview — no real transactions are executed and no
-            funds are at risk until mainnet integration and a security review are complete.
+            {IS_MAINNET
+              ? "GetBackSOL is live on Solana mainnet — transactions are real and final. The code has not yet had an external security audit; use at your own risk."
+              : "GetBackSOL is currently a devnet preview — no real transactions are executed and no funds are at risk until mainnet integration and a security review are complete."}
           </p>
         </div>
 
