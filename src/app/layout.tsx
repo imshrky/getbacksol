@@ -23,7 +23,8 @@ const noFlashScript = `
 (function () {
   try {
     var stored = localStorage.getItem('theme');
-    var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = (stored && stored !== 'system') ? stored : (systemDark ? 'dark' : 'light');
     if (theme === 'dark') document.documentElement.classList.add('dark');
   } catch (e) {}
 })();
