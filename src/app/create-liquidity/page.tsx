@@ -20,7 +20,7 @@ export default function CreateLiquidityPage() {
   return (
     <div className="fade-in">
       <SectionTitle
-        index="02"
+        index="03"
         eyebrow="Liquidity"
         title="Create a liquidity pool"
         description="Pair your token with SOL (or another asset) so people can trade it. Freeze authority must be revoked first."

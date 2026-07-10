@@ -5,9 +5,9 @@ import ThemeProvider from "@/components/ThemeProvider";
 import Header from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "Nebula Tools | Solana Token & Liquidity Suite",
+  title: "GetBackSOL | Reclaim locked SOL from dormant Solana accounts",
   description:
-    "Create SPL tokens, manage liquidity, swap, burn, and track the leaderboard — all in one no-code Solana toolkit.",
+    "Scan your Solana wallet, close dormant token accounts, and get the locked SOL rent back — in seconds, minus a small service fee.",
 };
 
 // Runs before hydration to avoid a flash of the wrong theme.
@@ -37,9 +37,9 @@ export default function RootLayout({
             <Header />
             <main className="mx-auto max-w-5xl px-4 pb-24 pt-10 sm:px-6">{children}</main>
             <footer className="rule mt-10 py-8 text-center text-xs text-[var(--muted)]">
-              Nebula Tools is a UI mockup inspired by Solana token-creation platforms. No real
-              transactions are executed until on-chain integration is completed. Not affiliated
-              with Orion Tools.
+              GetBackSOL is currently a UI mockup — no real transactions are executed until
+              on-chain integration is completed. Additional Solana tools (Token Creator, Swap,
+              Liquidity...) are included as a preview of the wider product roadmap.
             </footer>
           </Providers>
         </ThemeProvider>

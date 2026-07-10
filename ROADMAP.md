@@ -1,4 +1,4 @@
-# Feuille de route — Nebula Tools
+# Feuille de route — GetBackSOL
 
 Décision retenue : on lance avec **Reclaim Rent seul**, puis on ajoute le reste de la suite une
 fois que l'outil génère du trafic et du revenu. Voir `CLAUDE.md` pour le contexte complet et

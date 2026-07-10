@@ -10,7 +10,7 @@ export default function LeaderboardPage() {
   return (
     <div className="fade-in">
       <SectionTitle
-        index="07"
+        index="08"
         eyebrow="Leaderboard"
         title="Top burners"
         description="Ranked by total value burned across all tokens on the platform."

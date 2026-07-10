@@ -31,7 +31,7 @@ export default function BurnAndEarnPage() {
   return (
     <div className="fade-in">
       <SectionTitle
-        index="06"
+        index="07"
         eyebrow="Burn & Earn"
         title="Burn tokens, earn rewards"
         description="Burning tokens reduces supply and earns you points toward the leaderboard and future reward drops."

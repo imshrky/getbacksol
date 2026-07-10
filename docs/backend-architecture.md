@@ -1,4 +1,4 @@
-# Nebula Tools — Architecture backend & mise en production
+# GetBackSOL — Architecture backend & mise en production
 
 Ce document explique ce qu'il faut construire derrière la maquette (Next.js) pour que chaque outil devienne réellement fonctionnel sur Solana, d'abord sur **devnet**, puis sur **mainnet**.
 

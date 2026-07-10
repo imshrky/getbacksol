@@ -16,7 +16,7 @@ export default function RemoveLiquidityPage() {
   return (
     <div className="fade-in">
       <SectionTitle
-        index="04"
+        index="05"
         eyebrow="Liquidity"
         title="Remove liquidity"
         description="Withdraw your share of a pool back into both underlying tokens."

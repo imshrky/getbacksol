@@ -32,7 +32,7 @@ export default function SwapPage() {
   return (
     <div className="fade-in">
       <SectionTitle
-        index="03"
+        index="04"
         eyebrow="Swap"
         title="Swap tokens instantly"
         description="Trade between SPL tokens at the best available route. Rates shown are illustrative."

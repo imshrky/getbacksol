@@ -1,8 +1,9 @@
-# Nebula Tools — contexte projet pour Claude Code
+# GetBackSOL — contexte projet pour Claude Code
 
 ## C'est quoi
 
-Une plateforme d'outils Solana no-code, dans l'esprit d'Orion Tools. Next.js 16 (App Router,
+GetBackSOL : un outil qui récupère le SOL verrouillé dans les comptes de tokens dormants d'un
+wallet Solana, avec une suite d'outils Solana complémentaires en aperçu. Next.js 16 (App Router,
 Turbopack) + TypeScript + Tailwind CSS 4 + `@solana/wallet-adapter`. Thème clair/sombre,
 esthétique éditoriale "suisse" (Helvetica, rouge accent, grille fine, sections numérotées).
 
@@ -14,8 +15,9 @@ mais chaque action (créer un token, swap, burn, fermer un compte...) passe par
 `src/lib/useSimulatedTx.ts`, un hook qui simule un délai puis affiche un succès — aucune vraie
 transaction n'est envoyée au réseau pour l'instant.
 
-Huit pages/outils existent déjà dans `src/app/` : Token Creator (`/`), Create Liquidity, Swap,
-Remove Liquidity, Burn Token, Burn & Earn, Leaderboard, et **Reclaim Rent** (`/reclaim-rent`).
+Huit pages/outils existent déjà dans `src/app/` : **Reclaim Rent (`/`, page d'accueil)**,
+Token Creator (`/token-creator`), Create Liquidity, Swap, Remove Liquidity, Burn Token,
+Burn & Earn, et Leaderboard.
 
 ## Priorité de travail — commencer ici
 
@@ -28,7 +30,7 @@ production et ne génère pas de revenu.
 
 Étapes concrètes pour rendre Reclaim Rent réel, dans l'ordre :
 
-1. Remplacer la simulation dans `src/app/reclaim-rent/page.tsx` par une vraie découverte des
+1. Remplacer la simulation dans `src/app/page.tsx` (la page d'accueil) par une vraie découverte des
    comptes de tokens du wallet connecté via `getTokenAccountsByOwner`, filtrée sur les comptes à
    solde nul (voir `docs/backend-architecture.md`, section 7, pour le détail des instructions).
 2. Construire la transaction réelle : `createCloseAccountInstruction` (`@solana/spl-token`) pour
@@ -41,11 +43,12 @@ production et ne génère pas de revenu.
 5. Une fois validé sur devnet : créer le wallet de frais (idéalement un multisig Squads), obtenir
    une clé RPC de production (Helius), puis basculer `NETWORK` sur `mainnet-beta`.
 
-Ne pas commencer par Token Creator, Swap ou Liquidity — c'est un choix délibéré, pas un oubli.
+Ne pas commencer par Token Creator (`/token-creator`), Swap ou Liquidity — c'est un choix
+délibéré, pas un oubli.
 
 ## Fichiers clés
 
-- `src/app/reclaim-rent/page.tsx` — la page à rendre fonctionnelle en premier.
+- `src/app/page.tsx` — la page d'accueil (Reclaim Rent), à rendre fonctionnelle en premier.
 - `src/lib/useSimulatedTx.ts` — le hook à remplacer par de vraies transactions ; garder la même
   interface (`status`, `message`, `run`) pour ne rien casser côté UI.
 - `src/lib/mockTokens.ts` — contient `MOCK_RENT_ACCOUNTS`, les données factices à remplacer par

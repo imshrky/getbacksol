@@ -16,7 +16,7 @@ export default function BurnTokenPage() {
   return (
     <div className="fade-in">
       <SectionTitle
-        index="05"
+        index="06"
         eyebrow="Burn"
         title="Burn tokens"
         description="Permanently remove tokens from circulating supply. This action cannot be undone."
