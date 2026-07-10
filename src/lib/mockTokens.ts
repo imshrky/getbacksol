@@ -25,26 +25,9 @@ export const MOCK_LEADERBOARD = [
   { rank: 5, wallet: "5vBn...77qT", burned: "3,410,000 FLOKI", volume: "$12,330" },
 ];
 
-export type MockRentAccount = {
-  id: string;
-  mint: string;
-  symbol: string;
-  status: "empty" | "dust";
-  dustAmount?: string;
-  reclaimable: number; // SOL returned when the account is closed
-};
-
 // A standard SPL token account locks ~0.00203928 SOL as rent-exempt reserve.
+// Reclaim Rent now reads real per-account amounts from the chain (see
+// useRentAccounts.ts) — this constant is only used for illustrative copy.
 export const RENT_PER_ACCOUNT = 0.00203928;
-
-export const MOCK_RENT_ACCOUNTS: MockRentAccount[] = [
-  { id: "1", mint: "7xKX...p2Qa", symbol: "USDC-old", status: "empty", reclaimable: RENT_PER_ACCOUNT },
-  { id: "2", mint: "3nRt...9fZc", symbol: "MEMEX", status: "dust", dustAmount: "0.000004", reclaimable: RENT_PER_ACCOUNT },
-  { id: "3", mint: "9pLm...c81V", symbol: "SAMO", status: "empty", reclaimable: RENT_PER_ACCOUNT },
-  { id: "4", mint: "2vBn...44qT", symbol: "RUGCOIN", status: "dust", dustAmount: "0.0000001", reclaimable: RENT_PER_ACCOUNT },
-  { id: "5", mint: "5wCe...19mR", symbol: "TESTV1", status: "empty", reclaimable: RENT_PER_ACCOUNT },
-  { id: "6", mint: "8f3K...c92A", symbol: "OLDLP", status: "empty", reclaimable: RENT_PER_ACCOUNT },
-  { id: "7", mint: "1uYt...05zX", symbol: "AIRDROP7", status: "dust", dustAmount: "0.00000002", reclaimable: RENT_PER_ACCOUNT },
-];
 
 export const RECLAIM_FEE_RATE = 0.15;

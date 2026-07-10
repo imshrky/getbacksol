@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useWallet } from "@solana/wallet-adapter-react";
 import {
-  Flame,
   Wallet,
   ScanSearch,
   Coins,
@@ -12,17 +12,25 @@ import {
   Eye,
   ShieldAlert,
   Code2,
+  Loader2,
+  AlertTriangle,
+  PartyPopper,
 } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
 import { TxStatusBanner } from "@/components/ui/TxStatusBanner";
 import { Faq } from "@/components/ui/Faq";
 import { ImpactStats } from "@/components/ui/ImpactStats";
-import { useSimulatedTx } from "@/lib/useSimulatedTx";
-import { MOCK_RENT_ACCOUNTS, RECLAIM_FEE_RATE, RENT_PER_ACCOUNT } from "@/lib/mockTokens";
+import { useRentAccounts } from "@/lib/useRentAccounts";
+import { useReclaimRent } from "@/lib/useReclaimRent";
+import { RECLAIM_FEE_RATE, RENT_PER_ACCOUNT } from "@/lib/mockTokens";
 
 function accountLabel(count: number) {
   return `${count} account${count === 1 ? "" : "s"}`;
+}
+
+function shortenAddress(address: string) {
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
 
 const STEPS = [
@@ -34,7 +42,7 @@ const STEPS = [
   {
     icon: ScanSearch,
     title: "We scan for dead accounts",
-    body: "We list every token account you own and flag the ones sitting at a zero (or dust) balance.",
+    body: "We list every token account you own and identify the ones sitting at a zero balance, ready to close.",
   },
   {
     icon: Coins,
@@ -73,7 +81,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Is closing an account safe?",
-    a: "Yes. The Token Program only allows closing accounts with a zero balance, so it's physically impossible to close an account that still holds value. Accounts with worthless dust are burned first (optional) so they qualify too.",
+    a: "Yes. The Token Program only allows closing accounts with a zero balance, so it's physically impossible to close an account that still holds value.",
+  },
+  {
+    q: "What about accounts with leftover dust?",
+    a: "Accounts with a small nonzero balance aren't closable yet — Safe-Burn (burning the dust first so the account qualifies) is coming soon. Today we only scan and close accounts already at zero.",
   },
   {
     q: "Why a 15% fee?",
@@ -90,33 +102,42 @@ const FAQ_ITEMS = [
 ];
 
 export default function HomePage() {
-  const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(MOCK_RENT_ACCOUNTS.map((a) => a.id))
-  );
-  const [safeBurn, setSafeBurn] = useState(true);
-  const { status, message, run } = useSimulatedTx();
+  const { connected } = useWallet();
+  const { accounts, dustCount, loading, error, refresh } = useRentAccounts();
+  const { status, message, run } = useReclaimRent();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const allSelected = selected.size === MOCK_RENT_ACCOUNTS.length;
+  useEffect(() => {
+    setSelected(new Set(accounts.map((a) => a.pubkey)));
+  }, [accounts]);
 
-  function toggleOne(id: string) {
+  const allSelected = accounts.length > 0 && selected.size === accounts.length;
+
+  function toggleOne(pubkey: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(pubkey)) next.delete(pubkey);
+      else next.add(pubkey);
       return next;
     });
   }
 
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(MOCK_RENT_ACCOUNTS.map((a) => a.id)));
+    setSelected(allSelected ? new Set() : new Set(accounts.map((a) => a.pubkey)));
   }
 
   const { gross, fee, net, count } = useMemo(() => {
-    const chosen = MOCK_RENT_ACCOUNTS.filter((a) => selected.has(a.id));
+    const chosen = accounts.filter((a) => selected.has(a.pubkey));
     const grossVal = chosen.reduce((sum, a) => sum + a.reclaimable, 0);
     const feeVal = grossVal * RECLAIM_FEE_RATE;
     return { gross: grossVal, fee: feeVal, net: grossVal - feeVal, count: chosen.length };
-  }, [selected]);
+  }, [accounts, selected]);
+
+  async function handleClose() {
+    const chosen = accounts.filter((a) => selected.has(a.pubkey));
+    await run(chosen);
+    refresh();
+  }
 
   return (
     <div className="fade-in">
@@ -205,135 +226,166 @@ export default function HomePage() {
           index="04"
           eyebrow="Reclaim Rent"
           title="Close dead accounts, reclaim SOL"
-          description={`Standard rent-exempt reserve per account: ~${RENT_PER_ACCOUNT.toFixed(6)} SOL.`}
+          description={`Live amounts pulled from your wallet — a standard account returns ~${RENT_PER_ACCOUNT.toFixed(6)} SOL.`}
         />
 
         <Card className="mx-auto max-w-2xl !p-0 overflow-hidden">
-          <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-3">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                onChange={toggleAll}
-                className="h-4 w-4 accent-[var(--accent)]"
-              />
-              Select all ({MOCK_RENT_ACCOUNTS.length} closable accounts found)
-            </label>
-            <span className="text-xs text-[var(--muted)]">{accountLabel(count)} selected</span>
-          </div>
+          {!connected ? (
+            <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
+              <Wallet className="h-6 w-6 text-[var(--muted)]" />
+              <p className="text-sm text-[var(--muted)]">
+                Connect your wallet to scan for reclaimable accounts.
+              </p>
+            </div>
+          ) : loading ? (
+            <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--muted)]" />
+              <p className="text-sm text-[var(--muted)]">Scanning your wallet for dormant accounts…</p>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
+              <AlertTriangle className="h-6 w-6 text-red-400" />
+              <p className="text-sm text-[var(--muted)]">{error}</p>
+              <button className="btn-outline" onClick={() => refresh()}>
+                Try again
+              </button>
+            </div>
+          ) : accounts.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
+              <PartyPopper className="h-6 w-6 text-[var(--accent)]" />
+              <p className="text-sm text-[var(--muted)]">
+                No closable accounts found — this wallet is already clean.
+              </p>
+              {dustCount > 0 && (
+                <p className="text-xs text-[var(--muted)]">
+                  ({dustCount} account{dustCount > 1 ? "s" : ""} with a small leftover balance —
+                  Safe-Burn support is coming soon.)
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-3">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    className="h-4 w-4 accent-[var(--accent)]"
+                  />
+                  Select all ({accounts.length} closable accounts found)
+                </label>
+                <span className="text-xs text-[var(--muted)]">{accountLabel(count)} selected</span>
+              </div>
 
-          {/* Desktop / tablet: table */}
-          <table className="hidden w-full text-left text-sm sm:table">
-            <thead className="bg-[var(--surface-2)] text-xs uppercase tracking-wide text-[var(--muted)]">
-              <tr>
-                <th className="w-10 px-5 py-2.5"></th>
-                <th className="px-2 py-2.5">Token account</th>
-                <th className="px-2 py-2.5">Status</th>
-                <th className="px-5 py-2.5 text-right">Reclaimable</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--border)]">
-              {MOCK_RENT_ACCOUNTS.map((a) => (
-                <tr key={a.id} className="surface-hover">
-                  <td className="px-5 py-2.5">
+              {/* Desktop / tablet: table */}
+              <table className="hidden w-full text-left text-sm sm:table">
+                <thead className="bg-[var(--surface-2)] text-xs uppercase tracking-wide text-[var(--muted)]">
+                  <tr>
+                    <th className="w-10 px-5 py-2.5"></th>
+                    <th className="px-2 py-2.5">Token account</th>
+                    <th className="px-2 py-2.5">Mint</th>
+                    <th className="px-5 py-2.5 text-right">Reclaimable</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {accounts.map((a) => (
+                    <tr key={a.pubkey} className="surface-hover">
+                      <td className="px-5 py-2.5">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(a.pubkey)}
+                          onChange={() => toggleOne(a.pubkey)}
+                          className="h-4 w-4 accent-[var(--accent)]"
+                        />
+                      </td>
+                      <td className="px-2 py-2.5 font-mono text-xs">{shortenAddress(a.pubkey)}</td>
+                      <td className="px-2 py-2.5 font-mono text-xs text-[var(--muted)]">
+                        {shortenAddress(a.mint)}
+                      </td>
+                      <td className="px-5 py-2.5 text-right text-[var(--muted)]">
+                        {a.reclaimable.toFixed(6)} SOL
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Mobile: stacked rows, so the reclaimable amount is never clipped */}
+              <div className="divide-y divide-[var(--border)] sm:hidden">
+                {accounts.map((a) => (
+                  <label
+                    key={a.pubkey}
+                    className="surface-hover flex items-start gap-3 px-4 py-3"
+                  >
                     <input
                       type="checkbox"
-                      checked={selected.has(a.id)}
-                      onChange={() => toggleOne(a.id)}
-                      className="h-4 w-4 accent-[var(--accent)]"
+                      checked={selected.has(a.pubkey)}
+                      onChange={() => toggleOne(a.pubkey)}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
                     />
-                  </td>
-                  <td className="px-2 py-2.5">
-                    <span className="font-medium">{a.symbol}</span>
-                    <span className="ml-2 font-mono text-xs text-[var(--muted)]">{a.mint}</span>
-                  </td>
-                  <td className="px-2 py-2.5 text-xs">
-                    {a.status === "empty" ? (
-                      <span className="text-[var(--muted)]">Empty</span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[var(--accent)]">
-                        <Flame className="h-3 w-3" /> Dust · {a.dustAmount}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-2.5 text-right text-[var(--muted)]">
-                    {a.reclaimable.toFixed(6)} SOL
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-sm">{shortenAddress(a.pubkey)}</span>
+                        <span className="shrink-0 text-sm text-[var(--muted)]">
+                          {a.reclaimable.toFixed(6)} SOL
+                        </span>
+                      </div>
+                      <div className="mt-0.5 truncate font-mono text-xs text-[var(--muted)]">
+                        mint {shortenAddress(a.mint)}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
 
-          {/* Mobile: stacked rows, so the reclaimable amount is never clipped */}
-          <div className="divide-y divide-[var(--border)] sm:hidden">
-            {MOCK_RENT_ACCOUNTS.map((a) => (
-              <label
-                key={a.id}
-                className="surface-hover flex items-start gap-3 px-4 py-3"
-              >
-                <input
-                  type="checkbox"
-                  checked={selected.has(a.id)}
-                  onChange={() => toggleOne(a.id)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
+              {dustCount > 0 && (
+                <p className="border-t border-[var(--border)] px-5 py-3 text-xs text-[var(--muted)]">
+                  {dustCount} more account{dustCount > 1 ? "s" : ""} with a small leftover balance
+                  found — not shown yet, Safe-Burn support is coming soon.
+                </p>
+              )}
+
+              <div className="border-t border-[var(--border)] p-5">
+                <Toggle
+                  checked={false}
+                  onChange={() => {}}
+                  disabled
+                  label="Safe-Burn + Sell dust balances first"
+                  hint="Coming soon — burns worthless leftover token dust before closing, so more accounts qualify for a refund."
                 />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">{a.symbol}</span>
-                    <span className="shrink-0 text-sm text-[var(--muted)]">
-                      {a.reclaimable.toFixed(6)} SOL
-                    </span>
+
+                <div className="mt-5 space-y-1.5 rounded-[8px] bg-[var(--surface-2)] px-4 py-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted)]">Gross reclaimable ({count} accounts)</span>
+                    <span>{gross.toFixed(6)} SOL</span>
                   </div>
-                  <div className="mt-0.5 flex items-center justify-between gap-2">
-                    <span className="truncate font-mono text-xs text-[var(--muted)]">{a.mint}</span>
-                    {a.status === "empty" ? (
-                      <span className="shrink-0 text-xs text-[var(--muted)]">Empty</span>
-                    ) : (
-                      <span className="flex shrink-0 items-center gap-1 text-xs text-[var(--accent)]">
-                        <Flame className="h-3 w-3" /> Dust
-                      </span>
-                    )}
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted)]">Service fee ({(RECLAIM_FEE_RATE * 100).toFixed(0)}%)</span>
+                    <span>−{fee.toFixed(6)} SOL</span>
+                  </div>
+                  <div className="flex justify-between border-t border-[var(--border)] pt-1.5 font-semibold">
+                    <span>You receive</span>
+                    <span>{net.toFixed(6)} SOL</span>
                   </div>
                 </div>
-              </label>
-            ))}
-          </div>
 
-          <div className="border-t border-[var(--border)] p-5">
-            <Toggle
-              checked={safeBurn}
-              onChange={setSafeBurn}
-              label="Safe-Burn + Sell dust balances first"
-              hint="Burns worthless leftover token dust before closing, so more accounts qualify for a refund."
-            />
+                <button
+                  className="btn-primary mt-5 w-full"
+                  disabled={count === 0 || status === "pending"}
+                  onClick={handleClose}
+                >
+                  {status === "pending" ? "Closing accounts…" : `Close ${accountLabel(count)} & Reclaim SOL`}
+                </button>
 
-            <div className="mt-5 space-y-1.5 rounded-[8px] bg-[var(--surface-2)] px-4 py-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-[var(--muted)]">Gross reclaimable ({count} accounts)</span>
-                <span>{gross.toFixed(6)} SOL</span>
+                <TxStatusBanner
+                  status={status}
+                  message={message}
+                  pendingText="Waiting for wallet approval, then confirming on-chain…"
+                />
               </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--muted)]">Service fee ({(RECLAIM_FEE_RATE * 100).toFixed(0)}%)</span>
-                <span>−{fee.toFixed(6)} SOL</span>
-              </div>
-              <div className="flex justify-between border-t border-[var(--border)] pt-1.5 font-semibold">
-                <span>You receive</span>
-                <span>{net.toFixed(6)} SOL</span>
-              </div>
-            </div>
-
-            <button
-              className="btn-primary mt-5 w-full"
-              disabled={count === 0 || status === "pending"}
-              onClick={() =>
-                run(`Closed ${count} account${count > 1 ? "s" : ""} — ${net.toFixed(6)} SOL sent to your wallet.`)
-              }
-            >
-              {status === "pending" ? "Closing accounts…" : `Close ${accountLabel(count)} & Reclaim SOL`}
-            </button>
-
-            <TxStatusBanner status={status} message={message} />
-          </div>
+            </>
+          )}
         </Card>
       </section>
 

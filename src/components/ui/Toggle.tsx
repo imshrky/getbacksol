@@ -6,15 +6,21 @@ export function Toggle({
   label,
   hint,
   cost,
+  disabled,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
   hint?: string;
   cost?: string;
+  disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[8px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+    <div
+      className={`flex items-center justify-between gap-4 rounded-[8px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 ${
+        disabled ? "opacity-60" : ""
+      }`}
+    >
       <div>
         <p className="text-sm font-medium">{label}</p>
         {hint && <p className="mt-0.5 text-xs text-[var(--muted)]">{hint}</p>}
@@ -25,8 +31,9 @@ export function Toggle({
           type="button"
           role="switch"
           aria-checked={checked}
+          disabled={disabled}
           onClick={() => onChange(!checked)}
-          className="relative h-6 w-11 shrink-0 rounded-full border transition-colors"
+          className="relative h-6 w-11 shrink-0 rounded-full border transition-colors disabled:cursor-not-allowed"
           style={{
             background: checked ? "var(--accent)" : "var(--border)",
             borderColor: checked ? "var(--accent)" : "var(--border-strong)",

@@ -3,14 +3,22 @@
 import { Loader2, CheckCircle2, WalletMinimal, AlertTriangle } from "lucide-react";
 import type { TxStatus } from "@/lib/useSimulatedTx";
 
-export function TxStatusBanner({ status, message }: { status: TxStatus; message: string }) {
+export function TxStatusBanner({
+  status,
+  message,
+  pendingText = "Simulating transaction…",
+}: {
+  status: TxStatus;
+  message: string;
+  pendingText?: string;
+}) {
   if (status === "idle") return null;
 
   const config = {
     pending: {
       icon: <Loader2 className="h-4 w-4 animate-spin" />,
       className: "border-[var(--accent-2)]/40 bg-[var(--accent-2)]/10 text-[var(--accent-2)]",
-      text: "Simulating transaction…",
+      text: pendingText,
     },
     success: {
       icon: <CheckCircle2 className="h-4 w-4" />,
