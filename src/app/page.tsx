@@ -154,12 +154,14 @@ export default function HomePage() {
           GetBackSOL
         </span>
         <h1 className="mx-auto max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
-          Get back the SOL trapped in your dormant accounts
+          Your SOL is Trapped.
+          <br />
+          <span className="text-[var(--accent)]">Refund it.</span>
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-sm text-[var(--muted)] sm:text-base">
-          Every empty token account in your wallet is holding a small SOL deposit hostage. Scan
-          your wallet, close them in one transaction, and reclaim what's yours — minus a small
-          service fee.
+          Every token purchase on Solana locks 0.00204 SOL in rent fees. Even after selling, that
+          SOL stays trapped in empty token accounts. Get your SOL back — we close them safely and
+          instantly.
         </p>
 
         <p className="mx-auto mt-8 max-w-2xl text-xs text-[var(--muted)]">
