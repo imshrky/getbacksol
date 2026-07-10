@@ -21,7 +21,7 @@ export function TokenSelect({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 rounded-[4px] border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm"
+        className="flex w-full items-center justify-between gap-2 rounded-[8px] border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm"
       >
         <span className="flex items-center gap-2">
           <span className={`h-5 w-5 rounded-full bg-gradient-to-br ${value.icon}`} />
@@ -32,7 +32,7 @@ export function TokenSelect({
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-[4px] border border-[var(--border)] bg-[var(--surface)] shadow-lg">
+        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-[8px] border border-[var(--border)] bg-[var(--surface)] shadow-lg">
           {MOCK_TOKENS.map((t) => (
             <button
               key={t.symbol}

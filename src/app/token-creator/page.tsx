@@ -151,10 +151,10 @@ export default function TokenCreatorPage() {
 
         <div className="mt-5">
           <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Image</label>
-          <label className="flex h-28 cursor-pointer items-center justify-center gap-3 rounded-[4px] border border-dashed border-[var(--border-strong)] bg-[var(--surface)] text-sm text-[var(--muted)] hover:border-[var(--accent)]">
+          <label className="flex h-28 cursor-pointer items-center justify-center gap-3 rounded-[8px] border border-dashed border-[var(--border-strong)] bg-[var(--surface)] text-sm text-[var(--muted)] hover:border-[var(--accent)]">
             {imagePreview ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={imagePreview} alt="Token" className="h-20 w-20 rounded-[4px] object-cover" />
+              <img src={imagePreview} alt="Token" className="h-20 w-20 rounded-[8px] object-cover" />
             ) : (
               <>
                 <ImagePlus className="h-5 w-5" />
@@ -228,7 +228,7 @@ export default function TokenCreatorPage() {
           </div>
         )}
 
-        <div className="mt-6 flex items-center justify-between rounded-[4px] bg-[var(--surface-2)] px-4 py-3 text-sm">
+        <div className="mt-6 flex items-center justify-between rounded-[8px] bg-[var(--surface-2)] px-4 py-3 text-sm">
           <span className="text-[var(--muted)]">Total cost</span>
           <span className="font-semibold">{totalCost} SOL</span>
         </div>
@@ -250,7 +250,7 @@ export default function TokenCreatorPage() {
         <h2 className="mb-5 text-center text-xl font-semibold">How to use the Token Creator</h2>
         <ol className="space-y-3">
           {STEPS.map((step, i) => (
-            <li key={step} className="flex gap-3 rounded-[4px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm">
+            <li key={step} className="flex gap-3 rounded-[8px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--border-strong)] text-xs font-semibold">
                 {i + 1}
               </span>

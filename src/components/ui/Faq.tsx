@@ -7,7 +7,7 @@ export function Faq({ items }: { items: { q: string; a: string }[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <div className="divide-y divide-[var(--border)] overflow-hidden rounded-[6px] border border-[var(--border)]">
+    <div className="divide-y divide-[var(--border)] overflow-hidden rounded-[10px] border border-[var(--border)]">
       {items.map((item, i) => {
         const open = openIndex === i;
         return (

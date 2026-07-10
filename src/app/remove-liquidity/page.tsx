@@ -54,7 +54,7 @@ export default function RemoveLiquidityPage() {
               <button
                 key={p}
                 onClick={() => setPercent(p)}
-                className="flex-1 rounded-[3px] border border-[var(--border)] py-1.5 text-xs hover:border-[var(--accent)]"
+                className="flex-1 rounded-[6px] border border-[var(--border)] py-1.5 text-xs hover:border-[var(--accent)]"
               >
                 {p}%
               </button>
@@ -62,7 +62,7 @@ export default function RemoveLiquidityPage() {
           </div>
         </div>
 
-        <div className="mt-6 space-y-2 rounded-[4px] bg-[var(--surface-2)] px-4 py-3 text-sm">
+        <div className="mt-6 space-y-2 rounded-[8px] bg-[var(--surface-2)] px-4 py-3 text-sm">
           <div className="flex justify-between">
             <span className="text-[var(--muted)]">Pool</span>
             <span>{pool.pair}</span>

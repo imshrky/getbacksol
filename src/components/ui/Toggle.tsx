@@ -14,7 +14,7 @@ export function Toggle({
   cost?: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[4px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+    <div className="flex items-center justify-between gap-4 rounded-[8px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
       <div>
         <p className="text-sm font-medium">{label}</p>
         {hint && <p className="mt-0.5 text-xs text-[var(--muted)]">{hint}</p>}

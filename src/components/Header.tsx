@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import clsx from "clsx";
 import ThemeToggle from "./ThemeToggle";
 
 const WalletMultiButtonDynamic = dynamic(
@@ -15,25 +13,20 @@ const WalletMultiButtonDynamic = dynamic(
 );
 
 const NAV_LINKS = [
-  { href: "/", label: "Reclaim Rent" },
-  { href: "/token-creator", label: "Token Creator" },
-  { href: "/create-liquidity", label: "Liquidity" },
-  { href: "/swap", label: "Swap" },
-  { href: "/remove-liquidity", label: "Remove Liquidity" },
-  { href: "/burn-token", label: "Burn" },
-  { href: "/burn-and-earn", label: "Burn & Earn" },
-  { href: "/leaderboard", label: "Leaderboard" },
+  { href: "#how-it-works", label: "How it works" },
+  { href: "#security", label: "Security" },
+  { href: "#reclaim", label: "Reclaim SOL" },
+  { href: "#faq", label: "FAQ" },
 ];
 
 export default function Header() {
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--header-bg)] backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-[3px] bg-[var(--accent)] text-[13px] font-bold text-[var(--accent-ink)]">
+          <span className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-[var(--accent)] text-[13px] font-bold text-[var(--accent-ink)]">
             G
           </span>
           <span className="text-sm font-semibold tracking-tight">
@@ -46,12 +39,7 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className={clsx(
-                "border-b-2 px-3 py-2 text-[13px] font-medium tracking-tight transition-colors",
-                pathname === link.href
-                  ? "border-[var(--accent)] text-[var(--foreground)]"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
-              )}
+              className="border-b-2 border-transparent px-3 py-2 text-[13px] font-medium tracking-tight text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--foreground)]"
             >
               {link.label}
             </Link>
@@ -64,7 +52,7 @@ export default function Header() {
             <WalletMultiButtonDynamic />
           </div>
           <button
-            className="rounded-[4px] border border-[var(--border-strong)] p-2 lg:hidden"
+            className="rounded-[8px] border border-[var(--border-strong)] p-2 lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label="Toggle menu"
           >
@@ -80,12 +68,7 @@ export default function Header() {
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className={clsx(
-                "rounded-[4px] px-3 py-2 text-sm",
-                pathname === link.href
-                  ? "bg-[var(--hover)] text-[var(--foreground)]"
-                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
-              )}
+              className="rounded-[8px] px-3 py-2 text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
             >
               {link.label}
             </Link>

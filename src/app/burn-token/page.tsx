@@ -41,7 +41,7 @@ export default function BurnTokenPage() {
           />
         </div>
 
-        <div className="mt-5 flex items-start gap-2 rounded-[4px] border border-[var(--accent)]/30 bg-[var(--accent)]/5 px-4 py-3 text-xs text-[var(--foreground)]">
+        <div className="mt-5 flex items-start gap-2 rounded-[8px] border border-[var(--accent)]/30 bg-[var(--accent)]/5 px-4 py-3 text-xs text-[var(--foreground)]">
           <Flame className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
           <span>
             Burning is irreversible. The tokens will be permanently removed from total supply and

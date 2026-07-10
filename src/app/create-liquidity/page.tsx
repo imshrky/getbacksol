@@ -28,7 +28,7 @@ export default function CreateLiquidityPage() {
 
       <Card className="mx-auto max-w-xl">
         <div className="space-y-3">
-          <div className="rounded-[4px] border border-[var(--border)] bg-[var(--surface)] p-3">
+          <div className="rounded-[8px] border border-[var(--border)] bg-[var(--surface)] p-3">
             <TokenSelect label="Token A" value={tokenA} onChange={setTokenA} />
             <input
               type="number"
@@ -48,7 +48,7 @@ export default function CreateLiquidityPage() {
             </span>
           </div>
 
-          <div className="rounded-[4px] border border-[var(--border)] bg-[var(--surface)] p-3">
+          <div className="rounded-[8px] border border-[var(--border)] bg-[var(--surface)] p-3">
             <TokenSelect label="Token B" value={tokenB} onChange={setTokenB} />
             <input
               type="number"
@@ -63,7 +63,7 @@ export default function CreateLiquidityPage() {
           </div>
         </div>
 
-        <div className="mt-5 space-y-2 rounded-[4px] bg-[var(--surface-2)] px-4 py-3 text-sm">
+        <div className="mt-5 space-y-2 rounded-[8px] bg-[var(--surface-2)] px-4 py-3 text-sm">
           <div className="flex justify-between">
             <span className="text-[var(--muted)]">Pool share</span>
             <span>100% (new pool)</span>
@@ -89,7 +89,7 @@ export default function CreateLiquidityPage() {
 
       <section className="mx-auto mt-16 max-w-xl">
         <h2 className="mb-4 text-center text-xl font-semibold">Your liquidity positions</h2>
-        <div className="overflow-hidden rounded-[6px] border border-[var(--border)]">
+        <div className="overflow-hidden rounded-[10px] border border-[var(--border)]">
           <table className="w-full text-left text-sm">
             <thead className="bg-[var(--surface-2)] text-xs uppercase tracking-wide text-[var(--muted)]">
               <tr>

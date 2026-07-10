@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import ThemeProvider from "@/components/ThemeProvider";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
+});
 
 export const metadata: Metadata = {
   title: "GetBackSOL | Reclaim locked SOL from dormant Solana accounts",
@@ -27,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={poppins.variable}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: noFlashScript }} />
       </head>
@@ -36,11 +44,7 @@ export default function RootLayout({
           <Providers>
             <Header />
             <main className="mx-auto max-w-5xl px-4 pb-24 pt-10 sm:px-6">{children}</main>
-            <footer className="rule mt-10 py-8 text-center text-xs text-[var(--muted)]">
-              GetBackSOL is currently a UI mockup — no real transactions are executed until
-              on-chain integration is completed. Additional Solana tools (Token Creator, Swap,
-              Liquidity...) are included as a preview of the wider product roadmap.
-            </footer>
+            <Footer />
           </Providers>
         </ThemeProvider>
       </body>

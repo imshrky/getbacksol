@@ -53,7 +53,7 @@ export default function BurnAndEarnPage() {
           />
         </div>
 
-        <div className="mt-5 flex items-center justify-between rounded-[4px] border border-[var(--accent)]/30 bg-[var(--accent)]/5 px-4 py-3 text-sm">
+        <div className="mt-5 flex items-center justify-between rounded-[8px] border border-[var(--accent)]/30 bg-[var(--accent)]/5 px-4 py-3 text-sm">
           <span className="flex items-center gap-2 text-[var(--foreground)]">
             <Trophy className="h-4 w-4 text-[var(--accent)]" /> Projected reward
           </span>
@@ -75,7 +75,7 @@ export default function BurnAndEarnPage() {
 
       <section className="mx-auto mt-16 max-w-lg">
         <h2 className="mb-4 text-center text-xl font-semibold">Your burn history</h2>
-        <div className="overflow-hidden rounded-[6px] border border-[var(--border)]">
+        <div className="overflow-hidden rounded-[10px] border border-[var(--border)]">
           <table className="w-full text-left text-sm">
             <thead className="bg-[var(--surface-2)] text-xs uppercase tracking-wide text-[var(--muted)]">
               <tr>

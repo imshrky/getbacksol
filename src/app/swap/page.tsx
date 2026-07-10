@@ -46,7 +46,7 @@ export default function SwapPage() {
               <button
                 key={s}
                 onClick={() => setSlippage(s)}
-                className={`rounded-[3px] border px-2.5 py-1 ${
+                className={`rounded-[6px] border px-2.5 py-1 ${
                   slippage === s
                     ? "border-[var(--accent)] text-[var(--foreground)]"
                     : "border-[var(--border)] text-[var(--muted)]"
@@ -55,13 +55,13 @@ export default function SwapPage() {
                 {s}%
               </button>
             ))}
-            <button className="rounded-[3px] border border-[var(--border)] p-1.5 text-[var(--muted)]">
+            <button className="rounded-[6px] border border-[var(--border)] p-1.5 text-[var(--muted)]">
               <Settings2 className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
 
-        <div className="rounded-[4px] border border-[var(--border)] bg-[var(--surface)] p-3">
+        <div className="rounded-[8px] border border-[var(--border)] bg-[var(--surface)] p-3">
           <div className="mb-2 flex items-center justify-between text-xs text-[var(--muted)]">
             <span>You pay</span>
             <button onClick={() => setAmount(String(fromToken.balance))}>
@@ -91,7 +91,7 @@ export default function SwapPage() {
           </button>
         </div>
 
-        <div className="rounded-[4px] border border-[var(--border)] bg-[var(--surface)] p-3">
+        <div className="rounded-[8px] border border-[var(--border)] bg-[var(--surface)] p-3">
           <div className="mb-2 flex items-center justify-between text-xs text-[var(--muted)]">
             <span>You receive</span>
             <span>Balance: {toToken.balance.toLocaleString()}</span>
@@ -110,7 +110,7 @@ export default function SwapPage() {
           </div>
         </div>
 
-        <div className="mt-4 space-y-1.5 rounded-[4px] bg-[var(--surface-2)] px-4 py-3 text-xs text-[var(--muted)]">
+        <div className="mt-4 space-y-1.5 rounded-[8px] bg-[var(--surface-2)] px-4 py-3 text-xs text-[var(--muted)]">
           <div className="flex justify-between">
             <span>Rate</span>
             <span>
