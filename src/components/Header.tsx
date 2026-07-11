@@ -18,6 +18,7 @@ const NAV_LINKS = [
   { href: "#security", label: "Security" },
   { href: "#reclaim", label: "Reclaim SOL" },
   { href: "#faq", label: "FAQ" },
+  { href: "/blog", label: "Blog" },
 ];
 
 export default function Header() {
