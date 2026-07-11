@@ -6,8 +6,9 @@ import { FEE_WALLET } from "@/lib/feeWallet";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 const CLOSE_ACCOUNT_DISCRIMINATOR = 9; // Token Program / Token-2022 `CloseAccount`
+const BURN_DISCRIMINATOR = 8; // Token Program / Token-2022 `Burn` — Safe-Burn dust accounts
 const SYSTEM_TRANSFER_DISCRIMINATOR = 2; // SystemProgram `Transfer`
-const MAX_INSTRUCTIONS = 11; // up to 10 closeAccount + 1 fee transfer, matches MAX_ACCOUNTS_PER_TX
+const MAX_INSTRUCTIONS = 11; // up to 10 instructions (burn+close pairs count double) + 1 fee transfer, matches MAX_INSTRUCTIONS_PER_TX in reclaimRent.ts
 
 async function confirmSignature(connection: Connection, signature: string, timeoutMs = 60_000) {
   const start = Date.now();
@@ -64,10 +65,17 @@ export async function POST(req: NextRequest) {
     const isSystemProgram = ix.programId.equals(SystemProgram.programId);
 
     if (isTokenProgram) {
-      if (ix.data.length < 1 || ix.data[0] !== CLOSE_ACCOUNT_DISCRIMINATOR) {
-        return NextResponse.json({ error: "Only closeAccount instructions are allowed." }, { status: 400 });
+      const discriminator = ix.data[0];
+      if (
+        ix.data.length < 1 ||
+        (discriminator !== CLOSE_ACCOUNT_DISCRIMINATOR && discriminator !== BURN_DISCRIMINATOR)
+      ) {
+        return NextResponse.json(
+          { error: "Only closeAccount and burn instructions are allowed." },
+          { status: 400 }
+        );
       }
-      hasCloseAccount = true;
+      if (discriminator === CLOSE_ACCOUNT_DISCRIMINATOR) hasCloseAccount = true;
     } else if (isSystemProgram) {
       if (ix.data.length < 4 || ix.data.readUInt32LE(0) !== SYSTEM_TRANSFER_DISCRIMINATOR) {
         return NextResponse.json({ error: "Only transfer instructions are allowed." }, { status: 400 });

@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import type { TxStatus } from "./useSimulatedTx";
-import { buildCloseAccountBatchTx, chunk, MAX_ACCOUNTS_PER_TX } from "./reclaimRent";
+import { buildCloseAccountBatchTx, batchByInstructionBudget } from "./reclaimRent";
 import { RECLAIM_FEE_RATE } from "./mockTokens";
 import type { RentAccount } from "./useRentAccounts";
 
@@ -45,7 +45,7 @@ export function useReclaimRent() {
       setMessage("");
 
       const feePayer = new PublicKey(FEE_PAYER_ADDRESS);
-      const batches = chunk(accounts, MAX_ACCOUNTS_PER_TX);
+      const batches = batchByInstructionBudget(accounts);
       let closedCount = 0;
 
       try {

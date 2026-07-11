@@ -10,6 +10,8 @@ export type RentAccount = {
   programId: string;
   reclaimable: number; // actual lamports held by the account, in SOL
   symbol?: string | null; // resolved lazily via /api/token-meta; undefined until resolved
+  needsBurn?: boolean; // true for dust accounts — burn before close
+  rawAmount?: string; // exact raw token amount to burn (only set when needsBurn is true)
 };
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
@@ -32,23 +34,24 @@ async function resolveSymbol(mint: string): Promise<string | null> {
 }
 
 /**
- * Scans the connected wallet for SPL / Token-2022 accounts sitting at a
- * zero balance — these are the ones eligible to close and reclaim rent
- * from. Accounts with a nonzero (dust) balance are counted but excluded
- * until Safe-Burn support ships.
+ * Scans the connected wallet for SPL / Token-2022 accounts. Zero-balance
+ * accounts (`accounts`) are closable directly; accounts with a small
+ * leftover balance (`dustAccounts`) need a burn instruction first — see
+ * reclaimRent.ts for how `needsBurn` / `rawAmount` get used when building
+ * the transaction.
  */
 export function useRentAccounts() {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
   const [accounts, setAccounts] = useState<RentAccount[]>([]);
-  const [dustCount, setDustCount] = useState(0);
+  const [dustAccounts, setDustAccounts] = useState<RentAccount[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!publicKey) {
       setAccounts([]);
-      setDustCount(0);
+      setDustAccounts([]);
       return;
     }
 
@@ -61,7 +64,7 @@ export function useRentAccounts() {
       ]);
 
       const empty: RentAccount[] = [];
-      let dust = 0;
+      const dust: RentAccount[] = [];
 
       for (const { value, programId } of [
         { value: legacy.value, programId: TOKEN_PROGRAM_ID },
@@ -69,32 +72,41 @@ export function useRentAccounts() {
       ]) {
         for (const { pubkey, account } of value) {
           const info = account.data.parsed.info;
+          const reclaimable = account.lamports / LAMPORTS_PER_SOL;
           if (info.tokenAmount.uiAmount === 0) {
             empty.push({
               pubkey: pubkey.toBase58(),
               mint: info.mint,
               programId: programId.toBase58(),
-              reclaimable: account.lamports / LAMPORTS_PER_SOL,
+              reclaimable,
             });
           } else {
-            dust += 1;
+            dust.push({
+              pubkey: pubkey.toBase58(),
+              mint: info.mint,
+              programId: programId.toBase58(),
+              reclaimable,
+              needsBurn: true,
+              rawAmount: info.tokenAmount.amount,
+            });
           }
         }
       }
 
-      // Show the list right away — symbol lookup is a decoration, not
+      // Show the lists right away — symbol lookup is a decoration, not
       // something worth delaying "here's what we found" for.
       setAccounts(empty);
-      setDustCount(dust);
+      setDustAccounts(dust);
       setLoading(false);
 
-      const uniqueMints = [...new Set(empty.map((a) => a.mint))];
+      const uniqueMints = [...new Set([...empty, ...dust].map((a) => a.mint))];
       if (uniqueMints.length > 0) {
         const entries = await Promise.all(
           uniqueMints.map(async (mint) => [mint, await resolveSymbol(mint)] as const)
         );
         const symbolByMint = new Map(entries);
         setAccounts((prev) => prev.map((a) => ({ ...a, symbol: symbolByMint.get(a.mint) ?? null })));
+        setDustAccounts((prev) => prev.map((a) => ({ ...a, symbol: symbolByMint.get(a.mint) ?? null })));
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to scan wallet for token accounts.");
@@ -106,5 +118,5 @@ export function useRentAccounts() {
     refresh();
   }, [refresh]);
 
-  return { accounts, dustCount, loading, error, refresh };
+  return { accounts, dustAccounts, dustCount: dustAccounts.length, loading, error, refresh };
 }

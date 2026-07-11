@@ -14,6 +14,7 @@ import {
   Loader2,
   AlertTriangle,
   PartyPopper,
+  Flame,
 } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
@@ -90,7 +91,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What about accounts with leftover dust?",
-    a: "Accounts with a small nonzero balance aren't closable yet — Safe-Burn (burning the dust first so the account qualifies) is coming soon. Today we only scan and close accounts already at zero.",
+    a: "Turn on Safe-Burn and we'll burn the residual balance first, in the same transaction, so the account qualifies for closing too. Selling that dust for SOL instead of burning it (for the rare token that's actually worth something) is coming soon — today, dust just gets burned.",
   },
   {
     q: "Why a 15% fee?",
@@ -110,17 +111,23 @@ const FAQ_ITEMS = [
 
 export default function HomePage() {
   const { connected } = useWallet();
-  const { accounts, dustCount, loading, error, refresh } = useRentAccounts();
+  const { accounts, dustAccounts, loading, error, refresh } = useRentAccounts();
   const { status, message, run } = useReclaimRent();
   const portfolio = usePortfolio();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [view, setView] = useState<"close" | "portfolio">("close");
+  const [safeBurn, setSafeBurn] = useState(true);
+
+  const closableAccounts = useMemo(
+    () => (safeBurn ? [...accounts, ...dustAccounts] : accounts),
+    [accounts, dustAccounts, safeBurn]
+  );
 
   useEffect(() => {
-    setSelected(new Set(accounts.map((a) => a.pubkey)));
-  }, [accounts]);
+    setSelected(new Set(closableAccounts.map((a) => a.pubkey)));
+  }, [closableAccounts]);
 
-  const allSelected = accounts.length > 0 && selected.size === accounts.length;
+  const allSelected = closableAccounts.length > 0 && selected.size === closableAccounts.length;
 
   function toggleOne(pubkey: string) {
     setSelected((prev) => {
@@ -132,18 +139,18 @@ export default function HomePage() {
   }
 
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(accounts.map((a) => a.pubkey)));
+    setSelected(allSelected ? new Set() : new Set(closableAccounts.map((a) => a.pubkey)));
   }
 
   const { gross, fee, net, count } = useMemo(() => {
-    const chosen = accounts.filter((a) => selected.has(a.pubkey));
+    const chosen = closableAccounts.filter((a) => selected.has(a.pubkey));
     const grossVal = chosen.reduce((sum, a) => sum + a.reclaimable, 0);
     const feeVal = grossVal * RECLAIM_FEE_RATE;
     return { gross: grossVal, fee: feeVal, net: grossVal - feeVal, count: chosen.length };
-  }, [accounts, selected]);
+  }, [closableAccounts, selected]);
 
   async function handleClose() {
-    const chosen = accounts.filter((a) => selected.has(a.pubkey));
+    const chosen = closableAccounts.filter((a) => selected.has(a.pubkey));
     await run(chosen);
     refresh();
   }
@@ -289,16 +296,20 @@ export default function HomePage() {
                 Try again
               </button>
             </div>
-          ) : accounts.length === 0 ? (
+          ) : closableAccounts.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
               <PartyPopper className="h-6 w-6 text-[var(--accent)]" />
               <p className="text-sm text-[var(--muted)]">
                 No closable accounts found — this wallet is already clean.
               </p>
-              {dustCount > 0 && (
+              {dustAccounts.length > 0 && !safeBurn && (
                 <p className="text-xs text-[var(--muted)]">
-                  ({dustCount} account{dustCount > 1 ? "s" : ""} with a small leftover balance —
-                  Safe-Burn support is coming soon.)
+                  ({dustAccounts.length} account{dustAccounts.length > 1 ? "s" : ""} with a small
+                  leftover balance —{" "}
+                  <button className="underline hover:text-[var(--foreground)]" onClick={() => setSafeBurn(true)}>
+                    turn on Safe-Burn
+                  </button>{" "}
+                  to include them.)
                 </p>
               )}
             </div>
@@ -312,7 +323,7 @@ export default function HomePage() {
                     onChange={toggleAll}
                     className="h-4 w-4 accent-[var(--accent)]"
                   />
-                  Select all ({accounts.length} closable accounts found)
+                  Select all ({closableAccounts.length} closable accounts found)
                 </label>
                 <span className="text-xs text-[var(--muted)]">{accountLabel(count)} selected</span>
               </div>
@@ -327,7 +338,7 @@ export default function HomePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
-                  {accounts.map((a) => (
+                  {closableAccounts.map((a) => (
                     <tr key={a.pubkey} className="surface-hover">
                       <td className="px-5 py-2.5">
                         <input
@@ -342,6 +353,11 @@ export default function HomePage() {
                         <span className="ml-2 font-mono text-xs text-[var(--muted)]">
                           {shortenAddress(a.mint)}
                         </span>
+                        {a.needsBurn && (
+                          <span className="ml-2 inline-flex items-center gap-1 text-xs text-[var(--accent)]">
+                            <Flame className="h-3 w-3" /> Dust
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-2.5 text-right text-[var(--muted)]">
                         {a.reclaimable.toFixed(6)} SOL
@@ -353,7 +369,7 @@ export default function HomePage() {
 
               {/* Mobile: stacked rows, so the reclaimable amount is never clipped */}
               <div className="divide-y divide-[var(--border)] sm:hidden">
-                {accounts.map((a) => (
+                {closableAccounts.map((a) => (
                   <label
                     key={a.pubkey}
                     className="surface-hover flex items-start gap-3 px-4 py-3"
@@ -371,28 +387,27 @@ export default function HomePage() {
                           {a.reclaimable.toFixed(6)} SOL
                         </span>
                       </div>
-                      <div className="mt-0.5 truncate font-mono text-xs text-[var(--muted)]">
-                        {shortenAddress(a.mint)}
+                      <div className="mt-0.5 flex items-center justify-between gap-2">
+                        <span className="truncate font-mono text-xs text-[var(--muted)]">
+                          {shortenAddress(a.mint)}
+                        </span>
+                        {a.needsBurn && (
+                          <span className="flex shrink-0 items-center gap-1 text-xs text-[var(--accent)]">
+                            <Flame className="h-3 w-3" /> Dust
+                          </span>
+                        )}
                       </div>
                     </div>
                   </label>
                 ))}
               </div>
 
-              {dustCount > 0 && (
-                <p className="border-t border-[var(--border)] px-5 py-3 text-xs text-[var(--muted)]">
-                  {dustCount} more account{dustCount > 1 ? "s" : ""} with a small leftover balance
-                  found — not shown yet, Safe-Burn support is coming soon.
-                </p>
-              )}
-
               <div className="border-t border-[var(--border)] p-5">
                 <Toggle
-                  checked={false}
-                  onChange={() => {}}
-                  disabled
-                  label="Safe-Burn + Sell dust balances first"
-                  hint="Coming soon — burns worthless leftover token dust before closing, so more accounts qualify for a refund."
+                  checked={safeBurn}
+                  onChange={setSafeBurn}
+                  label="Safe-Burn dust balances first"
+                  hint="Burns worthless leftover token dust before closing, so more accounts qualify for a refund. Selling dust for SOL instead of burning it is coming soon."
                 />
 
                 <div className="mt-5 space-y-1.5 rounded-[8px] bg-[var(--surface-2)] px-4 py-3 text-sm">
