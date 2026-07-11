@@ -226,8 +226,7 @@ export default function HomePage() {
                 <thead className="bg-[var(--surface-2)] text-xs uppercase tracking-wide text-[var(--muted)]">
                   <tr>
                     <th className="w-10 px-5 py-2.5"></th>
-                    <th className="px-2 py-2.5">Token account</th>
-                    <th className="px-2 py-2.5">Mint</th>
+                    <th className="px-2 py-2.5">Token</th>
                     <th className="px-5 py-2.5 text-right">Reclaimable</th>
                   </tr>
                 </thead>
@@ -242,9 +241,11 @@ export default function HomePage() {
                           className="h-4 w-4 accent-[var(--accent)]"
                         />
                       </td>
-                      <td className="px-2 py-2.5 font-mono text-xs">{shortenAddress(a.pubkey)}</td>
-                      <td className="px-2 py-2.5 font-mono text-xs text-[var(--muted)]">
-                        {shortenAddress(a.mint)}
+                      <td className="px-2 py-2.5">
+                        <span className="font-medium">{a.symbol ?? "Unknown"}</span>
+                        <span className="ml-2 font-mono text-xs text-[var(--muted)]">
+                          {shortenAddress(a.mint)}
+                        </span>
                       </td>
                       <td className="px-5 py-2.5 text-right text-[var(--muted)]">
                         {a.reclaimable.toFixed(6)} SOL
@@ -269,13 +270,13 @@ export default function HomePage() {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-sm">{shortenAddress(a.pubkey)}</span>
+                        <span className="font-medium">{a.symbol ?? "Unknown"}</span>
                         <span className="shrink-0 text-sm text-[var(--muted)]">
                           {a.reclaimable.toFixed(6)} SOL
                         </span>
                       </div>
                       <div className="mt-0.5 truncate font-mono text-xs text-[var(--muted)]">
-                        mint {shortenAddress(a.mint)}
+                        {shortenAddress(a.mint)}
                       </div>
                     </div>
                   </label>
