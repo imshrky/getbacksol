@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "GetBackSOL | Reclaim locked SOL from dormant Solana accounts",
   description:
     "Scan your Solana wallet, close dormant token accounts, and get the locked SOL rent back — in seconds, minus a small service fee.",
+  verification: {
+    google: "aNEWQV-blfW8koixrZjPY3D5FcXysIiQW6fWXYPXuAw",
+  },
 };
 
 // Runs before hydration to avoid a flash of the wrong theme.
