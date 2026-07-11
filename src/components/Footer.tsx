@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AtSign, MessageCircle, Code2 } from "lucide-react";
 import { RpcStatus } from "./ui/RpcStatus";
+import { LogoMark } from "./ui/Logo";
 import { NETWORK } from "@/app/providers";
 
 const IS_MAINNET = NETWORK === "mainnet-beta";
@@ -20,9 +21,7 @@ export default function Footer() {
       <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-10 sm:flex-row sm:justify-between sm:px-6">
         <div className="max-w-sm">
           <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-[var(--accent)] text-xs font-bold text-[var(--accent-ink)]">
-              G
-            </span>
+            <LogoMark className="h-6 w-6" />
             <span className="text-sm font-semibold tracking-tight">
               GetBack<span className="text-[var(--accent)]">SOL</span>
             </span>

@@ -149,6 +149,10 @@ export default function HomePage() {
     <div className="fade-in">
       {/* Hero + tool */}
       <section id="reclaim" className="scroll-mt-24 pb-16 pt-6 text-center sm:pb-20">
+        <span className="mx-auto mb-5 flex w-fit items-center gap-2 rounded-full border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-4 py-1.5 text-xs font-semibold text-[var(--accent)]">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
+          Reclaim locked SOL — safely, in seconds
+        </span>
         <span className="eyebrow mx-auto mb-3 justify-center">
           <span className="index">01</span>
           GetBackSOL
