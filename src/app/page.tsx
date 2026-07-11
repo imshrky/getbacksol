@@ -22,6 +22,7 @@ import { Faq } from "@/components/ui/Faq";
 import { ImpactStats } from "@/components/ui/ImpactStats";
 import { useRentAccounts } from "@/lib/useRentAccounts";
 import { useReclaimRent } from "@/lib/useReclaimRent";
+import { usePortfolio } from "@/lib/usePortfolio";
 import { RECLAIM_FEE_RATE, RENT_PER_ACCOUNT } from "@/lib/mockTokens";
 import { NETWORK } from "@/app/providers";
 
@@ -111,7 +112,9 @@ export default function HomePage() {
   const { connected } = useWallet();
   const { accounts, dustCount, loading, error, refresh } = useRentAccounts();
   const { status, message, run } = useReclaimRent();
+  const portfolio = usePortfolio();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [view, setView] = useState<"close" | "portfolio">("close");
 
   useEffect(() => {
     setSelected(new Set(accounts.map((a) => a.pubkey)));
@@ -145,6 +148,11 @@ export default function HomePage() {
     refresh();
   }
 
+  const sortedHoldings = useMemo(
+    () => [...portfolio.holdings].sort((a, b) => (b.usdValue ?? 0) - (a.usdValue ?? 0)),
+    [portfolio.holdings]
+  );
+
   return (
     <div className="fade-in">
       {/* Hero + tool */}
@@ -173,12 +181,100 @@ export default function HomePage() {
           {RENT_PER_ACCOUNT.toFixed(6)} SOL.
         </p>
         <Card className="mx-auto mt-3 max-w-2xl !p-0 overflow-hidden text-left">
+          {connected && (
+            <div className="flex border-b border-[var(--border)]">
+              <button
+                onClick={() => setView("close")}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  view === "close"
+                    ? "border-b-2 border-[var(--accent)] text-[var(--foreground)]"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                Closable accounts
+              </button>
+              <button
+                onClick={() => setView("portfolio")}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  view === "portfolio"
+                    ? "border-b-2 border-[var(--accent)] text-[var(--foreground)]"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                Full portfolio
+              </button>
+            </div>
+          )}
           {!connected ? (
             <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
               <Wallet className="h-6 w-6 text-[var(--muted)]" />
               <p className="text-sm text-[var(--muted)]">
                 Connect your wallet to scan for reclaimable accounts.
               </p>
+            </div>
+          ) : view === "portfolio" ? (
+            <div className="px-5 py-4">
+              {portfolio.loading ? (
+                <div className="flex flex-col items-center gap-2 py-12 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-[var(--muted)]" />
+                  <p className="text-sm text-[var(--muted)]">Loading your portfolio…</p>
+                </div>
+              ) : portfolio.error ? (
+                <div className="flex flex-col items-center gap-3 py-12 text-center">
+                  <AlertTriangle className="h-6 w-6 text-red-400" />
+                  <p className="text-sm text-[var(--muted)]">{portfolio.error}</p>
+                  <button className="btn-outline" onClick={() => portfolio.refresh()}>
+                    Try again
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4 flex items-center justify-between rounded-[8px] bg-[var(--surface-2)] px-4 py-3">
+                    <span className="text-sm text-[var(--muted)]">Total portfolio value</span>
+                    <span className="text-lg font-semibold">
+                      {portfolio.totalUsdValue != null
+                        ? `$${portfolio.totalUsdValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="divide-y divide-[var(--border)]">
+                    <div className="flex items-center justify-between py-2.5">
+                      <span className="font-medium">SOL</span>
+                      <div className="text-right">
+                        <div className="text-sm">{portfolio.solBalance.toFixed(4)} SOL</div>
+                        {portfolio.solPrice != null && (
+                          <div className="text-xs text-[var(--muted)]">
+                            ${(portfolio.solBalance * portfolio.solPrice).toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {sortedHoldings.map((h) => (
+                      <div key={h.mint} className="flex items-center justify-between py-2.5">
+                        <div>
+                          <span className="font-medium">{h.symbol ?? "Unknown"}</span>
+                          <span className="ml-2 font-mono text-xs text-[var(--muted)]">
+                            {shortenAddress(h.mint)}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm">
+                            {h.uiAmount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                          </div>
+                          {h.usdValue != null && (
+                            <div className="text-xs text-[var(--muted)]">${h.usdValue.toFixed(2)}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {sortedHoldings.length === 0 && (
+                      <p className="py-6 text-center text-sm text-[var(--muted)]">
+                        No other tokens held besides SOL.
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           ) : loading ? (
             <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
