@@ -21,9 +21,18 @@ export function chunk<T>(items: T[], size: number): T[][] {
  * sends the platform's 15% fee to FEE_WALLET — the user receives the
  * remaining 85% automatically, since closeAccount pays the rent directly
  * to `owner` and the fee transfer only moves the cut on top of that.
+ *
+ * `feePayer` is the platform's gasless relay wallet, not `owner` — the
+ * owner only needs to sign to authorize closing their own accounts, never
+ * needs to hold SOL themselves. See /api/relay-close for the other half.
  */
-export function buildCloseAccountBatchTx(owner: PublicKey, batch: RentAccount[]): Transaction {
+export function buildCloseAccountBatchTx(
+  owner: PublicKey,
+  feePayer: PublicKey,
+  batch: RentAccount[]
+): Transaction {
   const tx = new Transaction();
+  tx.feePayer = feePayer;
   let lamports = 0;
 
   for (const account of batch) {
