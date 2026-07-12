@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Connection, Transaction, SystemProgram, clusterApiUrl, type Cluster } from "@solana/web3.js";
+import {
+  Connection,
+  Transaction,
+  SystemProgram,
+  PublicKey,
+  ComputeBudgetProgram,
+  clusterApiUrl,
+  type Cluster,
+} from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { getFeePayerKeypair } from "@/lib/feePayer";
 import { FEE_WALLET } from "@/lib/feeWallet";
@@ -8,7 +16,19 @@ const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 const CLOSE_ACCOUNT_DISCRIMINATOR = 9; // Token Program / Token-2022 `CloseAccount`
 const BURN_DISCRIMINATOR = 8; // Token Program / Token-2022 `Burn` — Safe-Burn dust accounts
 const SYSTEM_TRANSFER_DISCRIMINATOR = 2; // SystemProgram `Transfer`
-const MAX_INSTRUCTIONS = 11; // up to 10 instructions (burn+close pairs count double) + 1 fee transfer, matches MAX_INSTRUCTIONS_PER_TX in reclaimRent.ts
+// Wallets (confirmed with MetaMask) commonly prepend their own instructions
+// before signing: compute-budget priority-fee instructions, and — for
+// wallets that run a post-transaction balance guard — assertion
+// instructions from that guard program. Neither takes custody of funds
+// (ComputeBudget instructions carry no accounts at all; the guard program
+// only asserts expected balances and reverts on mismatch, it can't move
+// anything), so both are allow-listed alongside our own instructions rather
+// than rejecting every transaction real wallets actually produce.
+const GUARD_PROGRAM_ID = new PublicKey("L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95");
+// Core: up to 10 instructions (burn+close pairs count double) + 1 fee
+// transfer, matching MAX_INSTRUCTIONS_PER_TX in reclaimRent.ts. Plus
+// headroom for wallet-injected compute-budget and guard instructions.
+const MAX_INSTRUCTIONS = 30;
 
 async function confirmSignature(connection: Connection, signature: string, timeoutMs = 60_000) {
   const start = Date.now();
@@ -61,6 +81,10 @@ export async function POST(req: NextRequest) {
 
   let hasCloseAccount = false;
   for (const ix of tx.instructions) {
+    if (ix.programId.equals(ComputeBudgetProgram.programId) || ix.programId.equals(GUARD_PROGRAM_ID)) {
+      continue;
+    }
+
     const isTokenProgram = ix.programId.equals(TOKEN_PROGRAM_ID) || ix.programId.equals(TOKEN_2022_PROGRAM_ID);
     const isSystemProgram = ix.programId.equals(SystemProgram.programId);
 
