@@ -40,8 +40,12 @@ export function Toggle({
           }}
         >
           <span
-            className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all"
-            style={checked ? { right: "2px", left: "auto" } : { left: "2px", right: "auto" }}
+            className="absolute h-5 w-5 rounded-full bg-white shadow transition-all"
+            style={{
+              top: "50%",
+              transform: "translateY(-50%)",
+              ...(checked ? { right: "2px", left: "auto" } : { left: "2px", right: "auto" }),
+            }}
           />
         </button>
       </div>
