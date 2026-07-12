@@ -296,111 +296,110 @@ export default function HomePage() {
                 Try again
               </button>
             </div>
-          ) : closableAccounts.length === 0 ? (
+          ) : accounts.length === 0 && dustAccounts.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
               <PartyPopper className="h-6 w-6 text-[var(--accent)]" />
               <p className="text-sm text-[var(--muted)]">
                 No closable accounts found — this wallet is already clean.
               </p>
-              {dustAccounts.length > 0 && !safeBurn && (
-                <p className="text-xs text-[var(--muted)]">
-                  ({dustAccounts.length} account{dustAccounts.length > 1 ? "s" : ""} with a small
-                  leftover balance —{" "}
-                  <button className="underline hover:text-[var(--foreground)]" onClick={() => setSafeBurn(true)}>
-                    turn on Safe-Burn
-                  </button>{" "}
-                  to include them.)
-                </p>
-              )}
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-3">
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleAll}
-                    className="h-4 w-4 accent-[var(--accent)]"
-                  />
-                  Select all ({closableAccounts.length} closable accounts found)
-                </label>
-                <span className="text-xs text-[var(--muted)]">{accountLabel(count)} selected</span>
-              </div>
+              {closableAccounts.length > 0 ? (
+                <>
+                  <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-3">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleAll}
+                        className="h-4 w-4 accent-[var(--accent)]"
+                      />
+                      Select all ({closableAccounts.length} closable accounts found)
+                    </label>
+                    <span className="text-xs text-[var(--muted)]">{accountLabel(count)} selected</span>
+                  </div>
 
-              {/* Desktop / tablet: table */}
-              <table className="hidden w-full text-left text-sm sm:table">
-                <thead className="bg-[var(--surface-2)] text-xs uppercase tracking-wide text-[var(--muted)]">
-                  <tr>
-                    <th className="w-10 px-5 py-2.5"></th>
-                    <th className="px-2 py-2.5">Token</th>
-                    <th className="px-5 py-2.5 text-right">Reclaimable</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border)]">
-                  {closableAccounts.map((a) => (
-                    <tr key={a.pubkey} className="surface-hover">
-                      <td className="px-5 py-2.5">
+                  {/* Desktop / tablet: table */}
+                  <table className="hidden w-full text-left text-sm sm:table">
+                    <thead className="bg-[var(--surface-2)] text-xs uppercase tracking-wide text-[var(--muted)]">
+                      <tr>
+                        <th className="w-10 px-5 py-2.5"></th>
+                        <th className="px-2 py-2.5">Token</th>
+                        <th className="px-5 py-2.5 text-right">Reclaimable</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border)]">
+                      {closableAccounts.map((a) => (
+                        <tr key={a.pubkey} className="surface-hover">
+                          <td className="px-5 py-2.5">
+                            <input
+                              type="checkbox"
+                              checked={selected.has(a.pubkey)}
+                              onChange={() => toggleOne(a.pubkey)}
+                              className="h-4 w-4 accent-[var(--accent)]"
+                            />
+                          </td>
+                          <td className="px-2 py-2.5">
+                            <span className="font-medium">{a.symbol ?? "Unknown"}</span>
+                            <span className="ml-2 font-mono text-xs text-[var(--muted)]">
+                              {shortenAddress(a.mint)}
+                            </span>
+                            {a.needsBurn && (
+                              <span className="ml-2 inline-flex items-center gap-1 text-xs text-[var(--accent)]">
+                                <Flame className="h-3 w-3" /> Dust
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-5 py-2.5 text-right text-[var(--muted)]">
+                            {a.reclaimable.toFixed(6)} SOL
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Mobile: stacked rows, so the reclaimable amount is never clipped */}
+                  <div className="divide-y divide-[var(--border)] sm:hidden">
+                    {closableAccounts.map((a) => (
+                      <label
+                        key={a.pubkey}
+                        className="surface-hover flex items-start gap-3 px-4 py-3"
+                      >
                         <input
                           type="checkbox"
                           checked={selected.has(a.pubkey)}
                           onChange={() => toggleOne(a.pubkey)}
-                          className="h-4 w-4 accent-[var(--accent)]"
+                          className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
                         />
-                      </td>
-                      <td className="px-2 py-2.5">
-                        <span className="font-medium">{a.symbol ?? "Unknown"}</span>
-                        <span className="ml-2 font-mono text-xs text-[var(--muted)]">
-                          {shortenAddress(a.mint)}
-                        </span>
-                        {a.needsBurn && (
-                          <span className="ml-2 inline-flex items-center gap-1 text-xs text-[var(--accent)]">
-                            <Flame className="h-3 w-3" /> Dust
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-5 py-2.5 text-right text-[var(--muted)]">
-                        {a.reclaimable.toFixed(6)} SOL
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Mobile: stacked rows, so the reclaimable amount is never clipped */}
-              <div className="divide-y divide-[var(--border)] sm:hidden">
-                {closableAccounts.map((a) => (
-                  <label
-                    key={a.pubkey}
-                    className="surface-hover flex items-start gap-3 px-4 py-3"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selected.has(a.pubkey)}
-                      onChange={() => toggleOne(a.pubkey)}
-                      className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium">{a.symbol ?? "Unknown"}</span>
-                        <span className="shrink-0 text-sm text-[var(--muted)]">
-                          {a.reclaimable.toFixed(6)} SOL
-                        </span>
-                      </div>
-                      <div className="mt-0.5 flex items-center justify-between gap-2">
-                        <span className="truncate font-mono text-xs text-[var(--muted)]">
-                          {shortenAddress(a.mint)}
-                        </span>
-                        {a.needsBurn && (
-                          <span className="flex shrink-0 items-center gap-1 text-xs text-[var(--accent)]">
-                            <Flame className="h-3 w-3" /> Dust
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium">{a.symbol ?? "Unknown"}</span>
+                            <span className="shrink-0 text-sm text-[var(--muted)]">
+                              {a.reclaimable.toFixed(6)} SOL
+                            </span>
+                          </div>
+                          <div className="mt-0.5 flex items-center justify-between gap-2">
+                            <span className="truncate font-mono text-xs text-[var(--muted)]">
+                              {shortenAddress(a.mint)}
+                            </span>
+                            {a.needsBurn && (
+                              <span className="flex shrink-0 items-center gap-1 text-xs text-[var(--accent)]">
+                                <Flame className="h-3 w-3" /> Dust
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="px-5 py-8 text-center text-sm text-[var(--muted)]">
+                  {dustAccounts.length} account{dustAccounts.length > 1 ? "s" : ""} with a small
+                  leftover balance — turn on Safe-Burn below to include them.
+                </p>
+              )}
 
               <div className="border-t border-[var(--border)] p-5">
                 <Toggle
