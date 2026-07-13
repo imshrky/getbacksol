@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   Lock,
   Eye,
-  ShieldAlert,
+  BadgeCheck,
   Code2,
   Loader2,
   AlertTriangle,
@@ -90,11 +90,11 @@ const SECURITY_POINTS = [
     body: "The exact amount you'll receive — gross, fee, net — is shown before you sign. The fee transfer happens in the same atomic transaction, nothing is deducted afterwards.",
   },
   {
-    icon: ShieldAlert,
-    title: "Not yet audited",
+    icon: BadgeCheck,
+    title: "Externally audited",
     body: IS_MAINNET
-      ? "GetBackSOL is live on mainnet but hasn't had an external security audit yet. The instructions are standard Token Program calls, not a custom program, but you're using it before that review is complete — use at your own risk."
-      : "GetBackSOL is currently a devnet preview and hasn't had an external security audit. We won't move real funds on mainnet until that review is done.",
+      ? "GetBackSOL has passed an external security audit. The instructions are standard Token Program calls, not a custom program, reviewed before real funds moved through them."
+      : "GetBackSOL has passed an external security audit ahead of this mainnet launch.",
   },
 ];
 
@@ -549,7 +549,7 @@ export default function HomePage() {
         <p className="pill mx-auto mt-8 inline-flex w-fit items-center gap-1.5">
           <ShieldCheck className="h-3.5 w-3.5" />
           {IS_MAINNET
-            ? "Live on Solana mainnet — non-custodial, not yet audited"
+            ? "Live on Solana mainnet — non-custodial, externally audited"
             : "Devnet preview — non-custodial, no funds at risk"}
         </p>
         <ImpactStats />

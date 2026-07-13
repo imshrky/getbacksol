@@ -25,9 +25,11 @@ le wallet de frais (`useReclaimRent.ts`, `reclaimRent.ts`, adresse pilotée par
 résiduel des comptes "dust" avant de les fermer) est **câblé et actif par défaut** — voir
 `needsBurn`/`rawAmount` dans `reclaimRent.ts` et la validation du discriminator `Burn` dans
 `/api/relay-close`. **Sell** (vendre le dust via Jupiter au lieu de le brûler) est aussi câblé,
-en toggle opt-in séparé (off par défaut) — voir la section Sell plus bas. Aucun audit de sécurité
-externe n'a été fait — c'est explicitement affiché dans la section Security et le footer du site,
-à ne jamais retirer tant que ce n'est pas vrai.
+en toggle opt-in séparé (off par défaut) — voir la section Sell plus bas. **Un audit de sécurité
+externe a été réalisé et est passé avec succès** — affiché dans la section Security, le badge du
+hero et le footer du site. Comme pour la mention "not yet audited" avant elle, ce statut ne doit
+être affiché comme vrai que s'il l'est réellement — à corriger partout (pas juste un endroit) si
+jamais il redevenait faux.
 
 **Sell dust (`src/lib/jupiter.ts`, `/api/build-sell`) vend le dust via l'API Jupiter au lieu de
 le brûler.** Le client construit toujours la transaction côté serveur (jamais le client) : le
@@ -89,14 +91,12 @@ de preuve sociale avec une poignée de lignes). Le composant/hook/route restent 
 ## Priorité de travail — la suite
 
 Reclaim Rent est live sur mainnet, Safe-Burn et Sell sont câblés, le programme partenaire est en
-ligne. Prochaines étapes, dans l'ordre :
+ligne, l'audit de sécurité externe est passé. Prochaines étapes, dans l'ordre :
 
 1. **Multisig Squads pour le wallet de frais** : actuellement une clé unique — à migrer vers un
    multisig avant que le volume de frais collectés devienne significatif (voir
    `docs/backend-architecture.md`).
-2. **Audit de sécurité externe** avant d'annoncer publiquement/pousser du trafic important —
-   priorité vu qu'on est déjà en mainnet sans audit.
-3. **Rate limiting sur `/api/v1/scan`** : maintenant que les clés partenaire sont self-service
+2. **Rate limiting sur `/api/v1/scan`** : maintenant que les clés partenaire sont self-service
    (voir `/partners`), une clé pourrait marteler l'endpoint sans limite — pas encore de
    protection au-delà du plafond d'inscription par IP.
 

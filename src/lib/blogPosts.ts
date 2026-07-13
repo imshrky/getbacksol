@@ -340,7 +340,7 @@ export const BLOG_POSTS: BlogPost[] = [
       { type: "h2", text: "Where GetBackSOL stands on this, right now" },
       {
         type: "p",
-        text: "Live on Solana mainnet, non-custodial, fees shown before every signature — and not yet externally audited, which is disclosed directly on the site rather than left out. That's the honest state of things today, not a claim about tomorrow.",
+        text: "Live on Solana mainnet, non-custodial, fees shown before every signature, and now past an external security audit. That's the honest state of things today, not a claim about tomorrow.",
       },
     ],
   },
