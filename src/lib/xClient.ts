@@ -65,9 +65,10 @@ export async function postTweet(text: string, replyToId?: string): Promise<{ id:
 /**
  * Searches recent tweets (last 7 days) matching `query`, using app-only
  * Bearer auth — read-only, no posting capability, so no OAuth 1.0a signing
- * needed here.
+ * needed here. `startTime` (ISO 8601) scopes the search to a time window —
+ * see auto-reply/route.ts for why that's the whole de-duplication strategy.
  */
-export async function searchRecentTweets(query: string, maxResults = 10) {
+export async function searchRecentTweets(query: string, maxResults = 10, startTime?: string) {
   const bearer = process.env.X_BEARER_TOKEN;
   if (!bearer) throw new Error("X_BEARER_TOKEN is not configured.");
 
@@ -75,6 +76,7 @@ export async function searchRecentTweets(query: string, maxResults = 10) {
   url.searchParams.set("query", query);
   url.searchParams.set("max_results", String(maxResults));
   url.searchParams.set("tweet.fields", "author_id,created_at");
+  if (startTime) url.searchParams.set("start_time", startTime);
 
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${bearer}` },
