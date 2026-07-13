@@ -137,6 +137,49 @@ export async function partnerExists(partnerId: string): Promise<ResolvedPartner 
 }
 
 /**
+ * Any connected wallet is an affiliate the moment its own referral link
+ * (`?ref=<walletAddress>`) earns its first credit — no signup, since the
+ * payout destination is just that same address. Only ever called from
+ * /api/relay-close after a real transaction has already confirmed, so this
+ * is intentionally permissive: any syntactically valid Solana address can
+ * self-enroll. That's safe because the only thing it does is credit a
+ * ledger entry payable to an address that's already public knowledge (it
+ * came from the link itself) — it can't redirect or inflate anyone else's
+ * funds. Rows are only ever created here, lazily, so wallets that never
+ * actually refer anyone never get a row at all.
+ */
+export async function resolveOrCreateWalletAffiliate(walletAddress: string): Promise<ResolvedPartner | null> {
+  try {
+    new PublicKey(walletAddress);
+  } catch {
+    return null;
+  }
+
+  const rows = await getSql()`
+    INSERT INTO partners (id, payout_wallet, revenue_share, kind)
+    VALUES (${walletAddress}, ${walletAddress}, ${PARTNER_REVENUE_SHARE}, 'wallet')
+    ON CONFLICT (id) DO UPDATE SET id = partners.id
+    RETURNING id, revenue_share, active
+  `;
+  if (!rows[0]?.active) return null;
+  return { id: rows[0].id, revenueShare: Number(rows[0].revenue_share) };
+}
+
+export type AffiliateStats = { referralCount: number; totalEarnedLamports: string };
+
+/** Public stats for a wallet's own referral link — no auth, same trust level as any on-chain balance lookup. */
+export async function getAffiliateStats(walletAddress: string): Promise<AffiliateStats> {
+  const rows = await getSql()`
+    SELECT count(*)::int AS count, coalesce(sum(partner_share_lamports), 0) AS total
+    FROM referrals WHERE partner_id = ${walletAddress}
+  `;
+  return {
+    referralCount: rows[0]?.count ?? 0,
+    totalEarnedLamports: String(rows[0]?.total ?? 0),
+  };
+}
+
+/**
  * Records a partner's cut of a real, already-confirmed reclaim transaction.
  * `grossFeeLamports` must come from re-reading the validated transfer
  * instruction server-side (see /api/relay-close) — never from a

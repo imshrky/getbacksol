@@ -21,6 +21,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { TxStatusBanner } from "@/components/ui/TxStatusBanner";
 import { Faq } from "@/components/ui/Faq";
 import { ImpactStats } from "@/components/ui/ImpactStats";
+import { AffiliateBanner } from "@/components/ui/AffiliateBanner";
 import { useRentAccounts } from "@/lib/useRentAccounts";
 import { useReclaimRent } from "@/lib/useReclaimRent";
 import { usePortfolio } from "@/lib/usePortfolio";
@@ -126,7 +127,7 @@ const FAQ_ITEMS = [
 ];
 
 export default function HomePage() {
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const { accounts, dustAccounts, loading, error, refresh } = useRentAccounts();
   const { status, message, run } = useReclaimRent();
   const portfolio = usePortfolio();
@@ -488,6 +489,12 @@ export default function HomePage() {
             </>
           )}
         </Card>
+
+        {connected && publicKey && (
+          <div className="mx-auto mt-4 max-w-2xl">
+            <AffiliateBanner address={publicKey.toBase58()} />
+          </div>
+        )}
 
         <p className="pill mx-auto mt-8 inline-flex w-fit items-center gap-1.5">
           <ShieldCheck className="h-3.5 w-3.5" />

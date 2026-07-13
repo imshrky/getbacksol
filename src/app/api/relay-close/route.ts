@@ -11,7 +11,7 @@ import {
 import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getFeePayerKeypair } from "@/lib/feePayer";
 import { FEE_WALLET } from "@/lib/feeWallet";
-import { partnerExists, recordReferral } from "@/lib/partners";
+import { partnerExists, resolveOrCreateWalletAffiliate, recordReferral } from "@/lib/partners";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 const CLOSE_ACCOUNT_DISCRIMINATOR = 9; // Token Program / Token-2022 `CloseAccount`
@@ -83,11 +83,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing transaction." }, { status: 400 });
   }
 
-  // Optional partner attribution tag, carried through from a `?ref=` link.
-  // Purely a bookkeeping label: it never changes what the transaction is
-  // allowed to do (the allow-list below is identical either way), and the
-  // fee amount credited to the partner is always read back from the
-  // validated transfer instruction itself, never trusted from this field.
+  // Optional attribution tag, carried through from a `?ref=` link — either
+  // a registered partner's id (see partnerExists) or, if that doesn't
+  // match, any connected wallet's own address self-enrolling as an
+  // affiliate on first use (see resolveOrCreateWalletAffiliate). Purely a
+  // bookkeeping label either way: it never changes what the transaction is
+  // allowed to do (the allow-list below is identical regardless), and the
+  // fee amount credited is always read back from the validated transfer
+  // instruction itself, never trusted from this field.
   const partnerId =
     typeof body?.partnerId === "string" && body.partnerId.length > 0 && body.partnerId.length <= 100
       ? body.partnerId
@@ -208,7 +211,7 @@ export async function POST(req: NextRequest) {
       // by this point, so a DB hiccup here must never surface as an error
       // to the user.
       try {
-        const partner = await partnerExists(partnerId);
+        const partner = (await partnerExists(partnerId)) ?? (await resolveOrCreateWalletAffiliate(partnerId));
         if (partner) await recordReferral(partner.id, signature, feeLamports, partner.revenueShare);
       } catch {
         // swallow — attribution is not part of the transaction's success

@@ -71,6 +71,16 @@ Nécessite `DATABASE_URL` (Postgres, ex. Neon) en variable d'environnement ; san
 échoue proprement en 503 plutôt qu'en 500. Voir `src/lib/db.ts`, `src/lib/partners.ts`,
 `scripts/schema.sql` (migration à lancer via `npm run db:migrate`).
 
+**Affiliation automatique par wallet : tout utilisateur connecté est déjà son propre affilié,
+sans inscription.** Contrairement au programme partenaire (signup, email, clé API), ici l'adresse
+du wallet connecté sert directement de `partnerId` — une bannière (`AffiliateBanner.tsx`) s'affiche
+dès la connexion avec le lien `getbacksol.com/?ref=<adresse>` et les gains cumulés. Le compte
+`partners` correspondant (`kind = 'wallet'`) est créé paresseusement par
+`resolveOrCreateWalletAffiliate` dans `partners.ts`, seulement au moment où une vraie commission
+est gagnée — jamais à la connexion elle-même, pour ne pas remplir la table de lignes vides. Même
+taux de 30 % que les partenaires API. `/api/affiliate/stats` renvoie les gains cumulés d'une
+adresse, en lecture publique (pas d'auth nécessaire, une adresse de wallet n'est pas un secret).
+
 ## Priorité de travail — la suite
 
 Reclaim Rent est live sur mainnet, Safe-Burn et Sell sont câblés, le programme partenaire est en
@@ -130,6 +140,9 @@ délibéré, pas un oubli.
   fee-payer (voir explication détaillée plus haut).
 - `src/app/api/build-sell/route.ts` — construit (sans signer) une transaction Sell complète pour
   un compte dust ; retourne 404 si aucune route de vente viable (le client bascule sur Burn).
+- `src/components/ui/AffiliateBanner.tsx` — affichée quand un wallet est connecté (`page.tsx`),
+  montre le lien de parrainage personnel + gains cumulés via `useAffiliateStats.ts`.
+- `src/app/api/affiliate/stats/route.ts` — lecture publique des gains d'affiliation d'une adresse.
 
 ## Conventions de code
 
