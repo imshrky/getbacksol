@@ -23,6 +23,7 @@ const NAV_LINKS = [
   { href: "/#reclaim", section: "reclaim", label: "Reclaim SOL" },
   { href: "/#faq", section: "faq", label: "FAQ" },
   { href: "/blog", section: null, label: "Blog" },
+  { href: "/support", section: null, label: "Support" },
 ] as const;
 
 const SECTION_IDS = NAV_LINKS.filter((l) => l.section).map((l) => l.section as string);
