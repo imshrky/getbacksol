@@ -30,6 +30,21 @@ import { captureReferral } from "@/lib/referral";
 
 const IS_MAINNET = NETWORK === "mainnet-beta";
 
+// A sample, not the full list — connect flow relies on the Solana Wallet
+// Standard (see providers.tsx), which auto-detects any compliant wallet,
+// not just the ones named here. This row exists so a first-time visitor
+// sees recognizable names before connecting, not because the list is
+// exhaustive.
+const SUPPORTED_WALLETS = [
+  "Phantom",
+  "Solflare",
+  "Backpack",
+  "Coinbase Wallet",
+  "Trust Wallet",
+  "OKX Wallet",
+  "Ledger",
+];
+
 function accountLabel(count: number) {
   return `${count} account${count === 1 ? "" : "s"}`;
 }
@@ -225,10 +240,20 @@ export default function HomePage() {
             </div>
           )}
           {!connected ? (
-            <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
+            <div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
               <Wallet className="h-6 w-6 text-[var(--muted)]" />
               <p className="text-sm text-[var(--muted)]">
                 Connect your wallet to scan for reclaimable accounts.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                {SUPPORTED_WALLETS.map((name) => (
+                  <span key={name} className="pill">
+                    {name}
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs text-[var(--muted)]">
+                Any Solana Wallet Standard wallet works, not just these.
               </p>
             </div>
           ) : view === "portfolio" ? (

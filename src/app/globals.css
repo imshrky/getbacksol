@@ -283,6 +283,14 @@ h1, h2, h3 {
   font-size: 0.85rem !important;
   font-weight: 500 !important;
   font-family: inherit !important;
+  /* The library's base stylesheet sets line-height: 48px, which doesn't
+     match this 60px button — if a wallet name is long enough to wrap, the
+     two lines overlap instead of stacking. Forcing a single line (rather
+     than just fixing line-height) is the more robust guard, since some
+     wallet names are longer than this button is ever going to be. */
+  line-height: normal !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
   transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease,
     transform 0.15s ease;
 }
@@ -300,10 +308,13 @@ h1, h2, h3 {
   width: 32px !important;
   height: 32px !important;
   border-radius: 9px !important;
+  flex-shrink: 0 !important;
 }
 
 .wallet-adapter-modal-list .wallet-adapter-button span {
+  flex-shrink: 0 !important;
   margin-left: auto !important;
+  padding-left: 10px !important;
   font-size: 0.62rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.07em;
@@ -311,7 +322,6 @@ h1, h2, h3 {
   color: var(--accent) !important;
   background: none !important;
   border: none !important;
-  padding: 0 !important;
   opacity: 0.85 !important;
 }
 
