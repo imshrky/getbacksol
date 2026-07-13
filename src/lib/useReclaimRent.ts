@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import type { TxStatus } from "./useSimulatedTx";
@@ -24,6 +24,40 @@ export function useReclaimRent() {
   const [status, setStatus] = useState<TxStatus>("idle");
   const [message, setMessage] = useState("");
 
+  // Wallet extensions don't reject a pending signTransaction() call just
+  // because the user switches apps (e.g. to grab a password from their
+  // keychain) — the promise just sits there until they come back and
+  // explicitly approve or dismiss it in the extension itself. Without
+  // this, "pending" could get stuck forever from the page's point of
+  // view. Each run() bumps this token; anything that resolves after the
+  // token has moved on (a manual reset, or a fresh run) is stale and its
+  // result is discarded instead of clobbering whatever the UI moved to.
+  const runToken = useRef(0);
+
+  const reset = useCallback(() => {
+    runToken.current++;
+    setStatus("idle");
+    setMessage("");
+  }, []);
+
+  // If the tab regains focus while still "pending", the user almost
+  // certainly tabbed away mid-approval (password manager, another app)
+  // rather than the wallet actually taking that long. Free the UI to try
+  // again rather than leaving the button stuck on "Closing accounts…".
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.visibilityState === "visible" && status === "pending") {
+        runToken.current++;
+        setStatus("idle");
+        setMessage(
+          "Still waiting on wallet approval when you switched away — cancelled. Ready to try again."
+        );
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [status]);
+
   const run = useCallback(
     async (accounts: RentAccount[], options?: { sellDust?: boolean }) => {
       if (!connected || !publicKey) {
@@ -42,6 +76,9 @@ export function useReclaimRent() {
         return;
       }
       if (accounts.length === 0) return;
+
+      const myToken = ++runToken.current;
+      const isStale = () => runToken.current !== myToken;
 
       setStatus("pending");
       setMessage("");
@@ -125,6 +162,8 @@ export function useReclaimRent() {
           closedCount += batch.length;
         }
 
+        if (isStale()) return;
+
         const gross = toBurnOrClose.reduce((sum, a) => sum + a.reclaimable, 0);
         const net = gross * (1 - RECLAIM_FEE_RATE) + soldLamports / LAMPORTS_PER_SOL;
         setStatus("success");
@@ -134,6 +173,8 @@ export function useReclaimRent() {
         ].filter(Boolean);
         setMessage(`${parts.join(" and ")} — ~${net.toFixed(6)} SOL sent to your wallet.`);
       } catch (e) {
+        if (isStale()) return;
+
         const errMsg = e instanceof Error ? e.message : "Transaction failed.";
         if (closedCount > 0 || soldCount > 0) {
           setStatus("success");
@@ -148,11 +189,6 @@ export function useReclaimRent() {
     },
     [connected, publicKey, connection, signTransaction]
   );
-
-  const reset = useCallback(() => {
-    setStatus("idle");
-    setMessage("");
-  }, []);
 
   return { status, message, run, reset };
 }
