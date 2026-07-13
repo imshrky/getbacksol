@@ -8,7 +8,7 @@ import {
   clusterApiUrl,
   type Cluster,
 } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getFeePayerKeypair } from "@/lib/feePayer";
 import { FEE_WALLET } from "@/lib/feeWallet";
 import { partnerExists, recordReferral } from "@/lib/partners";
@@ -30,6 +30,24 @@ const GUARD_PROGRAM_ID = new PublicKey("L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3
 // transfer, matching MAX_INSTRUCTIONS_PER_TX in reclaimRent.ts. Plus
 // headroom for wallet-injected compute-budget and guard instructions.
 const MAX_INSTRUCTIONS = 30;
+// Jupiter's own aggregator program (see /api/build-sell) — well-known,
+// heavily audited, trusted the same way Token/System program instruction
+// shapes already are: we don't parse its instruction data, only bound how
+// many of its instructions (and any Associated Token Account instruction,
+// which pays real rent) can appear per transaction.
+const JUPITER_PROGRAM_ID = new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
+// A legitimate Sell transaction (see build-sell/route.ts) needs at most one
+// of each — capping here bounds the worst case a tampered client could
+// achieve to roughly one rent-exempt reserve (~0.002 SOL), regardless of
+// instruction content, since account-creation rent is a network constant,
+// not something instruction data can inflate.
+const MAX_JUPITER_INSTRUCTIONS = 1;
+const MAX_ATA_INSTRUCTIONS = 1;
+// Generous upper bound on how much the fee payer can pay out to the owner
+// as guaranteed Sell proceeds in one transaction (see build-sell/route.ts)
+// — real dust sales never come close to this; it's a backstop against a
+// miscalculated or tampered payout amount, not a realistic ceiling.
+const MAX_SELL_PAYOUT_LAMPORTS = 2_000_000_000n; // 2 SOL
 
 async function confirmSignature(connection: Connection, signature: string, timeoutMs = 60_000) {
   const start = Date.now();
@@ -90,10 +108,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unexpected instruction count." }, { status: 400 });
   }
 
+  // The owner is whichever required signer isn't us — needed below to
+  // recognize a legitimate Sell payout (fee payer -> owner), distinct from
+  // our platform fee transfer (owner -> FEE_WALLET).
+  const ownerEntry = tx.signatures.find((s) => !s.publicKey.equals(feePayer.publicKey));
+  if (!ownerEntry) {
+    return NextResponse.json({ error: "Unexpected signature state." }, { status: 400 });
+  }
+  const ownerPubkey = ownerEntry.publicKey;
+
   let hasCloseAccount = false;
   let feeLamports = 0n;
+  let sellPayoutLamports = 0n;
+  let jupiterCount = 0;
+  let ataCount = 0;
   for (const ix of tx.instructions) {
     if (ix.programId.equals(ComputeBudgetProgram.programId) || ix.programId.equals(GUARD_PROGRAM_ID)) {
+      continue;
+    }
+
+    if (ix.programId.equals(JUPITER_PROGRAM_ID)) {
+      jupiterCount++;
+      if (jupiterCount > MAX_JUPITER_INSTRUCTIONS) {
+        return NextResponse.json({ error: "Too many swap instructions." }, { status: 400 });
+      }
+      continue;
+    }
+
+    if (ix.programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)) {
+      ataCount++;
+      if (ataCount > MAX_ATA_INSTRUCTIONS) {
+        return NextResponse.json({ error: "Too many account-creation instructions." }, { status: 400 });
+      }
       continue;
     }
 
@@ -116,11 +162,23 @@ export async function POST(req: NextRequest) {
       if (ix.data.length < 4 || ix.data.readUInt32LE(0) !== SYSTEM_TRANSFER_DISCRIMINATOR) {
         return NextResponse.json({ error: "Only transfer instructions are allowed." }, { status: 400 });
       }
+      const source = ix.keys[0]?.pubkey;
       const destination = ix.keys[1]?.pubkey;
-      if (!destination || !destination.equals(FEE_WALLET)) {
-        return NextResponse.json({ error: "Unexpected transfer destination." }, { status: 400 });
+      const lamports = ix.data.readBigUInt64LE(4);
+
+      if (destination?.equals(FEE_WALLET)) {
+        feeLamports += lamports;
+      } else if (source?.equals(feePayer.publicKey) && destination?.equals(ownerPubkey)) {
+        // Fee payer paying out guaranteed Sell proceeds (see
+        // build-sell/route.ts) — bounded so a miscalculated or tampered
+        // amount can't drain more than a dust sale ever plausibly yields.
+        sellPayoutLamports += lamports;
+        if (sellPayoutLamports > MAX_SELL_PAYOUT_LAMPORTS) {
+          return NextResponse.json({ error: "Sell payout too large." }, { status: 400 });
+        }
+      } else {
+        return NextResponse.json({ error: "Unexpected transfer source or destination." }, { status: 400 });
       }
-      feeLamports += ix.data.readBigUInt64LE(4);
     } else {
       return NextResponse.json({ error: "Unexpected program in transaction." }, { status: 400 });
     }

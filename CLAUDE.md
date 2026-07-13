@@ -21,10 +21,33 @@ vérifier `NETWORK` avant de supposer quel réseau est actif.
 La page d'accueil scanne les vrais comptes de tokens du wallet connecté (`useRentAccounts.ts`),
 construit et envoie de vraies transactions `closeAccount` + le transfert de commission 15 % vers
 le wallet de frais (`useReclaimRent.ts`, `reclaimRent.ts`, adresse pilotée par
-`NEXT_PUBLIC_FEE_WALLET_ADDRESS`, fallback dans `feeWallet.ts`). Le Safe-Burn (fermer les comptes
-"dust" à solde résiduel) n'est **pas encore** câblé — le toggle est visible mais désactivé,
-étiqueté "coming soon". Aucun audit de sécurité externe n'a été fait — c'est explicitement affiché
-dans la section Security et le footer du site, à ne jamais retirer tant que ce n'est pas vrai.
+`NEXT_PUBLIC_FEE_WALLET_ADDRESS`, fallback dans `feeWallet.ts`). Le Safe-Burn (brûler le solde
+résiduel des comptes "dust" avant de les fermer) est **câblé et actif par défaut** — voir
+`needsBurn`/`rawAmount` dans `reclaimRent.ts` et la validation du discriminator `Burn` dans
+`/api/relay-close`. **Sell** (vendre le dust via Jupiter au lieu de le brûler) est aussi câblé,
+en toggle opt-in séparé (off par défaut) — voir la section Sell plus bas. Aucun audit de sécurité
+externe n'a été fait — c'est explicitement affiché dans la section Security et le footer du site,
+à ne jamais retirer tant que ce n'est pas vrai.
+
+**Sell dust (`src/lib/jupiter.ts`, `/api/build-sell`) vend le dust via l'API Jupiter au lieu de
+le brûler.** Le client construit toujours la transaction côté serveur (jamais le client) : le
+serveur appelle Jupiter `/swap/v2/build`, assemble lui-même la transaction finale, et ne renvoie
+qu'un base64 non signé — l'owner signe ensuite, exactement comme le reste du relais. Piège
+économique identifié et résolu : si le wallet n'a pas encore de compte SOL wrapped (WSOL), Jupiter
+doit en créer un, dont le rent (~0.002 SOL) est avancé par notre fee-payer — mais le cleanup natif
+de Jupiter renvoie ce rent au owner, pas à qui l'a avancé, ce qui ferait perdre ~0.002 SOL au
+fee-payer à *chaque* vente nécessitant un nouveau compte. Solution : dans ce cas, on remplace
+l'instruction de cleanup de Jupiter par notre propre `closeAccount` (destination = fee-payer, donc
+il récupère le rent + le produit de la vente), puis on paie au owner le montant minimum garanti de
+la quote (`otherAmountThreshold`) via un transfert séparé — jamais moins que ça, le swap échoue
+on-chain sinon. Le fee-payer ne peut donc jamais perdre plus que ce montant garanti, quel que soit
+le slippage réel. Le relais (`/api/relay-close`) autorise `JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4`
+(programme Jupiter) et `ASSOCIATED_TOKEN_PROGRAM_ID`, chacun plafonné à 1 instruction par
+transaction, plus un plafond de 2 SOL sur tout transfert fee-payer→owner — aucune de ces
+instructions n'est parsée en détail (comme Token/System Program, on fait confiance au programme
+officiel), seuls les comptes source/destination et les plafonds sont vérifiés statiquement. Testé
+avec un vrai compte dust mainnet (transaction décodée et vérifiée instruction par instruction,
+jamais signée ni soumise).
 
 Les textes du site (hero, FAQ, footer) s'adaptent automatiquement selon `NETWORK` — ne jamais
 coder en dur "devnet preview" ou "no funds at risk" quelque part, toujours passer par la
@@ -50,16 +73,17 @@ Nécessite `DATABASE_URL` (Postgres, ex. Neon) en variable d'environnement ; san
 
 ## Priorité de travail — la suite
 
-Reclaim Rent est live sur mainnet pour les comptes déjà vides. Prochaines étapes, dans l'ordre :
+Reclaim Rent est live sur mainnet, Safe-Burn et Sell sont câblés, le programme partenaire est en
+ligne. Prochaines étapes, dans l'ordre :
 
-1. **Câbler Safe-Burn** : ajouter l'instruction `burn` avant `closeAccount` pour les comptes à solde
-   résiduel (voir `dustCount` déjà remonté par `useRentAccounts.ts`, il ne manque que la
-   construction de l'instruction burn dans `reclaimRent.ts`).
-2. **Multisig Squads pour le wallet de frais** : actuellement une clé unique — à migrer vers un
+1. **Multisig Squads pour le wallet de frais** : actuellement une clé unique — à migrer vers un
    multisig avant que le volume de frais collectés devienne significatif (voir
    `docs/backend-architecture.md`).
-3. **Audit de sécurité externe** avant d'annoncer publiquement/pousser du trafic important —
+2. **Audit de sécurité externe** avant d'annoncer publiquement/pousser du trafic important —
    priorité vu qu'on est déjà en mainnet sans audit.
+3. **Rate limiting sur `/api/v1/scan`** : maintenant que les clés partenaire sont self-service
+   (voir `/partners`), une clé pourrait marteler l'endpoint sans limite — pas encore de
+   protection au-delà du plafond d'inscription par IP.
 
 Ne pas commencer par Token Creator (`/token-creator`), Swap ou Liquidity — c'est un choix
 délibéré, pas un oubli.
@@ -99,7 +123,13 @@ délibéré, pas un oubli.
 - `src/app/api/v1/scan/route.ts` — scan en lecture seule pour les partenaires (`X-API-Key`).
 - `src/app/api/relay-close/route.ts` — relais gasless ; accepte un `partnerId` optionnel
   (attribution uniquement, ne change jamais la liste blanche d'instructions autorisées) et
-  enregistre la commission après confirmation de la transaction.
+  enregistre la commission après confirmation de la transaction. Autorise aussi le programme
+  Jupiter et l'ATA program (1 instruction max chacun) pour Sell.
+- `src/lib/jupiter.ts` — appelle Jupiter `/swap/v2/build` pour obtenir les instructions de swap
+  dust→SOL ; gère le cas "nouveau compte WSOL nécessaire" en redirigeant le cleanup vers le
+  fee-payer (voir explication détaillée plus haut).
+- `src/app/api/build-sell/route.ts` — construit (sans signer) une transaction Sell complète pour
+  un compte dust ; retourne 404 si aucune route de vente viable (le client bascule sur Burn).
 
 ## Conventions de code
 

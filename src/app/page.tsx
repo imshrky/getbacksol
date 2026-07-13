@@ -92,7 +92,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What about accounts with leftover dust?",
-    a: "Turn on Safe-Burn and we'll burn the residual balance first, in the same transaction, so the account qualifies for closing too. Selling that dust for SOL instead of burning it (for the rare token that's actually worth something) is coming soon — today, dust just gets burned.",
+    a: "Turn on Safe-Burn and we'll burn the residual balance first, in the same transaction, so the account qualifies for closing too. You can also turn on Sell dust for SOL — when a token is actually worth something and your wallet already holds wrapped SOL, we'll try to sell it instead of burning it, and you keep 100% of the proceeds; tokens with no viable route just get burned as usual.",
   },
   {
     q: "Why a 15% fee?",
@@ -118,6 +118,7 @@ export default function HomePage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [view, setView] = useState<"close" | "portfolio">("close");
   const [safeBurn, setSafeBurn] = useState(true);
+  const [sellDust, setSellDust] = useState(false);
 
   const closableAccounts = useMemo(
     () => (safeBurn ? [...accounts, ...dustAccounts] : accounts),
@@ -162,7 +163,7 @@ export default function HomePage() {
 
   async function handleClose() {
     const chosen = closableAccounts.filter((a) => selected.has(a.pubkey));
-    await run(chosen);
+    await run(chosen, { sellDust: safeBurn && sellDust });
     refresh();
   }
 
@@ -416,8 +417,19 @@ export default function HomePage() {
                   checked={safeBurn}
                   onChange={setSafeBurn}
                   label="Safe-Burn dust balances first"
-                  hint="Burns worthless leftover token dust before closing, so more accounts qualify for a refund. Selling dust for SOL instead of burning it is coming soon."
+                  hint="Burns worthless leftover token dust before closing, so more accounts qualify for a refund."
                 />
+
+                {safeBurn && (
+                  <div className="mt-4">
+                    <Toggle
+                      checked={sellDust}
+                      onChange={setSellDust}
+                      label="Sell dust for SOL instead of burning"
+                      hint="Tries to sell dust tokens via Jupiter first, keeping 100% of the proceeds — only works when a token has a real market and your wallet already holds wrapped SOL. Falls back to burning otherwise."
+                    />
+                  </div>
+                )}
 
                 <div className="mt-5 space-y-1.5 rounded-[8px] bg-[var(--surface-2)] px-4 py-3 text-sm">
                   <div className="flex justify-between">
