@@ -495,11 +495,13 @@ export default function HomePage() {
         </div>
         <div className="mx-auto mt-4 max-w-2xl">
           <a
-            href="#"
+            href="https://github.com/imshrky/getbacksol"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--foreground)]"
           >
             <Code2 className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-            Verify the code yourself — source link coming soon
+            Verify the code yourself on GitHub
           </a>
         </div>
       </section>

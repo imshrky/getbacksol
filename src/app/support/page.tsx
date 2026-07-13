@@ -1,27 +1,19 @@
 import type { Metadata } from "next";
-import { Send, MessageCircle, ExternalLink } from "lucide-react";
+import { Send, ExternalLink } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Faq } from "@/components/ui/Faq";
 
 export const metadata: Metadata = {
   title: "Support | GetBackSOL",
-  description: "Get help with Reclaim Rent — reach us on Telegram or Discord, or check the FAQ.",
+  description: "Get help with Reclaim Rent — reach us on Telegram, or check the FAQ.",
 };
 
-// TODO: swap these placeholder hrefs for the real channels once they exist —
-// same convention as the social links in Footer.tsx.
 const CHANNELS = [
   {
-    href: "#",
+    href: "https://t.me/GetBackSOL",
     icon: Send,
     title: "Telegram",
     body: "Fastest way to reach us for account or transaction questions.",
-  },
-  {
-    href: "#",
-    icon: MessageCircle,
-    title: "Discord",
-    body: "Open a ticket in our server if you prefer async support.",
   },
 ];
 
@@ -32,7 +24,7 @@ const SUPPORT_FAQ_ITEMS = [
   },
   {
     q: "My wallet isn't supported — what can I do?",
-    a: "GetBackSOL connects through the Solana Wallet Standard, which covers Phantom, Solflare, Backpack, and most other modern Solana wallets. If yours doesn't show up in the connect menu, let us know on Telegram or Discord and we'll look into adding support.",
+    a: "GetBackSOL connects through the Solana Wallet Standard, which covers Phantom, Solflare, Backpack, and most other modern Solana wallets. If yours doesn't show up in the connect menu, let us know on Telegram and we'll look into adding support.",
   },
   {
     q: "How long does support usually take?",
@@ -53,11 +45,13 @@ export default function SupportPage() {
         description="Reach us directly, or check the FAQ below for common questions."
       />
 
-      <div className="mx-auto grid max-w-2xl gap-4 sm:grid-cols-2">
+      <div className="mx-auto grid max-w-sm gap-4">
         {CHANNELS.map((channel) => (
           <a
             key={channel.title}
             href={channel.href}
+            target="_blank"
+            rel="noopener noreferrer"
             className="surface-hover flex items-start gap-3 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] p-5"
           >
             <channel.icon className="h-5 w-5 shrink-0 text-[var(--accent)]" />

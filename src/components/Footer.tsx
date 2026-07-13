@@ -8,11 +8,10 @@ import { NETWORK } from "@/app/providers";
 
 const IS_MAINNET = NETWORK === "mainnet-beta";
 
-// TODO: swap these placeholder hrefs for the real profile/repo URLs.
 const LINKS = [
-  { href: "#", label: "X / Twitter", icon: AtSign },
-  { href: "#", label: "Discord", icon: MessageCircle },
-  { href: "#", label: "Source code", icon: Code2 },
+  { href: "https://x.com/GetBackSOL", label: "X / Twitter", icon: AtSign },
+  { href: "https://t.me/GetBackSOL", label: "Telegram", icon: MessageCircle },
+  { href: "https://github.com/imshrky/getbacksol", label: "Source code", icon: Code2 },
 ];
 
 export default function Footer() {
@@ -39,6 +38,8 @@ export default function Footer() {
             <a
               key={link.label}
               href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 text-xs text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
             >
               <link.icon className="h-3.5 w-3.5" />
