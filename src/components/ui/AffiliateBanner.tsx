@@ -23,10 +23,10 @@ export function AffiliateBanner({ address }: { address: string }) {
   }
 
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-start gap-2.5">
+    <div className="mb-4 flex flex-col gap-3 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] p-4 sm:flex-row sm:items-center">
+      <div className="flex items-start gap-2.5 sm:min-w-0 sm:flex-1">
         <Users className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-medium">Earn 30% by sharing your link</p>
           <p className="mt-0.5 text-xs text-[var(--muted)]">
             {stats && stats.referralCount > 0
@@ -37,8 +37,10 @@ export function AffiliateBanner({ address }: { address: string }) {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <code className="field-input flex-1 overflow-x-auto whitespace-nowrap text-xs sm:w-64">{link}</code>
+      <div className="flex items-center gap-2 sm:shrink-0">
+        <code className="field-input !w-full min-w-0 overflow-x-auto whitespace-nowrap text-xs sm:!w-60">
+          {link}
+        </code>
         <button
           type="button"
           onClick={copy}
