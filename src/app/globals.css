@@ -40,8 +40,14 @@
   --color-foreground: var(--foreground);
 }
 
-* {
-  border-color: var(--border);
+/* In @layer base so Tailwind utility classes (e.g. border-[var(--accent)]
+   on the active nav link) can still override this default — an unlayered
+   rule would otherwise always win over layered utilities regardless of
+   specificity, silently killing any border-color utility site-wide. */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
 }
 
 html {
