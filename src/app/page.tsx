@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
   Wallet,
   ScanSearch,
@@ -127,7 +128,32 @@ const FAQ_ITEMS = [
 ];
 
 export default function HomePage() {
-  const { connected, publicKey } = useWallet();
+  const { connected, publicKey, wallets } = useWallet();
+  const { setVisible: setWalletModalVisible } = useWalletModal();
+
+  // Solana's Mobile Wallet Adapter (auto-injected by the library) only
+  // covers Android — on iOS Safari with no wallet browser extension,
+  // `wallets` stays empty and there's no way to connect at all unless we
+  // hand the user off to a wallet app's own in-app browser, where Wallet
+  // Standard injection works normally once they land back on this page.
+  const isMobile = useSyncExternalStore(
+    () => () => {},
+    () =>
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+      // iPadOS 13+ reports as "Macintosh" by default — the standard tell is
+      // touch support, which no real Mac has.
+      (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1),
+    () => false
+  );
+
+  const mobileWalletLinks = useMemo(() => {
+    if (typeof window === "undefined") return { phantom: "", solflare: "" };
+    const url = encodeURIComponent(window.location.href);
+    return {
+      phantom: `https://phantom.app/ul/browse/${url}?ref=${url}`,
+      solflare: `https://solflare.com/ul/v1/browse/${url}?ref=${url}`,
+    };
+  }, []);
   const { accounts, dustAccounts, loading, error, refresh } = useRentAccounts();
   const { status, message, run } = useReclaimRent();
   const portfolio = usePortfolio();
@@ -241,7 +267,18 @@ export default function HomePage() {
             </div>
           )}
           {!connected ? (
-            <div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setWalletModalVisible(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setWalletModalVisible(true);
+                }
+              }}
+              className="surface-hover flex w-full cursor-pointer flex-col items-center gap-3 px-5 py-16 text-center"
+            >
               <Wallet className="h-6 w-6 text-[var(--muted)]" />
               <p className="text-sm text-[var(--muted)]">
                 Connect your wallet to scan for reclaimable accounts.
@@ -256,6 +293,19 @@ export default function HomePage() {
               <p className="text-xs text-[var(--muted)]">
                 Any Solana Wallet Standard wallet works, not just these.
               </p>
+              {isMobile && wallets.length === 0 && (
+                <div className="mt-1 flex flex-col items-center gap-2 sm:flex-row" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-xs text-[var(--muted)]">No wallet browser detected —</span>
+                  <div className="flex gap-2">
+                    <a href={mobileWalletLinks.phantom} className="btn-outline px-3 py-1.5 text-xs">
+                      Open in Phantom
+                    </a>
+                    <a href={mobileWalletLinks.solflare} className="btn-outline px-3 py-1.5 text-xs">
+                      Open in Solflare
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           ) : view === "portfolio" ? (
             <div className="px-5 py-4">
