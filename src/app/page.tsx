@@ -23,6 +23,7 @@ import { TxStatusBanner } from "@/components/ui/TxStatusBanner";
 import { Faq } from "@/components/ui/Faq";
 import { ImpactStats } from "@/components/ui/ImpactStats";
 import { AffiliateBanner } from "@/components/ui/AffiliateBanner";
+import { AffiliateLeaderboard } from "@/components/ui/AffiliateLeaderboard";
 import { useRentAccounts } from "@/lib/useRentAccounts";
 import { useReclaimRent } from "@/lib/useReclaimRent";
 import { usePortfolio } from "@/lib/usePortfolio";
@@ -541,8 +542,9 @@ export default function HomePage() {
         </Card>
 
         {connected && publicKey && (
-          <div className="mx-auto mt-4 max-w-2xl">
+          <div className="mx-auto mt-4 max-w-2xl space-y-4">
             <AffiliateBanner address={publicKey.toBase58()} />
+            <AffiliateLeaderboard currentWallet={publicKey.toBase58()} />
           </div>
         )}
 

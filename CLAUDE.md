@@ -80,6 +80,9 @@ dès la connexion avec le lien `getbacksol.com/?ref=<adresse>` et les gains cumu
 est gagnée — jamais à la connexion elle-même, pour ne pas remplir la table de lignes vides. Même
 taux de 30 % que les partenaires API. `/api/affiliate/stats` renvoie les gains cumulés d'une
 adresse, en lecture publique (pas d'auth nécessaire, une adresse de wallet n'est pas un secret).
+Un classement public (`AffiliateLeaderboard.tsx`, `/api/affiliate/leaderboard`) affiche à côté les
+5 wallets ayant le plus gagné, scopé à `kind = 'wallet'` uniquement (pas les partenaires API —
+programme différent, ils ne s'attendent pas à apparaître dans un classement).
 
 ## Priorité de travail — la suite
 
@@ -143,6 +146,9 @@ délibéré, pas un oubli.
 - `src/components/ui/AffiliateBanner.tsx` — affichée quand un wallet est connecté (`page.tsx`),
   montre le lien de parrainage personnel + gains cumulés via `useAffiliateStats.ts`.
 - `src/app/api/affiliate/stats/route.ts` — lecture publique des gains d'affiliation d'une adresse.
+- `src/components/ui/AffiliateLeaderboard.tsx` — top 5 wallets affiliés par gains cumulés, via
+  `useAffiliateLeaderboard.ts` / `/api/affiliate/leaderboard` (`getAffiliateLeaderboard` dans
+  `partners.ts`, filtré sur `kind = 'wallet'`).
 
 ## Conventions de code
 
