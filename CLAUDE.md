@@ -80,9 +80,11 @@ dès la connexion avec le lien `getbacksol.com/?ref=<adresse>` et les gains cumu
 est gagnée — jamais à la connexion elle-même, pour ne pas remplir la table de lignes vides. Même
 taux de 30 % que les partenaires API. `/api/affiliate/stats` renvoie les gains cumulés d'une
 adresse, en lecture publique (pas d'auth nécessaire, une adresse de wallet n'est pas un secret).
-Un classement public (`AffiliateLeaderboard.tsx`, `/api/affiliate/leaderboard`) affiche à côté les
-5 wallets ayant le plus gagné, scopé à `kind = 'wallet'` uniquement (pas les partenaires API —
-programme différent, ils ne s'attendent pas à apparaître dans un classement).
+Un classement public (`AffiliateLeaderboard.tsx`, `/api/affiliate/leaderboard`) existe déjà, scopé
+à `kind = 'wallet'` uniquement, mais **n'est volontairement pas affiché sur `page.tsx`** — retiré
+à la demande du produit tant qu'il n'y a pas au moins une dizaine d'affiliés réels (pas de valeur
+de preuve sociale avec une poignée de lignes). Le composant/hook/route restent en place, prêts à
+être ré-affichés (une seule ligne à rajouter dans `page.tsx`) une fois qu'il y a assez de volume.
 
 ## Priorité de travail — la suite
 
