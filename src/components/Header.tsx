@@ -23,6 +23,7 @@ const NAV_LINKS = [
   { href: "/#reclaim", section: "reclaim", label: "Reclaim SOL" },
   { href: "/#faq", section: "faq", label: "FAQ" },
   { href: "/blog", section: null, label: "Blog" },
+  { href: "/partners", section: null, label: "Partners" },
   { href: "/support", section: null, label: "Support" },
 ] as const;
 

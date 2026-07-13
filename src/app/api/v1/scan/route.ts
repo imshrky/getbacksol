@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey, clusterApiUrl, type Cluster } from "@solana/web3.js";
 import { scanWalletForRentAccounts } from "@/lib/scanWallet";
-import { resolvePartner } from "@/lib/partnerAuth";
+import { resolvePartnerByApiKey } from "@/lib/partners";
 import { RECLAIM_FEE_RATE } from "@/lib/mockTokens";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
@@ -9,21 +9,21 @@ const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 /**
  * Partner API v1 — read-only wallet scan. Lets a partner show "you have X
  * SOL to reclaim" in their own UI without reimplementing our scanning
- * logic. Does not build or submit any transaction: the partner's own
- * frontend still has to get their user's wallet to sign, same non-custodial
- * requirement as the rest of GetBackSOL. That part (submitting through our
- * gasless relay on a partner's behalf, with fee-share attribution) is a
- * deliberate v2 — this endpoint only needs to prove out auth + the shared
- * scan function before that gets built.
+ * logic. Does not build or submit any transaction — the partner links out
+ * to getbacksol.com (with a `?ref=` attribution tag) for the user to
+ * connect their own wallet and execute through our existing gasless relay.
+ * That keeps the actual money-moving surface exactly as it is today; a
+ * partner's key only ever grants this read-only lookup, never transaction
+ * submission. Revenue-share bookkeeping happens on the relay side (see
+ * /api/relay-close) once a referred transaction actually confirms.
  *
- * Auth: X-API-Key header, checked against a small partner registry (see
- * partnerAuth.ts). No rate limiting yet — there are no real partners to
- * rate-limit against; add it once there's real traffic to protect.
+ * Auth: X-API-Key header, resolved against the partners table (see
+ * partners.ts). Partners self-provision a key at /partners.
  */
 export async function GET(req: NextRequest) {
   const apiKey = req.headers.get("x-api-key");
-  const partnerId = resolvePartner(apiKey);
-  if (!partnerId) {
+  const partner = await resolvePartnerByApiKey(apiKey);
+  if (!partner) {
     return NextResponse.json({ error: "Invalid or missing X-API-Key." }, { status: 401 });
   }
 

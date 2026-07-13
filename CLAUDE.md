@@ -35,6 +35,19 @@ Les 7 autres outils (Token Creator, Create Liquidity, Swap, Remove Liquidity, Bu
 Burn & Earn, Leaderboard) restent en simulation via `src/lib/useSimulatedTx.ts` — vision produit,
 pas encore la priorité.
 
+**Programme partenaire (`/partners`) est self-service et branche une vraie base de données.**
+C'est le premier composant persistant du projet — tout le reste est volontairement stateless.
+Un partenaire s'inscrit, reçoit une clé API instantanément (pas de validation manuelle), affiche
+le scan de wallet dans sa propre UI via `/api/v1/scan`, puis renvoie l'utilisateur vers
+`getbacksol.com/?ref=<partnerId>` pour l'exécution réelle — toujours via notre relais gasless
+existant, jamais via une exécution côté partenaire. La clé API ne donne donc **jamais** accès à
+la construction ou la soumission de transactions. Le partenaire touche 30 % de notre frais de 15 %
+sur chaque reclaim référé, calculé côté serveur à partir du montant réel de l'instruction de
+transfert validée dans `/api/relay-close` — jamais depuis une valeur envoyée par le client.
+Nécessite `DATABASE_URL` (Postgres, ex. Neon) en variable d'environnement ; sans elle, le signup
+échoue proprement en 503 plutôt qu'en 500. Voir `src/lib/db.ts`, `src/lib/partners.ts`,
+`scripts/schema.sql` (migration à lancer via `npm run db:migrate`).
+
 ## Priorité de travail — la suite
 
 Reclaim Rent est live sur mainnet pour les comptes déjà vides. Prochaines étapes, dans l'ordre :
@@ -72,6 +85,21 @@ délibéré, pas un oubli.
   que des couleurs Tailwind en dur, pour rester cohérent entre les deux thèmes.
 - `docs/backend-architecture.md` — le plan technique complet, outil par outil, avec l'infra
   nécessaire (RPC, base de données, stockage) et les considérations de sécurité.
+- `src/lib/db.ts` — client Postgres paresseux (`getSql()`), lit `DATABASE_URL`. Ne jamais importer
+  le client au niveau module de façon eager : l'erreur "non configuré" doit remonter dans le
+  `try/catch` de la route, pas planter le chargement du module (500 générique au lieu d'un 503
+  propre).
+- `src/lib/partners.ts` — inscription self-service (`signUpPartner`), résolution de clé API par
+  hash (`resolvePartnerByApiKey`), vérification d'un `partnerId` d'attribution
+  (`partnerExists`), et écriture du grand livre de commissions (`recordReferral`).
+- `src/app/partners/page.tsx` — page publique d'inscription partenaire, affiche la clé API une
+  seule fois à la création (jamais récupérable ensuite, seul son hash SHA-256 est stocké).
+- `src/app/api/partners/signup/route.ts` — endpoint d'inscription self-service (POST), protégé
+  par un plafond quotidien par IP stocké en base (pas de CAPTCHA pour l'instant).
+- `src/app/api/v1/scan/route.ts` — scan en lecture seule pour les partenaires (`X-API-Key`).
+- `src/app/api/relay-close/route.ts` — relais gasless ; accepte un `partnerId` optionnel
+  (attribution uniquement, ne change jamais la liste blanche d'instructions autorisées) et
+  enregistre la commission après confirmation de la transaction.
 
 ## Conventions de code
 
@@ -86,7 +114,8 @@ délibéré, pas un oubli.
 
 ```bash
 npm install
-npm run dev      # démarre en local sur :3000
-npm run build     # build de production
-npm run lint      # vérifie le code
+npm run dev         # démarre en local sur :3000
+npm run build       # build de production
+npm run lint        # vérifie le code
+npm run db:migrate  # applique scripts/schema.sql sur DATABASE_URL (idempotent)
 ```

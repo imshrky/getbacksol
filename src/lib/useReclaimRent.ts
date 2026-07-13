@@ -7,6 +7,7 @@ import type { TxStatus } from "./useSimulatedTx";
 import { buildCloseAccountBatchTx, batchByInstructionBudget } from "./reclaimRent";
 import { RECLAIM_FEE_RATE } from "./mockTokens";
 import type { RentAccount } from "./useRentAccounts";
+import { getReferral } from "./referral";
 
 const FEE_PAYER_ADDRESS = process.env.NEXT_PUBLIC_FEE_PAYER_ADDRESS;
 
@@ -46,6 +47,7 @@ export function useReclaimRent() {
 
       const feePayer = new PublicKey(FEE_PAYER_ADDRESS);
       const batches = batchByInstructionBudget(accounts);
+      const partnerId = getReferral();
       let closedCount = 0;
 
       try {
@@ -60,7 +62,10 @@ export function useReclaimRent() {
           const res = await fetch("/api/relay-close", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ transaction: serialized.toString("base64") }),
+            body: JSON.stringify({
+              transaction: serialized.toString("base64"),
+              ...(partnerId ? { partnerId } : {}),
+            }),
           });
 
           const body = await res.json().catch(() => ({}));

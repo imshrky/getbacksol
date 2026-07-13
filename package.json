@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
     "@solana/spl-token": "^0.4.15",
@@ -18,6 +19,7 @@
     "lucide-react": "^1.23.0",
     "next": "16.2.10",
     "oauth-1.0a": "^2.2.6",
+    "postgres": "^3.4.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "server-only": "^0.0.1"

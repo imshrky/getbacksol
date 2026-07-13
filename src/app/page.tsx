@@ -26,6 +26,7 @@ import { useReclaimRent } from "@/lib/useReclaimRent";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { RECLAIM_FEE_RATE, RENT_PER_ACCOUNT } from "@/lib/mockTokens";
 import { NETWORK } from "@/app/providers";
+import { captureReferral } from "@/lib/referral";
 
 const IS_MAINNET = NETWORK === "mainnet-beta";
 
@@ -130,6 +131,12 @@ export default function HomePage() {
   useEffect(() => {
     setSelected(new Set(closableAccounts.map((a) => a.pubkey)));
   }, [closableAccounts]);
+
+  // Capture a partner's `?ref=` attribution tag once on load, so a referred
+  // reclaim still gets credited to them even after the wallet-connect flow.
+  useEffect(() => {
+    captureReferral();
+  }, []);
 
   const allSelected = closableAccounts.length > 0 && selected.size === closableAccounts.length;
 
