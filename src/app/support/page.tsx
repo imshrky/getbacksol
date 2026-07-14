@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const CHANNELS = [
   {
-    href: "https://t.me/GetBackSOL",
+    href: "https://telegram.me/GetBackSOL",
     icon: Send,
     title: "Telegram",
     body: "Fastest way to reach us for account or transaction questions.",

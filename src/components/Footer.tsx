@@ -10,7 +10,7 @@ const IS_MAINNET = NETWORK === "mainnet-beta";
 
 const LINKS = [
   { href: "https://x.com/GetBackSOL", label: "X / Twitter", icon: AtSign },
-  { href: "https://t.me/GetBackSOL", label: "Telegram", icon: MessageCircle },
+  { href: "https://telegram.me/GetBackSOL", label: "Telegram", icon: MessageCircle },
   { href: "https://github.com/imshrky/getbacksol", label: "Source code", icon: Code2 },
 ];
 
