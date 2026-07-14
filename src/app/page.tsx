@@ -45,7 +45,6 @@ const SUPPORTED_WALLETS = [
   "Solflare",
   "Backpack",
   "Coinbase Wallet",
-  "Trust Wallet",
   "OKX Wallet",
   "Ledger",
 ];

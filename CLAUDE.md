@@ -212,20 +212,23 @@ avec `requireAllSignatures: false`), pas d'une erreur RPC après un aller-retour
 comme supposé initialement. Autrement dit : la signature renvoyée par Trust Wallet ne correspond
 tout simplement pas au message qu'on lui a demandé de signer.
 
-Hypothèse retenue (non confirmée à 100 %, faute de pouvoir reproduire avec un vrai Trust Wallet ni
-tester en direct sur devnet — faucet épuisé au moment du fix) : certains wallets géreraient mal
-une transaction dont le fee payer n'est pas le wallet connecté (notre architecture gasless
-d'origine — `tx.feePayer` = wallet du relais, pas `owner`). Solution construite : **l'owner paie
-désormais ses propres frais réseau**, après un micro-versement de `/api/relay-topup` — le pattern
-que tous les wallets supportent nativement. `/api/relay-close` accepte maintenant deux formes :
-l'ancienne (`feePayer` = relais, encore utilisée par le flux Sell qui doit avancer le rent du
-compte WSOL) et la nouvelle (`feePayer` = owner, déjà entièrement signée — vérifiée avec
-`tx.verifySignatures()` avant d'être transmise telle quelle, sans signature du relais). Testé
-hors-ligne (transaction construite et signée localement avec une clé de test, sans SOL devnet
-nécessaire) : la nouvelle branche de validation fonctionne correctement de bout en bout jusqu'au
-dernier contrôle métier. **Reste à confirmer avec un vrai Trust Wallet** — si le bug persiste
-après ce changement, la vraie cause est ailleurs et la solution la plus simple sera de retirer
-Trust Wallet de `SUPPORTED_WALLETS` sur `page.tsx`.
+Hypothèse testée : certains wallets géreraient mal une transaction dont le fee payer n'est pas le
+wallet connecté (notre architecture gasless d'origine — `tx.feePayer` = wallet du relais, pas
+`owner`). Solution construite : **l'owner paie désormais ses propres frais réseau**, après un
+micro-versement de `/api/relay-topup` — le pattern que tous les wallets supportent nativement.
+`/api/relay-close` accepte deux formes : l'ancienne (`feePayer` = relais, encore utilisée par le
+flux Sell qui doit avancer le rent du compte WSOL) et la nouvelle (`feePayer` = owner, déjà
+entièrement signée — vérifiée avec `tx.verifySignatures()` avant d'être transmise telle quelle).
+
+**Hypothèse infirmée en production** : le bug persiste avec Trust Wallet même après ce changement
+(même signature invalide, alors que `feePayer` est maintenant `owner`) — donc la vraie cause n'est
+pas le pattern "fee payer étranger", c'est autre chose de plus profond côté Trust Wallet
+(sérialisation de plusieurs instructions Token Program, corruption de la signature dans le pont
+`postMessage` de l'extension, implémentation Wallet Standard incomplète — pas de diagnostic
+définitif possible sans une vraie extension Trust Wallet à tester). **Décision : Trust Wallet
+retiré de `SUPPORTED_WALLETS` dans `page.tsx`.** L'architecture "owner paie ses propres frais" est
+conservée telle quelle malgré tout — c'est un pattern plus largement compatible en soi, même si
+elle n'a pas résolu ce cas précis.
 - `src/lib/feeWallet.ts` — adresse du wallet qui reçoit la commission de 15 % (pilotée par
   `NEXT_PUBLIC_FEE_WALLET_ADDRESS`, actuellement une clé unique). À migrer vers un multisig Squads
   — on est déjà en mainnet avec cette clé simple, c'est du vrai risque, pas juste une best practice.

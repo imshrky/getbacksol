@@ -55,12 +55,14 @@ export function batchByInstructionBudget(accounts: RentAccount[]): RentAccount[]
  * `rawAmount`) before the close, so a residual dust balance doesn't block
  * closeAccount's zero-balance requirement.
  *
- * `owner` is the fee payer too — not the platform's relay wallet. Some
- * wallets (observed with Trust Wallet) don't correctly handle signing a
- * transaction whose fee payer is a different account, so instead the
- * relay tops the owner up with a few thousand lamports beforehand (see
- * /api/relay-topup) and the owner pays their own tiny network fee here,
- * the pattern every wallet supports. Still "gasless" from the user's
+ * `owner` is the fee payer too — not the platform's relay wallet, for
+ * wider wallet compatibility (a transaction whose fee payer isn't the
+ * connected account is a less common, less-tested pattern — see CLAUDE.md
+ * for the Trust Wallet investigation this came out of, though that
+ * specific wallet turned out to have a different, still-unresolved issue).
+ * The relay tops the owner up with a few thousand lamports beforehand (see
+ * /api/relay-topup) so they can pay their own tiny network fee here. Still
+ * "gasless" from the user's
  * perspective — they never need to already hold SOL, they just receive a
  * dust amount of it moments before signing. See /api/relay-close for the
  * other half (this transaction ends up fully signed by `owner` alone, no

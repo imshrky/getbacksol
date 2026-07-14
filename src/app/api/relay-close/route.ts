@@ -115,9 +115,9 @@ export async function POST(req: NextRequest) {
   // Two valid shapes: the relay pays the network fee (legacy — still used
   // by the Sell flow, which needs the relay to front WSOL account rent),
   // or the owner pays their own tiny network fee after a top-up (see
-  // /api/relay-topup) — some wallets (observed with Trust Wallet) don't
-  // correctly handle signing a transaction whose fee payer is a different
-  // account, so the everyday close/burn flow uses this shape instead.
+  // /api/relay-topup) — the everyday close/burn flow uses this shape for
+  // wider wallet compatibility (see CLAUDE.md for the Trust Wallet
+  // investigation this came out of).
   const isSelfFunded = !tx.feePayer.equals(feePayer.publicKey);
   let ownerPubkey: PublicKey;
 

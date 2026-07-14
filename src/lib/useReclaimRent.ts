@@ -105,17 +105,18 @@ export function useReclaimRent() {
       let soldCount = 0;
       let soldLamports = 0;
 
-      // Some wallets don't correctly handle a transaction whose fee payer
-      // isn't the connected account (this app is gasless — a separate
-      // platform wallet always pays the network fee, see feePayer above).
-      // Observed with Trust Wallet: it returns a signature that looks
-      // valid but doesn't actually verify against the message we asked it
-      // to sign, so the relay later fails with an opaque on-chain
-      // "signature verification failed" error after a wasted round trip.
-      // Catching that here — client-side, immediately — turns it into a
-      // clear message instead. `false` means "only check signatures that
-      // are present": the fee payer's slot is still empty at this point,
-      // that's expected and not itself an error.
+      // Some wallets return a signature that looks valid but doesn't
+      // actually verify against the message we asked them to sign (see
+      // CLAUDE.md — found via Trust Wallet, though the root cause turned
+      // out not to be specific to the fee-payer pattern, since it kept
+      // happening after that was changed; Trust Wallet was removed from
+      // SUPPORTED_WALLETS in page.tsx as a result). Kept as a general
+      // safeguard for any wallet that might hit this — `.serialize()`
+      // would eventually throw the same thing anyway, but catching it here
+      // gives a clearer, earlier message. `false` means "only check
+      // signatures that are present": the fee payer's slot may still be
+      // empty at this point on the legacy (Sell flow) code path, that's
+      // expected and not itself an error.
       async function signWithTimeout(tx: Transaction): Promise<Transaction> {
         const signed = await Promise.race([
           signTransaction!(tx),
@@ -128,7 +129,7 @@ export function useReclaimRent() {
         ]);
         if (!signed.verifySignatures(false)) {
           throw new Error(
-            "Your wallet returned a signature that doesn't verify — this is a known issue with some wallets (e.g. Trust Wallet) and gasless transactions. Please try Phantom, Solflare, or Backpack instead."
+            "Your wallet returned a signature that doesn't verify. This is a known compatibility issue with a small number of wallets — please try Phantom, Solflare, or Backpack instead."
           );
         }
         return signed;
