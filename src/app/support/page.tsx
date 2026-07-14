@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Send, ExternalLink } from "lucide-react";
+import { Send, ExternalLink, X as XIcon } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Faq } from "@/components/ui/Faq";
 
@@ -19,6 +19,12 @@ const CHANNELS = [
     icon: Send,
     title: "Telegram",
     body: "Fastest way to reach us for account or transaction questions.",
+  },
+  {
+    href: "https://x.com/GetBackSOL",
+    icon: XIcon,
+    title: "X (Twitter)",
+    body: "Follow for updates, announcements, and product news.",
   },
 ];
 
