@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid transaction." }, { status: 400 });
   }
 
-  if (!tx.feePayer || !tx.feePayer.equals(feePayer.publicKey)) {
+  if (!tx.feePayer) {
     return NextResponse.json({ error: "Unexpected fee payer." }, { status: 400 });
   }
 
@@ -112,14 +112,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unexpected instruction count." }, { status: 400 });
   }
 
-  // The owner is whichever required signer isn't us — needed below to
-  // recognize a legitimate Sell payout (fee payer -> owner), distinct from
-  // our platform fee transfer (owner -> FEE_WALLET).
-  const ownerEntry = tx.signatures.find((s) => !s.publicKey.equals(feePayer.publicKey));
-  if (!ownerEntry) {
-    return NextResponse.json({ error: "Unexpected signature state." }, { status: 400 });
+  // Two valid shapes: the relay pays the network fee (legacy — still used
+  // by the Sell flow, which needs the relay to front WSOL account rent),
+  // or the owner pays their own tiny network fee after a top-up (see
+  // /api/relay-topup) — some wallets (observed with Trust Wallet) don't
+  // correctly handle signing a transaction whose fee payer is a different
+  // account, so the everyday close/burn flow uses this shape instead.
+  const isSelfFunded = !tx.feePayer.equals(feePayer.publicKey);
+  let ownerPubkey: PublicKey;
+
+  if (isSelfFunded) {
+    ownerPubkey = tx.feePayer;
+    if (tx.signatures.length !== 1 || !tx.signatures[0].publicKey.equals(ownerPubkey)) {
+      return NextResponse.json({ error: "Unexpected signature state." }, { status: 400 });
+    }
+  } else {
+    // The owner is whichever required signer isn't us — needed below to
+    // recognize a legitimate Sell payout (fee payer -> owner), distinct
+    // from our platform fee transfer (owner -> FEE_WALLET).
+    const ownerEntry = tx.signatures.find((s) => !s.publicKey.equals(feePayer.publicKey));
+    if (!ownerEntry) {
+      return NextResponse.json({ error: "Unexpected signature state." }, { status: 400 });
+    }
+    ownerPubkey = ownerEntry.publicKey;
   }
-  const ownerPubkey = ownerEntry.publicKey;
 
   let hasCloseAccount = false;
   let feeLamports = 0n;
@@ -199,13 +215,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No closeAccount instruction found." }, { status: 400 });
   }
 
-  // Every signer except us must already have signed client-side.
-  const missing = tx.signatures.filter((s) => s.signature === null);
-  if (missing.length !== 1 || !missing[0].publicKey.equals(feePayer.publicKey)) {
-    return NextResponse.json({ error: "Unexpected signature state." }, { status: 400 });
+  if (isSelfFunded) {
+    // Already fully signed by the owner alone — verify cryptographically
+    // rather than trusting the wire bytes before forwarding as-is.
+    if (!tx.verifySignatures()) {
+      return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
+    }
+  } else {
+    // Every signer except us must already have signed client-side.
+    const missing = tx.signatures.filter((s) => s.signature === null);
+    if (missing.length !== 1 || !missing[0].publicKey.equals(feePayer.publicKey)) {
+      return NextResponse.json({ error: "Unexpected signature state." }, { status: 400 });
+    }
+    tx.partialSign(feePayer);
   }
-
-  tx.partialSign(feePayer);
 
   const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(NETWORK);
   const connection = new Connection(endpoint, "confirmed");

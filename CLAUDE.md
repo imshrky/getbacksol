@@ -194,15 +194,38 @@ configuration du Portal/listing, rien à câbler dans le code pour l'instant.
 - `src/lib/useRentAccounts.ts` — découverte réelle des comptes de tokens (SPL + Token-2022) du
   wallet connecté, filtrés sur solde nul ; remonte aussi `dustCount` pour les comptes non-nuls.
 - `src/lib/reclaimRent.ts` — construction des transactions `closeAccount` + frais, groupées par lot
-  de 10 comptes max.
+  de 10 comptes max. **`tx.feePayer` est `owner` lui-même, plus le wallet du relais** (voir
+  ci-dessous — bug Trust Wallet).
 - `src/lib/useReclaimRent.ts` — signe et envoie les transactions via le wallet connecté ; même
-  forme d'état (`status`, `message`) que `useSimulatedTx` pour rester compatible avec l'UI.
-  `signWithTimeout` vérifie `signed.verifySignatures(false)` juste après la signature, avant tout
-  envoi au relais — repéré avec Trust Wallet : certains wallets renvoient une signature qui ne
-  correspond pas au message signé quand le fee payer n'est pas le wallet connecté (transaction
-  gasless), ce qui échouait sinon côté relais avec une erreur RPC "signature verification failed"
-  opaque, après un aller-retour réseau inutile. Le `false` ne vérifie que les signatures déjà
-  présentes (celle de l'owner) — le fee payer n'a pas encore signé à ce stade, c'est normal.
+  forme d'état (`status`, `message`) que `useSimulatedTx` pour rester compatible avec l'UI. Avant
+  de signer chaque lot, appelle `/api/relay-topup` pour que l'owner ait de quoi payer ses propres
+  frais réseau (voir ci-dessous).
+- `src/app/api/relay-topup/route.ts` — envoie à l'owner juste assez de SOL (10 000 lamports par
+  transaction prévue, marge incluse) pour payer ses propres frais réseau ; entièrement signé par
+  le serveur, aucune interaction wallet. Ne fait rien si l'owner a déjà assez de solde (pas de
+  gaspillage sur les utilisateurs récurrents).
+
+**Bug Trust Wallet (juillet 2026) : "Signature verification failed. Invalid signature for public
+key [...]".** Diagnostiqué comme provenant de `Transaction.serialize()` de `@solana/web3.js`
+lui-même — **côté client, avant tout appel réseau** (elle vérifie les signatures présentes même
+avec `requireAllSignatures: false`), pas d'une erreur RPC après un aller-retour vers le relais
+comme supposé initialement. Autrement dit : la signature renvoyée par Trust Wallet ne correspond
+tout simplement pas au message qu'on lui a demandé de signer.
+
+Hypothèse retenue (non confirmée à 100 %, faute de pouvoir reproduire avec un vrai Trust Wallet ni
+tester en direct sur devnet — faucet épuisé au moment du fix) : certains wallets géreraient mal
+une transaction dont le fee payer n'est pas le wallet connecté (notre architecture gasless
+d'origine — `tx.feePayer` = wallet du relais, pas `owner`). Solution construite : **l'owner paie
+désormais ses propres frais réseau**, après un micro-versement de `/api/relay-topup` — le pattern
+que tous les wallets supportent nativement. `/api/relay-close` accepte maintenant deux formes :
+l'ancienne (`feePayer` = relais, encore utilisée par le flux Sell qui doit avancer le rent du
+compte WSOL) et la nouvelle (`feePayer` = owner, déjà entièrement signée — vérifiée avec
+`tx.verifySignatures()` avant d'être transmise telle quelle, sans signature du relais). Testé
+hors-ligne (transaction construite et signée localement avec une clé de test, sans SOL devnet
+nécessaire) : la nouvelle branche de validation fonctionne correctement de bout en bout jusqu'au
+dernier contrôle métier. **Reste à confirmer avec un vrai Trust Wallet** — si le bug persiste
+après ce changement, la vraie cause est ailleurs et la solution la plus simple sera de retirer
+Trust Wallet de `SUPPORTED_WALLETS` sur `page.tsx`.
 - `src/lib/feeWallet.ts` — adresse du wallet qui reçoit la commission de 15 % (pilotée par
   `NEXT_PUBLIC_FEE_WALLET_ADDRESS`, actuellement une clé unique). À migrer vers un multisig Squads
   — on est déjà en mainnet avec cette clé simple, c'est du vrai risque, pas juste une best practice.

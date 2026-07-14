@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { Transaction } from "@solana/web3.js";
 import type { TxStatus } from "./useSimulatedTx";
 import { buildCloseAccountBatchTx, batchByInstructionBudget } from "./reclaimRent";
 import { RECLAIM_FEE_RATE } from "./mockTokens";
@@ -100,7 +100,6 @@ export function useReclaimRent() {
       setStatus("pending");
       setMessage("");
 
-      const feePayer = new PublicKey(FEE_PAYER_ADDRESS);
       const partnerId = getReferral();
       let closedCount = 0;
       let soldCount = 0;
@@ -197,8 +196,24 @@ export function useReclaimRent() {
         }
 
         const batches = batchByInstructionBudget(toBurnOrClose);
+
+        if (batches.length > 0) {
+          // The owner pays their own network fee on each batch below (see
+          // reclaimRent.ts for why) — top them up with just enough SOL to
+          // cover it first. Fully server-signed, no wallet interaction.
+          const topUpRes = await fetch("/api/relay-topup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ owner: publicKey.toBase58(), count: batches.length }),
+          });
+          if (!topUpRes.ok) {
+            const body = await topUpRes.json().catch(() => ({}));
+            throw new Error(body?.error || "Could not prepare network fees.");
+          }
+        }
+
         for (const batch of batches) {
-          const tx = buildCloseAccountBatchTx(publicKey, feePayer, batch);
+          const tx = buildCloseAccountBatchTx(publicKey, batch);
           const { blockhash } = await connection.getLatestBlockhash();
           tx.recentBlockhash = blockhash;
 
