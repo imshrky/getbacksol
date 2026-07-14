@@ -19,6 +19,16 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 // directly, so a timeout is the only generic way to recover here.
 const SIGN_TIMEOUT_MS = 60_000;
 
+// The wallet adapter passes the extension's own rejection message straight
+// through (e.g. Phantom's "User rejected the request."). Closing the
+// popup or clicking Cancel is a deliberate choice, not a failure — showing
+// a red error banner for something the user did on purpose is just
+// friction, so this is treated as a silent, no-message reset instead.
+function isUserRejection(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e);
+  return /reject|declin|cancel|user closed|dismiss/i.test(msg);
+}
+
 /**
  * Real on-chain counterpart to useSimulatedTx for Reclaim Rent — gasless:
  * the owner signs to authorize closing their own accounts, but the
@@ -194,15 +204,18 @@ export function useReclaimRent() {
       } catch (e) {
         if (isStale()) return;
 
-        const errMsg = e instanceof Error ? e.message : "Transaction failed.";
         if (closedCount > 0 || soldCount > 0) {
+          const errMsg = e instanceof Error ? e.message : "Transaction failed.";
           setStatus("success");
           setMessage(
             `Handled ${closedCount + soldCount} of ${accounts.length} accounts before an error occurred: ${errMsg}`
           );
+        } else if (isUserRejection(e)) {
+          setStatus("idle");
+          setMessage("");
         } else {
           setStatus("error");
-          setMessage(errMsg);
+          setMessage(e instanceof Error ? e.message : "Transaction failed.");
         }
       }
     },
