@@ -542,11 +542,14 @@ export default function HomePage() {
         </Card>
 
         {connected && publicKey && (
-          <div className="mx-auto mt-4 max-w-2xl space-y-4">
+          <div className="mx-auto mt-4 max-w-2xl">
             <AffiliateBanner address={publicKey.toBase58()} />
-            <ReclaimHistory />
           </div>
         )}
+
+        <div className="mx-auto mt-4 max-w-2xl">
+          <ReclaimHistory />
+        </div>
 
         <p className="pill mx-auto mt-8 inline-flex w-fit items-center gap-1.5">
           <ShieldCheck className="h-3.5 w-3.5" />
