@@ -48,6 +48,13 @@
   * {
     border-color: var(--border);
   }
+
+  /* Browsers show the default arrow cursor on <button> (unlike <a>, which
+     gets pointer for free) — covers every button site-wide: Reclaim,
+     toggles, the FAQ accordion, copy buttons, etc. */
+  button:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 html {
