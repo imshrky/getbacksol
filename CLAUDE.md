@@ -197,6 +197,12 @@ configuration du Portal/listing, rien à câbler dans le code pour l'instant.
   de 10 comptes max.
 - `src/lib/useReclaimRent.ts` — signe et envoie les transactions via le wallet connecté ; même
   forme d'état (`status`, `message`) que `useSimulatedTx` pour rester compatible avec l'UI.
+  `signWithTimeout` vérifie `signed.verifySignatures(false)` juste après la signature, avant tout
+  envoi au relais — repéré avec Trust Wallet : certains wallets renvoient une signature qui ne
+  correspond pas au message signé quand le fee payer n'est pas le wallet connecté (transaction
+  gasless), ce qui échouait sinon côté relais avec une erreur RPC "signature verification failed"
+  opaque, après un aller-retour réseau inutile. Le `false` ne vérifie que les signatures déjà
+  présentes (celle de l'owner) — le fee payer n'a pas encore signé à ce stade, c'est normal.
 - `src/lib/feeWallet.ts` — adresse du wallet qui reçoit la commission de 15 % (pilotée par
   `NEXT_PUBLIC_FEE_WALLET_ADDRESS`, actuellement une clé unique). À migrer vers un multisig Squads
   — on est déjà en mainnet avec cette clé simple, c'est du vrai risque, pas juste une best practice.
