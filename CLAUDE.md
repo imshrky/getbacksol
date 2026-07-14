@@ -88,6 +88,16 @@ Un classement public (`AffiliateLeaderboard.tsx`, `/api/affiliate/leaderboard`) 
 de preuve sociale avec une poignée de lignes). Le composant/hook/route restent en place, prêts à
 être ré-affichés (une seule ligne à rajouter dans `page.tsx`) une fois qu'il y a assez de volume.
 
+**Historique public des reclaims (`ReclaimHistory.tsx`, `/api/reclaims/history`)** affiché sous la
+bannière d'affiliation quand un wallet est connecté. Enregistre **toute** transaction de reclaim
+réussie (pas juste celles avec parrainage, contrairement à `referrals`) dans la table `reclaims` :
+wallet, nombre de comptes fermés pour l'owner, montant net reçu, signature, horodatage précis à la
+seconde. Le montant net est lu directement depuis les `preBalances`/`postBalances` réels de la
+transaction confirmée (`connection.getTransaction`) plutôt que recalculé, car `closeAccount` libère
+le solde réel du compte au moment de l'exécution, une valeur qui n'est pas encodée dans
+l'instruction elle-même. Chaque ligne pointe vers Solscan pour vérification indépendante — même
+logique de transparence que "Verify the code yourself on GitHub".
+
 ## Priorité de travail — la suite
 
 Reclaim Rent est live sur mainnet, Safe-Burn et Sell sont câblés, le programme partenaire est en
@@ -151,6 +161,11 @@ délibéré, pas un oubli.
 - `src/components/ui/AffiliateLeaderboard.tsx` — top 5 wallets affiliés par gains cumulés, via
   `useAffiliateLeaderboard.ts` / `/api/affiliate/leaderboard` (`getAffiliateLeaderboard` dans
   `partners.ts`, filtré sur `kind = 'wallet'`).
+- `src/lib/reclaims.ts` — écrit/lit la table `reclaims` (historique public de toute transaction,
+  pas juste celles avec parrainage). `recordReclaim` appelé depuis `/api/relay-close` après
+  confirmation ; `getReclaimHistory` sert `/api/reclaims/history`.
+- `src/components/ui/ReclaimHistory.tsx` — affichée sous `AffiliateBanner` (`page.tsx`), liste les
+  reclaims récents avec lien Solscan par ligne.
 
 ## Conventions de code
 

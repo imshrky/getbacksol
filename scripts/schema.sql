@@ -41,3 +41,16 @@ CREATE TABLE IF NOT EXISTS referrals (
 );
 
 CREATE INDEX IF NOT EXISTS referrals_partner_id_idx ON referrals (partner_id);
+
+-- Every successful reclaim transaction, referred or not — public activity
+-- feed (see /api/reclaims/history), not just partner-attributed ones.
+CREATE TABLE IF NOT EXISTS reclaims (
+  id BIGSERIAL PRIMARY KEY,
+  wallet TEXT NOT NULL,
+  tx_signature TEXT NOT NULL UNIQUE,
+  accounts_closed INT NOT NULL,
+  net_lamports BIGINT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS reclaims_created_at_idx ON reclaims (created_at DESC);

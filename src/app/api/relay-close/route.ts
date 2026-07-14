@@ -12,6 +12,7 @@ import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } 
 import { getFeePayerKeypair } from "@/lib/feePayer";
 import { FEE_WALLET } from "@/lib/feeWallet";
 import { partnerExists, resolveOrCreateWalletAffiliate, recordReferral } from "@/lib/partners";
+import { recordReclaim } from "@/lib/reclaims";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 const CLOSE_ACCOUNT_DISCRIMINATOR = 9; // Token Program / Token-2022 `CloseAccount`
@@ -125,6 +126,10 @@ export async function POST(req: NextRequest) {
   let sellPayoutLamports = 0n;
   let jupiterCount = 0;
   let ataCount = 0;
+  // Only counts closes that pay the owner directly — excludes the
+  // Sell flow's internal WSOL-account close (destination = fee payer),
+  // which isn't one of "their" accounts from the user's point of view.
+  let accountsClosedForOwner = 0;
   for (const ix of tx.instructions) {
     if (ix.programId.equals(ComputeBudgetProgram.programId) || ix.programId.equals(GUARD_PROGRAM_ID)) {
       continue;
@@ -160,7 +165,10 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      if (discriminator === CLOSE_ACCOUNT_DISCRIMINATOR) hasCloseAccount = true;
+      if (discriminator === CLOSE_ACCOUNT_DISCRIMINATOR) {
+        hasCloseAccount = true;
+        if (ix.keys[1]?.pubkey?.equals(ownerPubkey)) accountsClosedForOwner++;
+      }
     } else if (isSystemProgram) {
       if (ix.data.length < 4 || ix.data.readUInt32LE(0) !== SYSTEM_TRANSFER_DISCRIMINATOR) {
         return NextResponse.json({ error: "Only transfer instructions are allowed." }, { status: 400 });
@@ -216,6 +224,29 @@ export async function POST(req: NextRequest) {
       } catch {
         // swallow — attribution is not part of the transaction's success
       }
+    }
+
+    // Public activity feed — every reclaim, not just referred ones. Reads
+    // the owner's actual pre/post SOL balance from the confirmed
+    // transaction rather than trying to compute it ourselves: closeAccount
+    // releases whatever the account's real on-chain balance is at
+    // execution time, which isn't encoded in the instruction itself.
+    try {
+      const details = await connection.getTransaction(signature, {
+        commitment: "confirmed",
+        maxSupportedTransactionVersion: 0,
+      });
+      const accountKeys = details?.transaction.message.getAccountKeys().staticAccountKeys;
+      const ownerIndex = accountKeys?.findIndex((k) => k.equals(ownerPubkey)) ?? -1;
+      if (details?.meta && ownerIndex >= 0) {
+        const netLamports =
+          BigInt(details.meta.postBalances[ownerIndex]) - BigInt(details.meta.preBalances[ownerIndex]);
+        if (netLamports > 0n) {
+          await recordReclaim(ownerPubkey.toBase58(), signature, accountsClosedForOwner, netLamports);
+        }
+      }
+    } catch {
+      // swallow — the activity feed is cosmetic, never the transaction's success
     }
 
     return NextResponse.json({ signature });
