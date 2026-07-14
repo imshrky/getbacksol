@@ -33,7 +33,7 @@ export function AffiliateBanner({ address }: { address: string }) {
               ? `${stats.totalEarnedSol.toFixed(6)} SOL earned from ${stats.referralCount} referral${
                   stats.referralCount > 1 ? "s" : ""
                 } so far.`
-              : "Anyone who reclaims SOL through your link earns you 30% of our fee — automatically."}
+              : "Anyone who reclaims SOL through your link earns you 30% of our fee, automatically."}
           </p>
         </div>
       </div>
@@ -44,7 +44,7 @@ export function AffiliateBanner({ address }: { address: string }) {
         <button
           type="button"
           onClick={copy}
-          className="btn-outline flex shrink-0 items-center gap-1.5 px-3 py-2.5 text-xs"
+          className="btn-outline flex w-[92px] shrink-0 items-center justify-center gap-1.5 px-3 py-2.5 text-xs"
         >
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? "Copied" : "Copy"}

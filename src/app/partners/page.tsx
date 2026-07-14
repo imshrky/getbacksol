@@ -8,11 +8,11 @@ import { Faq } from "@/components/ui/Faq";
 const FAQ_ITEMS = [
   {
     q: "How do I actually integrate this?",
-    a: "Call GET /api/v1/scan?wallet=<address> with your API key in the X-API-Key header to show a user how much SOL they can reclaim in your own UI. When they want to act on it, link them to getbacksol.com/?ref=<your-partner-id> — they connect their own wallet and close accounts through our existing gasless relay. You never touch a private key or build a transaction yourself.",
+    a: "Call GET /api/v1/scan?wallet=<address> with your API key in the X-API-Key header to show a user how much SOL they can reclaim in your own UI. When they want to act on it, link them to getbacksol.com/?ref=<your-partner-id>, where they connect their own wallet and close accounts through our existing gasless relay. You never touch a private key or build a transaction yourself.",
   },
   {
     q: "How do you calculate my share?",
-    a: "We charge a 15% fee on every reclaim, taken in the same atomic transaction as the close. When that transaction was referred by your link, we credit your account with 30% of that fee — computed from the actual on-chain transfer amount, not from anything your side reports.",
+    a: "We charge a 15% fee on every reclaim, taken in the same atomic transaction as the close. When that transaction was referred by your link, we credit your account with 30% of that fee, computed from the actual on-chain transfer amount, not from anything your side reports.",
   },
   {
     q: "How and when do I get paid?",
@@ -20,11 +20,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Can my key move funds or sign transactions?",
-    a: "No. Your API key only grants read-only wallet scanning. It can never build, sign, or submit a transaction — every reclaim is still signed by the end user's own wallet and executed through our unchanged, allow-listed relay.",
+    a: "No. Your API key only grants read-only wallet scanning. It can never build, sign, or submit a transaction. Every reclaim is still signed by the end user's own wallet and executed through our unchanged, allow-listed relay.",
   },
   {
     q: "Is there a cost to join?",
-    a: "No. Signup is free and instant — you get a key immediately after submitting the form below.",
+    a: "No. Signup is free and instant, you get a key immediately after submitting the form below.",
   },
 ];
 
@@ -80,7 +80,7 @@ export default function PartnersPage() {
       <SectionTitle
         eyebrow="Partner Program"
         title="Earn a share of every SOL you help reclaim"
-        description="Show your users the SOL trapped in their own wallets, send them our way to reclaim it, and keep 30% of the fee — automatically attributed to you, no manual reporting."
+        description="Show your users the SOL trapped in their own wallets, send them our way to reclaim it, and keep 30% of the fee, automatically attributed to you, no manual reporting."
       />
 
       <div className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-3">
@@ -89,7 +89,7 @@ export default function PartnersPage() {
           <h3 className="text-sm font-semibold">Read-only integration</h3>
           <p className="mt-1.5 text-sm text-[var(--muted)]">
             Your key only calls our scan endpoint. Execution happens on getbacksol.com, signed by
-            the user&apos;s own wallet — your integration never touches funds.
+            the user&apos;s own wallet. Your integration never touches funds.
           </p>
         </Card>
         <Card>
@@ -97,7 +97,7 @@ export default function PartnersPage() {
           <h3 className="text-sm font-semibold">30% revenue share</h3>
           <p className="mt-1.5 text-sm text-[var(--muted)]">
             Every referred reclaim credits your account with 30% of our 15% fee, calculated from
-            the real, confirmed transaction — not self-reported.
+            the real, confirmed transaction, not self-reported.
           </p>
         </Card>
         <Card>
@@ -105,7 +105,7 @@ export default function PartnersPage() {
           <h3 className="text-sm font-semibold">Non-custodial, always</h3>
           <p className="mt-1.5 text-sm text-[var(--muted)]">
             Same security model as the rest of GetBackSOL: we never see, store, or touch a
-            private key — yours or your users&apos;.
+            private key, yours or your users&apos;.
           </p>
         </Card>
       </div>
@@ -115,10 +115,10 @@ export default function PartnersPage() {
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400">
               <Check className="h-4 w-4" />
-              You&apos;re in — partner ID: {result.partnerId}
+              You&apos;re in! Partner ID: {result.partnerId}
             </div>
             <p className="mt-2 text-xs text-[var(--muted)]">
-              Save your API key now — for your security, we only store its hash, so this is the
+              Save your API key now. For your security, we only store its hash, so this is the
               only time it will ever be shown.
             </p>
 
@@ -126,13 +126,13 @@ export default function PartnersPage() {
               API key
             </label>
             <div className="flex items-center gap-2">
-              <code className="field-input flex-1 overflow-x-auto whitespace-nowrap text-xs">
+              <code className="field-input min-w-0 flex-1 overflow-x-auto whitespace-nowrap text-xs">
                 {result.apiKey}
               </code>
               <button
                 type="button"
                 onClick={() => copy(result.apiKey, "key")}
-                className="btn-outline flex shrink-0 items-center gap-1.5 px-3 py-2.5 text-xs"
+                className="btn-outline flex w-[92px] shrink-0 items-center justify-center gap-1.5 px-3 py-2.5 text-xs"
               >
                 {copied === "key" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 {copied === "key" ? "Copied" : "Copy"}
@@ -143,13 +143,13 @@ export default function PartnersPage() {
               Your referral link
             </label>
             <div className="flex items-center gap-2">
-              <code className="field-input flex-1 overflow-x-auto whitespace-nowrap text-xs">
+              <code className="field-input min-w-0 flex-1 overflow-x-auto whitespace-nowrap text-xs">
                 {`https://getbacksol.com/?ref=${result.partnerId}`}
               </code>
               <button
                 type="button"
                 onClick={() => copy(`https://getbacksol.com/?ref=${result.partnerId}`, "link")}
-                className="btn-outline flex shrink-0 items-center gap-1.5 px-3 py-2.5 text-xs"
+                className="btn-outline flex w-[92px] shrink-0 items-center justify-center gap-1.5 px-3 py-2.5 text-xs"
               >
                 {copied === "link" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 {copied === "link" ? "Copied" : "Copy"}
