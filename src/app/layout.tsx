@@ -21,6 +21,15 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://getbacksol.com"),
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
+  keywords: [
+    "Solana rent reclaim",
+    "reclaim SOL",
+    "close token accounts",
+    "dormant token accounts",
+    "SPL token rent refund",
+    "Solana wallet cleanup",
+  ],
+  alternates: { canonical: "/" },
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,

@@ -9,6 +9,7 @@ const DESCRIPTION = "Get help with Reclaim Rent — reach us on Telegram, or che
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
+  alternates: { canonical: "/support" },
   openGraph: { title: TITLE, description: DESCRIPTION, url: "/support" },
   twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };

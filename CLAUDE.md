@@ -88,6 +88,18 @@ manuellement à chaque jalon shippé (déplacer de "In progress"/"Planned" vers 
 vraie date), sinon la page finit par mentir sur l'état du projet — même logique que le statut de
 l'audit de sécurité plus haut dans ce fichier.
 
+**Canonical URLs + meta keywords ajoutés suite à un second passage d'audit SEO** (item critique :
+"Missing canonical URL" sur toutes les pages). `alternates: { canonical: "..." }` ajouté sur
+chaque route qui exporte son propre `metadata` (`layout.tsx` racine pour `/`, `support/page.tsx`,
+`blog/page.tsx`, `blog/[slug]/page.tsx`, `partners/layout.tsx`). Piège identique à celui du
+`/partners` : les 7 outils simulés (`token-creator`, `create-liquidity`, `swap`,
+`remove-liquidity`, `burn-token`, `burn-and-earn`, `leaderboard`) sont eux aussi des Client
+Components sans `metadata` propre, donc ils héritaient tous silencieusement du titre, de la
+description **et maintenant du canonical** de la page d'accueil. Corrigé en ajoutant un
+`layout.tsx` dédié à chacun (même pattern que `partners/layout.tsx`), chacun avec son propre
+`alternates.canonical`. Si un futur outil passe en Client Component, il lui faut systématiquement
+ce même layout dédié, sinon il hérite silencieusement des metadata de l'accueil.
+
 **Programme partenaire (`/partners`) est self-service et branche une vraie base de données.**
 C'est le premier composant persistant du projet — tout le reste est volontairement stateless.
 Un partenaire s'inscrit, reçoit une clé API instantanément (pas de validation manuelle), affiche
@@ -200,6 +212,9 @@ délibéré, pas un oubli.
 - `src/app/partners/layout.tsx` — porte le `metadata` de `/partners` : nécessaire car
   `partners/page.tsx` est un Client Component et ne peut pas exporter `metadata` lui-même (sinon
   la page hérite silencieusement du titre/description de l'accueil).
+- `src/app/{token-creator,create-liquidity,swap,remove-liquidity,burn-token,burn-and-earn,
+  leaderboard}/layout.tsx` — même pattern que `partners/layout.tsx`, un par outil simulé encore en
+  Client Component, chacun avec son propre `title`/`description`/`alternates.canonical`.
 
 ## Conventions de code
 
