@@ -11,6 +11,13 @@ import { getReferral } from "./referral";
 
 const FEE_PAYER_ADDRESS = process.env.NEXT_PUBLIC_FEE_PAYER_ADDRESS;
 const LAMPORTS_PER_SOL = 1_000_000_000;
+// Closing the wallet extension's own approval popup (its window X, not a
+// Cancel button inside it) doesn't reliably reject signTransaction() —
+// some wallets only reject on an explicit in-app dismissal, so the
+// promise can otherwise hang forever with no signal reaching the page at
+// all. A website can't observe a browser extension's popup lifecycle
+// directly, so a timeout is the only generic way to recover here.
+const SIGN_TIMEOUT_MS = 60_000;
 
 /**
  * Real on-chain counterpart to useSimulatedTx for Reclaim Rent — gasless:
@@ -89,6 +96,18 @@ export function useReclaimRent() {
       let soldCount = 0;
       let soldLamports = 0;
 
+      function signWithTimeout(tx: Transaction): Promise<Transaction> {
+        return Promise.race([
+          signTransaction!(tx),
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Wallet approval timed out — the request may have been closed.")),
+              SIGN_TIMEOUT_MS
+            )
+          ),
+        ]);
+      }
+
       async function relay(serializedTx: Buffer) {
         const res = await fetch("/api/relay-close", {
           method: "POST",
@@ -123,7 +142,7 @@ export function useReclaimRent() {
           const { transaction, outAmount } = await buildRes.json();
 
           const tx = Transaction.from(Buffer.from(transaction, "base64"));
-          const signed = await signTransaction!(tx);
+          const signed = await signWithTimeout(tx);
           await relay(signed.serialize({ requireAllSignatures: false }));
 
           soldLamports += Number(outAmount);
@@ -156,7 +175,7 @@ export function useReclaimRent() {
           const { blockhash } = await connection.getLatestBlockhash();
           tx.recentBlockhash = blockhash;
 
-          const signed = await signTransaction(tx);
+          const signed = await signWithTimeout(tx);
           await relay(signed.serialize({ requireAllSignatures: false }));
 
           closedCount += batch.length;
