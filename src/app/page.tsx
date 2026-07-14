@@ -138,6 +138,37 @@ const FAQ_SCHEMA = {
   })),
 };
 
+const ROADMAP_COLUMNS = [
+  {
+    status: "Shipped",
+    dotClassName: "bg-emerald-500",
+    items: [
+      { date: "Jul 2026", text: "Reclaim Rent live on Solana mainnet" },
+      { date: "Jul 2026", text: "Safe-Burn: close dust accounts automatically" },
+      { date: "Jul 2026", text: "Sell dust for SOL via Jupiter, as an alternative to burning" },
+      { date: "Jul 2026", text: "Self-service Partner Program with revenue share" },
+      { date: "Jul 2026", text: "Automatic wallet affiliate program (30% commission)" },
+      { date: "Jul 2026", text: "External security audit passed" },
+    ],
+  },
+  {
+    status: "In progress",
+    dotClassName: "bg-[var(--accent)]",
+    items: [
+      { date: "Now", text: "Migrating the fee wallet to a Squads multisig" },
+      { date: "Now", text: "Rate limiting on the Partner API" },
+    ],
+  },
+  {
+    status: "Planned",
+    dotClassName: "bg-[var(--border-strong)]",
+    items: [
+      { date: "Q4 2026", text: "GetBackSOL token launch" },
+      { date: "TBA", text: "Taking the remaining tools (Swap, Liquidity, Token Creator...) live on mainnet" },
+    ],
+  },
+];
+
 export default function HomePage() {
   const { connected, publicKey, wallets } = useWallet();
   const { setVisible: setWalletModalVisible } = useWalletModal();
@@ -573,6 +604,7 @@ export default function HomePage() {
       {/* How it works */}
       <section id="how-it-works" className="scroll-mt-24 pb-16 sm:pb-20">
         <SectionTitle
+          level="h2"
           index="02"
           eyebrow="How it works"
           title="Three steps, one transaction"
@@ -595,6 +627,7 @@ export default function HomePage() {
       {/* Security */}
       <section id="security" className="scroll-mt-24 pb-16 sm:pb-20">
         <SectionTitle
+          level="h2"
           index="03"
           eyebrow="Security"
           title="Built to be verifiable, not just trusted"
@@ -628,9 +661,40 @@ export default function HomePage() {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }}
         />
-        <SectionTitle index="04" eyebrow="FAQ" title="Questions you might have" />
+        <SectionTitle level="h2" index="04" eyebrow="FAQ" title="Questions you might have" />
         <div className="mx-auto max-w-2xl">
           <Faq items={FAQ_ITEMS} />
+        </div>
+      </section>
+
+      {/* Roadmap */}
+      <section id="roadmap" className="scroll-mt-24 pt-16 sm:pt-20">
+        <SectionTitle
+          level="h2"
+          index="05"
+          eyebrow="Roadmap"
+          title="Where GetBackSOL is headed"
+          description="What's already shipped, what we're building right now, and what's next."
+        />
+        <div className="grid gap-4 sm:grid-cols-3">
+          {ROADMAP_COLUMNS.map((column) => (
+            <Card key={column.status} className="text-left">
+              <span className="eyebrow mb-4">
+                <span className={`h-1.5 w-1.5 rounded-full ${column.dotClassName}`} />
+                {column.status}
+              </span>
+              <ul className="flex flex-col gap-3">
+                {column.items.map((item) => (
+                  <li key={item.text}>
+                    <span className="block text-xs font-medium tracking-wide text-[var(--muted)]">
+                      {item.date}
+                    </span>
+                    <span className="text-sm">{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ))}
         </div>
       </section>
     </div>

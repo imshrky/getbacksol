@@ -17,14 +17,17 @@ export function SectionTitle({
   title,
   description,
   align = "center",
+  level = "h1",
 }: {
   index?: string;
   eyebrow?: string;
   title: string;
   description?: string;
   align?: "center" | "left";
+  level?: "h1" | "h2";
 }) {
   const isCenter = align === "center";
+  const Heading = level;
   return (
     <div className={clsx("mb-8", isCenter && "text-center")}>
       {eyebrow && (
@@ -33,7 +36,7 @@ export function SectionTitle({
           {eyebrow}
         </span>
       )}
-      <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
+      <Heading className="text-3xl font-semibold tracking-tight sm:text-4xl">{title}</Heading>
       {description && (
         <p
           className={clsx(

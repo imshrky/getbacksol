@@ -71,6 +71,23 @@ Next.js ne lit l'export `metadata` que sur les Server Components — d'où l'ajo
 enfant Client Component. Le même piège s'appliquerait à tout futur outil converti en Client
 Component sans layout dédié.
 
+Piège trouvé et corrigé dans la même passe : `SectionTitle` (`Card.tsx`) rendait systématiquement
+son titre en `<h1>`, ce qui donnait 4 balises `<h1>` sur la page d'accueil (le hero + How it
+works + Security + FAQ) — mauvais pour le SEO (un seul `<h1>` par page attendu). Ajout d'un prop
+`level` (`"h1" | "h2"`, défaut `"h1"`) : les 3 sections de la page d'accueil qui suivent déjà le
+hero passent `level="h2"`, toutes les autres pages (blog, support, partners, outils simulés) où
+`SectionTitle` est l'unique titre de la page gardent le défaut `h1`. Vérifié via
+`document.querySelectorAll('h1'|'h2')` dans le navigateur : un seul `h1`, hiérarchie `h1 > h2 >
+h3` correcte partout.
+
+**Section Roadmap (`page.tsx`, sous la FAQ, index "05")** : trois colonnes (Shipped / In
+progress / Planned) avec dates, dérivées de l'historique git réel et de la section "Priorité de
+travail" plus haut dans ce fichier — pas des dates inventées. Contient le lancement du token
+prévu en **Q4 2026** (seule date future annoncée publiquement pour l'instant). À tenir à jour
+manuellement à chaque jalon shippé (déplacer de "In progress"/"Planned" vers "Shipped" avec la
+vraie date), sinon la page finit par mentir sur l'état du projet — même logique que le statut de
+l'audit de sécurité plus haut dans ce fichier.
+
 **Programme partenaire (`/partners`) est self-service et branche une vraie base de données.**
 C'est le premier composant persistant du projet — tout le reste est volontairement stateless.
 Un partenaire s'inscrit, reçoit une clé API instantanément (pas de validation manuelle), affiche
