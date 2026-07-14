@@ -153,6 +153,13 @@ ligne, l'audit de sécurité externe est passé. Prochaines étapes, dans l'ordr
 Ne pas commencer par Token Creator (`/token-creator`), Swap ou Liquidity — c'est un choix
 délibéré, pas un oubli.
 
+**Listing Phantom (dApp directory) en cours, géré manuellement par l'utilisateur via Phantom
+Portal (`phantom.com/portal`), pas par du code.** App ID Phantom : `d92dd29b-7d8b-4e5a-a37f-
+5121cce8aee0`. Étape en cours : vérification du domaine `getbacksol.com` via un enregistrement
+DNS TXT (`_phantom_portal-challenge` → hash de challenge fourni par Phantom). Le site n'utilise
+aucun SDK Phantom (juste `@solana/wallet-adapter` standard) — cet App ID ne sert qu'à la
+configuration du Portal/listing, rien à câbler dans le code pour l'instant.
+
 ## Fichiers clés
 
 - `src/app/page.tsx` — la page d'accueil (Reclaim Rent), branchée en réel.
