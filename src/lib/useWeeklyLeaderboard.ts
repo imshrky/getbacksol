@@ -13,20 +13,22 @@ export type WeeklyRankingEntry = {
 };
 
 export type WeeklyLeaderboard = {
-  resetAt: string;
+  resetAt: string | null;
   poolSol: number;
   rankings: WeeklyRankingEntry[];
 };
 
-/** Fetches the live weekly leaderboard — refreshes periodically so the countdown and ranks stay current. */
-export function useWeeklyLeaderboard() {
+export type LeaderboardPeriod = "week" | "all-time";
+
+/** Fetches the live leaderboard for the given period — refreshes periodically so the countdown and ranks stay current. */
+export function useWeeklyLeaderboard(period: LeaderboardPeriod = "week") {
   const [data, setData] = useState<WeeklyLeaderboard | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     function load() {
-      fetch("/api/leaderboard/weekly")
+      fetch(`/api/leaderboard/weekly?period=${period}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((json) => {
           if (cancelled || !json) return;
@@ -59,7 +61,7 @@ export function useWeeklyLeaderboard() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [period]);
 
   return data;
 }

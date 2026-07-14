@@ -146,6 +146,14 @@ semaine (`reclaims.fee_lamports`, nouvelle colonne remplie dans `/api/relay-clos
 `feeLamports` déjà validé — jamais recalculé), split 50/30/20 entre le top 3 en fin de semaine
 (`/api/leaderboard/weekly` pour l'affichage public, en direct).
 
+**Trois onglets, un seul vrai prize pool.** "XP Leaderboard" / "Top Closers" / "Top Referrers"
+sont trois vues du **même** classement déjà chargé (juste triées différemment côté client dans
+`WeeklyLeaderboard.tsx` — pas de requête séparée) : seul l'onglet XP a un prize pool réel et
+payable. Un toggle "This week" / "All-time" existe aussi — "All-time" (`getAllTimeRankings` dans
+`leaderboard.ts`, `?period=all-time` sur `/api/leaderboard/weekly`) est une vue "hall of fame"
+purement informative, sans pool ni countdown ni paiement, pour ne pas tripler la mécanique de
+paiement déjà construite.
+
 **Paiement réel mais volontairement manuel, jamais automatique.** Le serveur ne détient pas la
 clé privée de `FEE_WALLET` (juste son adresse, voir `feeWallet.ts`) — cohérent avec la migration
 multisig déjà prévue, à laquelle un nouveau hot wallet de paiement automatique aurait justement

@@ -49,30 +49,17 @@ export type RankingEntry = {
   referralCount: number;
 };
 
-/**
- * Combines this week's closing activity (reclaims) and referral activity
- * (referrals) per wallet into one ranked list. Done as two separate
- * queries and merged in JS rather than one big join — both result sets are
- * small (one row per active wallet per week) and the merge logic reads far
- * more clearly this way than a full outer join would.
- */
-export async function getWeeklyRankings(window: WeekWindow, limit = 20): Promise<RankingEntry[]> {
-  const sql = getSql();
-  const [closingRows, referralRows] = await Promise.all([
-    sql`
-      SELECT wallet, count(*)::int AS accounts_closed, coalesce(sum(net_lamports), 0) AS sol_recovered
-      FROM reclaims
-      WHERE created_at >= ${window.weekStart.toISOString()} AND created_at < ${window.weekEnd.toISOString()}
-      GROUP BY wallet
-    `,
-    sql`
-      SELECT partner_id AS wallet, count(*)::int AS referral_count
-      FROM referrals
-      WHERE created_at >= ${window.weekStart.toISOString()} AND created_at < ${window.weekEnd.toISOString()}
-      GROUP BY partner_id
-    `,
-  ]);
+type ClosingRow = { wallet: string; accounts_closed: number; sol_recovered: string | number };
+type ReferralRow = { wallet: string; referral_count: number };
 
+/**
+ * Combines closing activity (reclaims) and referral activity (referrals)
+ * per wallet into one ranked list. Takes already-fetched rows rather than a
+ * time window so the identical merge logic serves both the weekly and the
+ * all-time rankings — only the two queries that produce `closingRows` /
+ * `referralRows` differ (windowed vs. unwindowed).
+ */
+function mergeRankings(closingRows: ClosingRow[], referralRows: ReferralRow[], limit: number): RankingEntry[] {
   const byWallet = new Map<string, RankingEntry>();
   for (const row of closingRows) {
     byWallet.set(row.wallet, {
@@ -100,6 +87,40 @@ export async function getWeeklyRankings(window: WeekWindow, limit = 20): Promise
   }
 
   return [...byWallet.values()].sort((a, b) => b.xp - a.xp).slice(0, limit);
+}
+
+/** This week's rankings — the only ones with a real, payable prize pool. */
+export async function getWeeklyRankings(window: WeekWindow, limit = 20): Promise<RankingEntry[]> {
+  const sql = getSql();
+  const [closingRows, referralRows] = await Promise.all([
+    sql`
+      SELECT wallet, count(*)::int AS accounts_closed, coalesce(sum(net_lamports), 0) AS sol_recovered
+      FROM reclaims
+      WHERE created_at >= ${window.weekStart.toISOString()} AND created_at < ${window.weekEnd.toISOString()}
+      GROUP BY wallet
+    `,
+    sql`
+      SELECT partner_id AS wallet, count(*)::int AS referral_count
+      FROM referrals
+      WHERE created_at >= ${window.weekStart.toISOString()} AND created_at < ${window.weekEnd.toISOString()}
+      GROUP BY partner_id
+    `,
+  ]);
+  return mergeRankings(closingRows as unknown as ClosingRow[], referralRows as unknown as ReferralRow[], limit);
+}
+
+/**
+ * All-time rankings across the whole platform — an informational "hall of
+ * fame" view, not tied to any prize pool or payout (the weekly leaderboard
+ * is the only track with real money attached).
+ */
+export async function getAllTimeRankings(limit = 20): Promise<RankingEntry[]> {
+  const sql = getSql();
+  const [closingRows, referralRows] = await Promise.all([
+    sql`SELECT wallet, count(*)::int AS accounts_closed, coalesce(sum(net_lamports), 0) AS sol_recovered FROM reclaims GROUP BY wallet`,
+    sql`SELECT partner_id AS wallet, count(*)::int AS referral_count FROM referrals GROUP BY partner_id`,
+  ]);
+  return mergeRankings(closingRows as unknown as ClosingRow[], referralRows as unknown as ReferralRow[], limit);
 }
 
 /** This week's prize pool so far — a real share of real fees collected, grows as the week goes on. */
