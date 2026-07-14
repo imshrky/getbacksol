@@ -3,9 +3,14 @@ import { Send, ExternalLink } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Faq } from "@/components/ui/Faq";
 
+const TITLE = "Support | GetBackSOL";
+const DESCRIPTION = "Get help with Reclaim Rent — reach us on Telegram, or check the FAQ.";
+
 export const metadata: Metadata = {
-  title: "Support | GetBackSOL",
-  description: "Get help with Reclaim Rent — reach us on Telegram, or check the FAQ.",
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: { title: TITLE, description: DESCRIPTION, url: "/support" },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 
 const CHANNELS = [

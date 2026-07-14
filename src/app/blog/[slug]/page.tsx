@@ -16,9 +16,18 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return {};
+  const title = `${post.title} | GetBackSOL Blog`;
   return {
-    title: `${post.title} | GetBackSOL Blog`,
+    title,
     description: post.description,
+    openGraph: {
+      title,
+      description: post.description,
+      url: `/blog/${post.slug}`,
+      type: "article",
+      publishedTime: post.publishedAt,
+    },
+    twitter: { card: "summary_large_image", title, description: post.description },
   };
 }
 
@@ -43,8 +52,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = getPostBySlug(slug);
   if (!post) notFound();
 
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    datePublished: post.publishedAt,
+    author: { "@type": "Organization", name: "GetBackSOL" },
+    publisher: { "@type": "Organization", name: "GetBackSOL" },
+    mainEntityOfPage: `https://getbacksol.com/blog/${post.slug}`,
+  };
+
   return (
     <article className="fade-in mx-auto max-w-2xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <Link
         href="/blog"
         className="mb-6 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)]"

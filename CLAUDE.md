@@ -60,6 +60,17 @@ Les 7 autres outils (Token Creator, Create Liquidity, Swap, Remove Liquidity, Bu
 Burn & Earn, Leaderboard) restent en simulation via `src/lib/useSimulatedTx.ts` — vision produit,
 pas encore la priorité.
 
+**SEO technique corrigé suite à un audit complet** (`layout.tsx`, `opengraph-image.tsx`,
+`partners/layout.tsx`, `support/page.tsx`, `blog/page.tsx`, `blog/[slug]/page.tsx`, `page.tsx`) :
+`metadataBase` + Open Graph/Twitter Card sur toutes les routes, image OG dynamique générée via
+`next/og` (marque, pas un screenshot statique), et schémas JSON-LD (`FAQPage` sur la page
+d'accueil, `BlogPosting` sur chaque article). Piège trouvé et corrigé : `/partners` héritait du
+titre/description de la page d'accueil car sa page est un Client Component (`"use client"`), et
+Next.js ne lit l'export `metadata` que sur les Server Components — d'où l'ajout d'un
+`partners/layout.tsx` dédié, un Server Component qui ne fait que porter le `metadata` pour son
+enfant Client Component. Le même piège s'appliquerait à tout futur outil converti en Client
+Component sans layout dédié.
+
 **Programme partenaire (`/partners`) est self-service et branche une vraie base de données.**
 C'est le premier composant persistant du projet — tout le reste est volontairement stateless.
 Un partenaire s'inscrit, reçoit une clé API instantanément (pas de validation manuelle), affiche
@@ -166,6 +177,12 @@ délibéré, pas un oubli.
   confirmation ; `getReclaimHistory` sert `/api/reclaims/history`.
 - `src/components/ui/ReclaimHistory.tsx` — affichée sous `AffiliateBanner` (`page.tsx`), liste les
   reclaims récents avec lien Solscan par ligne.
+- `src/app/opengraph-image.tsx` — image OG dynamique (`next/og` `ImageResponse`), générée à la
+  volée avec la charte du site (fond noir, logo rouge, wordmark) ; convention de fichier détectée
+  automatiquement par Next.js, pas de câblage manuel dans les balises meta.
+- `src/app/partners/layout.tsx` — porte le `metadata` de `/partners` : nécessaire car
+  `partners/page.tsx` est un Client Component et ne peut pas exporter `metadata` lui-même (sinon
+  la page hérite silencieusement du titre/description de l'accueil).
 
 ## Conventions de code
 

@@ -12,10 +12,30 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
+const SITE_NAME = "GetBackSOL";
+const SITE_TITLE = "GetBackSOL | Reclaim locked SOL from dormant Solana accounts";
+const SITE_DESCRIPTION =
+  "Scan your Solana wallet, close dormant token accounts, and get the locked SOL rent back — in seconds, minus a small service fee.";
+
 export const metadata: Metadata = {
-  title: "GetBackSOL | Reclaim locked SOL from dormant Solana accounts",
-  description:
-    "Scan your Solana wallet, close dormant token accounts, and get the locked SOL rent back — in seconds, minus a small service fee.",
+  metadataBase: new URL("https://getbacksol.com"),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/",
+    siteName: SITE_NAME,
+    type: "website",
+    locale: "en_US",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SITE_TITLE }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ["/opengraph-image"],
+  },
   verification: {
     google: "aNEWQV-blfW8koixrZjPY3D5FcXysIiQW6fWXYPXuAw",
   },

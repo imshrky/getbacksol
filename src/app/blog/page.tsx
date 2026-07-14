@@ -3,10 +3,15 @@ import Link from "next/link";
 import { SectionTitle } from "@/components/ui/Card";
 import { BLOG_POSTS } from "@/lib/blogPosts";
 
+const TITLE = "Blog | GetBackSOL";
+const DESCRIPTION =
+  "Guides and explainers on Solana rent, dormant token accounts, and reclaiming locked SOL — written to actually answer the question, not just rank for it.";
+
 export const metadata: Metadata = {
-  title: "Blog | GetBackSOL",
-  description:
-    "Guides and explainers on Solana rent, dormant token accounts, and reclaiming locked SOL — written to actually answer the question, not just rank for it.",
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: { title: TITLE, description: DESCRIPTION, url: "/blog" },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 
 export default function BlogIndexPage() {

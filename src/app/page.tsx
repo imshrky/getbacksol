@@ -128,6 +128,16 @@ const FAQ_ITEMS = [
   },
 ];
 
+const FAQ_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_ITEMS.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
+
 export default function HomePage() {
   const { connected, publicKey, wallets } = useWallet();
   const { setVisible: setWalletModalVisible } = useWalletModal();
@@ -614,6 +624,10 @@ export default function HomePage() {
 
       {/* FAQ */}
       <section id="faq" className="scroll-mt-24">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }}
+        />
         <SectionTitle index="04" eyebrow="FAQ" title="Questions you might have" />
         <div className="mx-auto max-w-2xl">
           <Faq items={FAQ_ITEMS} />
