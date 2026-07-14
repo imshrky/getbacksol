@@ -122,11 +122,8 @@ dès la connexion avec le lien `getbacksol.com/?ref=<adresse>` et les gains cumu
 est gagnée — jamais à la connexion elle-même, pour ne pas remplir la table de lignes vides. Même
 taux de 30 % que les partenaires API. `/api/affiliate/stats` renvoie les gains cumulés d'une
 adresse, en lecture publique (pas d'auth nécessaire, une adresse de wallet n'est pas un secret).
-Un classement public (`AffiliateLeaderboard.tsx`, `/api/affiliate/leaderboard`) existe déjà, scopé
-à `kind = 'wallet'` uniquement, mais **n'est volontairement pas affiché sur `page.tsx`** — retiré
-à la demande du produit tant qu'il n'y a pas au moins une dizaine d'affiliés réels (pas de valeur
-de preuve sociale avec une poignée de lignes). Le composant/hook/route restent en place, prêts à
-être ré-affichés (une seule ligne à rajouter dans `page.tsx`) une fois qu'il y a assez de volume.
+L'ancien classement top-5 par gains cumulés (`AffiliateLeaderboard.tsx`) a été retiré et remplacé
+par le Weekly XP Leaderboard décrit plus bas — voir cette section pour le classement actuel.
 
 **Historique public des reclaims (`ReclaimHistory.tsx`, `/api/reclaims/history`)** affiché sous la
 bannière d'affiliation quand un wallet est connecté. Enregistre **toute** transaction de reclaim
@@ -137,6 +134,29 @@ transaction confirmée (`connection.getTransaction`) plutôt que recalculé, car
 le solde réel du compte au moment de l'exécution, une valeur qui n'est pas encodée dans
 l'instruction elle-même. Chaque ligne pointe vers Solscan pour vérification indépendante — même
 logique de transparence que "Verify the code yourself on GitHub".
+
+**Weekly XP Leaderboard (`WeeklyLeaderboard.tsx`, section "Leaderboard" sur `page.tsx`, avant le
+Roadmap)** remplace l'ancien classement d'affiliation (`AffiliateLeaderboard.tsx` et
+`getAffiliateLeaderboard` dans `partners.ts` — supprimés, plus utilisés). Classement hebdomadaire
+(reset chaque lundi 00:00 UTC) combinant XP de fermeture de comptes (`reclaims`, 10 XP/compte) et
+XP de parrainage (`referrals`, 1 XP/parrainage) — calcul entièrement dérivé des données
+existantes, pas de nouvelle table de score (voir `src/lib/leaderboard.ts`). Le "prize pool" affiché
+est **réel** : 10 % (`PRIZE_POOL_SHARE`) des frais de plateforme réellement collectés cette
+semaine (`reclaims.fee_lamports`, nouvelle colonne remplie dans `/api/relay-close` à partir du
+`feeLamports` déjà validé — jamais recalculé), split 50/30/20 entre le top 3 en fin de semaine
+(`/api/leaderboard/weekly` pour l'affichage public, en direct).
+
+**Paiement réel mais volontairement manuel, jamais automatique.** Le serveur ne détient pas la
+clé privée de `FEE_WALLET` (juste son adresse, voir `feeWallet.ts`) — cohérent avec la migration
+multisig déjà prévue, à laquelle un nouveau hot wallet de paiement automatique aurait justement
+nui. À la place : `/admin/leaderboard` (non listée dans le nav, `noindex`) affiche le paiement dû
+de la semaine précédente ; quiconque détient la clé de `FEE_WALLET` connecte son wallet, l'app
+construit une transaction avec 3 instructions `SystemProgram.transfer` vers le top 3, et
+**c'est lui qui signe** — exactement comme n'importe quelle transaction Reclaim. `/api/leaderboard/payout`
+(POST) ne fait jamais confiance à un montant envoyé par le client : après confirmation on-chain,
+il relit les vrais deltas de solde de la transaction (même pattern que `recordReclaim`) et ne
+valide/enregistre le paiement dans `weekly_payouts` que si la source est bien `FEE_WALLET` et que
+chaque gagnant a reçu exactement le montant attendu, recalculé côté serveur.
 
 ## Priorité de travail — la suite
 
@@ -205,12 +225,23 @@ configuration du Portal/listing, rien à câbler dans le code pour l'instant.
 - `src/components/ui/AffiliateBanner.tsx` — affichée quand un wallet est connecté (`page.tsx`),
   montre le lien de parrainage personnel + gains cumulés via `useAffiliateStats.ts`.
 - `src/app/api/affiliate/stats/route.ts` — lecture publique des gains d'affiliation d'une adresse.
-- `src/components/ui/AffiliateLeaderboard.tsx` — top 5 wallets affiliés par gains cumulés, via
-  `useAffiliateLeaderboard.ts` / `/api/affiliate/leaderboard` (`getAffiliateLeaderboard` dans
-  `partners.ts`, filtré sur `kind = 'wallet'`).
 - `src/lib/reclaims.ts` — écrit/lit la table `reclaims` (historique public de toute transaction,
   pas juste celles avec parrainage). `recordReclaim` appelé depuis `/api/relay-close` après
-  confirmation ; `getReclaimHistory` sert `/api/reclaims/history`.
+  confirmation (avec `feeLamports`, utilisé par le Weekly Leaderboard) ; `getReclaimHistory` sert
+  `/api/reclaims/history`.
+- `src/lib/leaderboard.ts` — calcul du classement hebdomadaire (XP fermeture + parrainage) et du
+  prize pool (part réelle des frais collectés cette semaine), fenêtres de semaine (lundi 00:00
+  UTC), et les fonctions de paiement (`getPendingPayout`, `recordWeeklyPayout`).
+- `src/app/api/leaderboard/weekly/route.ts` — classement public en direct pour la semaine en
+  cours ; `src/app/api/leaderboard/payout/route.ts` — GET renvoie le paiement dû de la semaine
+  précédente, POST vérifie une signature on-chain avant d'enregistrer le paiement (jamais de
+  montant fourni par le client).
+- `src/components/ui/WeeklyLeaderboard.tsx` — affichage public (section "Leaderboard" sur
+  `page.tsx`), via `useWeeklyLeaderboard.ts`.
+- `src/app/admin/leaderboard/page.tsx` (+ `layout.tsx` pour le `noindex`) — page non listée dans
+  le nav où quiconque détient la clé `FEE_WALLET` connecte son wallet et signe lui-même le
+  paiement des 3 gagnants de la semaine précédente. Voir la section dédiée plus haut pour le
+  raisonnement (pas de nouvelle clé chaude sur le serveur).
 - `src/components/ui/ReclaimHistory.tsx` — affichée sous `AffiliateBanner` (`page.tsx`), liste les
   reclaims récents avec lien Solscan par ligne.
 - `src/app/opengraph-image.tsx` — image OG dynamique (`next/og` `ImageResponse`), générée à la

@@ -242,7 +242,7 @@ export async function POST(req: NextRequest) {
         const netLamports =
           BigInt(details.meta.postBalances[ownerIndex]) - BigInt(details.meta.preBalances[ownerIndex]);
         if (netLamports > 0n) {
-          await recordReclaim(ownerPubkey.toBase58(), signature, accountsClosedForOwner, netLamports);
+          await recordReclaim(ownerPubkey.toBase58(), signature, accountsClosedForOwner, netLamports, feeLamports);
         }
       }
     } catch {

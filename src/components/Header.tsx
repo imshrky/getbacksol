@@ -18,14 +18,15 @@ const WalletMultiButtonDynamic = dynamic(
 // another route (e.g. /blog) instead of trying to scroll to an id that only
 // exists on the homepage.
 // Order matches the actual scroll order of the sections on the homepage
-// (reclaim -> how-it-works -> security -> faq -> roadmap), not alphabetical
-// or historical order — so the nav reads left-to-right the same way the
-// page reads top-to-bottom.
+// (reclaim -> how-it-works -> security -> faq -> weekly-leaderboard ->
+// roadmap), not alphabetical or historical order — so the nav reads
+// left-to-right the same way the page reads top-to-bottom.
 const NAV_LINKS = [
   { href: "/#reclaim", section: "reclaim", label: "Reclaim SOL" },
   { href: "/#how-it-works", section: "how-it-works", label: "How it works" },
   { href: "/#security", section: "security", label: "Security" },
   { href: "/#faq", section: "faq", label: "FAQ" },
+  { href: "/#weekly-leaderboard", section: "weekly-leaderboard", label: "Leaderboard" },
   { href: "/#roadmap", section: "roadmap", label: "Roadmap" },
   { href: "/blog", section: null, label: "Blog" },
   { href: "/partners", section: null, label: "Partners" },

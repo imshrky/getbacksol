@@ -179,32 +179,6 @@ export async function getAffiliateStats(walletAddress: string): Promise<Affiliat
   };
 }
 
-export type LeaderboardEntry = { walletAddress: string; referralCount: number; totalEarnedLamports: string };
-
-/**
- * Top wallet affiliates by total earned — public, since a wallet address
- * isn't a secret and this is meant to be shown on the site as a perk/
- * incentive. Scoped to `kind = 'wallet'` only: registered API partners
- * (kind = 'partner') are a different, business-facing program and don't
- * belong in a casual leaderboard they didn't sign up expecting to be in.
- */
-export async function getAffiliateLeaderboard(limit = 5): Promise<LeaderboardEntry[]> {
-  const rows = await getSql()`
-    SELECT r.partner_id AS wallet_address, count(*)::int AS count, sum(r.partner_share_lamports) AS total
-    FROM referrals r
-    JOIN partners p ON p.id = r.partner_id
-    WHERE p.kind = 'wallet'
-    GROUP BY r.partner_id
-    ORDER BY total DESC
-    LIMIT ${limit}
-  `;
-  return rows.map((row) => ({
-    walletAddress: row.wallet_address,
-    referralCount: row.count,
-    totalEarnedLamports: String(row.total),
-  }));
-}
-
 /**
  * Records a partner's cut of a real, already-confirmed reclaim transaction.
  * `grossFeeLamports` must come from re-reading the validated transfer

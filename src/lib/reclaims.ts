@@ -14,18 +14,22 @@ export type ReclaimHistoryEntry = {
  * unlike the `referrals` ledger which only tracks partner-attributed
  * fees. Purely a public activity feed (see getReclaimHistory); best-effort
  * only, called after the real transaction has already confirmed, so a
- * failure here must never surface as an error to the user.
+ * failure here must never surface as an error to the user. `feeLamports`
+ * is the platform fee already validated in /api/relay-close (never
+ * recomputed here) — it feeds the weekly leaderboard prize pool (see
+ * src/lib/leaderboard.ts), not just this activity feed.
  */
 export async function recordReclaim(
   wallet: string,
   txSignature: string,
   accountsClosed: number,
-  netLamports: bigint
+  netLamports: bigint,
+  feeLamports: bigint
 ): Promise<void> {
   try {
     await getSql()`
-      INSERT INTO reclaims (wallet, tx_signature, accounts_closed, net_lamports)
-      VALUES (${wallet}, ${txSignature}, ${accountsClosed}, ${netLamports.toString()})
+      INSERT INTO reclaims (wallet, tx_signature, accounts_closed, net_lamports, fee_lamports)
+      VALUES (${wallet}, ${txSignature}, ${accountsClosed}, ${netLamports.toString()}, ${feeLamports.toString()})
     `;
   } catch (e) {
     const err = e as { code?: string };

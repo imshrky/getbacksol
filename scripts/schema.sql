@@ -54,3 +54,29 @@ CREATE TABLE IF NOT EXISTS reclaims (
 );
 
 CREATE INDEX IF NOT EXISTS reclaims_created_at_idx ON reclaims (created_at DESC);
+
+-- Platform fee actually collected in this reclaim (already computed and
+-- validated in /api/relay-close at record time) — needed to size the weekly
+-- leaderboard prize pool, which is a share of real fee revenue, not a
+-- made-up number. Defaults to 0 for rows recorded before this column
+-- existed; those weeks are simply excluded from historical pool totals.
+ALTER TABLE reclaims ADD COLUMN IF NOT EXISTS fee_lamports BIGINT NOT NULL DEFAULT 0;
+
+-- One row per (week, rank) once a weekly leaderboard prize is actually paid
+-- out — see src/lib/leaderboard.ts. Payouts are signed manually by whoever
+-- holds the FEE_WALLET key (the app never holds that private key, see
+-- feeWallet.ts), so this table only ever records payouts that already
+-- happened on-chain; a row here is proof, not a promise.
+CREATE TABLE IF NOT EXISTS weekly_payouts (
+  id BIGSERIAL PRIMARY KEY,
+  week_start DATE NOT NULL,
+  rank INT NOT NULL,
+  wallet TEXT NOT NULL,
+  xp NUMERIC NOT NULL,
+  amount_lamports BIGINT NOT NULL,
+  tx_signature TEXT NOT NULL,
+  paid_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (week_start, rank)
+);
+
+CREATE INDEX IF NOT EXISTS weekly_payouts_week_start_idx ON weekly_payouts (week_start);

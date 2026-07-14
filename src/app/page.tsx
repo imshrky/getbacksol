@@ -25,6 +25,7 @@ import { Faq } from "@/components/ui/Faq";
 import { ImpactStats } from "@/components/ui/ImpactStats";
 import { AffiliateBanner } from "@/components/ui/AffiliateBanner";
 import { ReclaimHistory } from "@/components/ui/ReclaimHistory";
+import { WeeklyLeaderboard } from "@/components/ui/WeeklyLeaderboard";
 import { useRentAccounts } from "@/lib/useRentAccounts";
 import { useReclaimRent } from "@/lib/useReclaimRent";
 import { usePortfolio } from "@/lib/usePortfolio";
@@ -665,11 +666,25 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Weekly leaderboard */}
+      <section id="weekly-leaderboard" className="scroll-mt-24 pt-16 sm:pt-20">
+        <SectionTitle
+          level="h2"
+          index="05"
+          eyebrow="Leaderboard"
+          title="Compete for the weekly prize pool"
+          description="Ranked by XP from closing accounts and referrals. Real SOL, split between the top 3 every week."
+        />
+        <div className="mx-auto max-w-2xl">
+          <WeeklyLeaderboard currentWallet={publicKey?.toBase58()} />
+        </div>
+      </section>
+
       {/* Roadmap */}
       <section id="roadmap" className="scroll-mt-24 pt-16 sm:pt-20">
         <SectionTitle
           level="h2"
-          index="05"
+          index="06"
           eyebrow="Roadmap"
           title="Where GetBackSOL is headed"
           description="What's already shipped, what we're building right now, and what's next."
