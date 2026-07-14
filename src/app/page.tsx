@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   PartyPopper,
   Flame,
+  CheckCircle2,
 } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
@@ -138,19 +139,16 @@ const FAQ_SCHEMA = {
   })),
 };
 
+const SHIPPED_ACHIEVEMENTS = [
+  { date: "Jul 2026", text: "Reclaim Rent live on Solana mainnet" },
+  { date: "Jul 2026", text: "Safe-Burn: close dust accounts automatically" },
+  { date: "Jul 2026", text: "Sell dust for SOL via Jupiter" },
+  { date: "Jul 2026", text: "Self-service Partner Program" },
+  { date: "Jul 2026", text: "Automatic wallet affiliate program" },
+  { date: "Jul 2026", text: "External security audit passed" },
+];
+
 const ROADMAP_COLUMNS = [
-  {
-    status: "Shipped",
-    dotClassName: "bg-emerald-500",
-    items: [
-      { date: "Jul 2026", text: "Reclaim Rent live on Solana mainnet" },
-      { date: "Jul 2026", text: "Safe-Burn: close dust accounts automatically" },
-      { date: "Jul 2026", text: "Sell dust for SOL via Jupiter, as an alternative to burning" },
-      { date: "Jul 2026", text: "Self-service Partner Program with revenue share" },
-      { date: "Jul 2026", text: "Automatic wallet affiliate program (30% commission)" },
-      { date: "Jul 2026", text: "External security audit passed" },
-    ],
-  },
   {
     status: "In progress",
     dotClassName: "bg-[var(--accent)]",
@@ -676,7 +674,27 @@ export default function HomePage() {
           title="Where GetBackSOL is headed"
           description="What's already shipped, what we're building right now, and what's next."
         />
-        <div className="grid gap-4 sm:grid-cols-3">
+
+        <span className="eyebrow mb-4">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          Shipped
+        </span>
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {SHIPPED_ACHIEVEMENTS.map((item) => (
+            <div
+              key={item.text}
+              className="flex flex-col gap-2 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] p-3"
+            >
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <span className="text-xs font-medium tracking-wide text-[var(--muted)]">
+                {item.date}
+              </span>
+              <span className="text-sm leading-snug">{item.text}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
           {ROADMAP_COLUMNS.map((column) => (
             <Card key={column.status} className="text-left">
               <span className="eyebrow mb-4">
