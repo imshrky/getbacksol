@@ -311,6 +311,34 @@ elle n'a pas résolu ce cas précis.
   leaderboard}/layout.tsx` — même pattern que `partners/layout.tsx`, un par outil simulé encore en
   Client Component, chacun avec son propre `title`/`description`/`alternates.canonical`.
 
+## Automatisation réseaux sociaux
+
+**X/Twitter (`src/lib/xClient.ts`, `src/app/api/cron/scheduled-post`, `src/app/api/cron/auto-reply`,
+`vercel.json`)** : deux cron jobs Vercel. `scheduled-post` publie un message tous les 2 jours
+depuis un pool statique tournant (`src/lib/scheduledPosts.ts`), rotation dérivée de la date
+(stateless, pas de DB). `auto-reply` cherche des tweets récents sur des mots-clés liés à Solana
+rent et répond à quelques-uns par jour (`src/lib/replyTemplates.ts`), sans jamais inclure de lien
+dans la réponse (X facture plus cher un post avec lien). Auth OAuth 1.0a (`X_API_KEY`,
+`X_API_KEY_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`, `X_BEARER_TOKEN`) — **l'API X est
+payante par requête**, contrairement à Telegram ci-dessous. Les deux routes sont protégées par
+`CRON_SECRET` (envoyé automatiquement par Vercel en Bearer token sur les invocations planifiées).
+
+**Telegram (`src/lib/telegramClient.ts`, `src/lib/telegramPosts.ts`,
+`src/app/api/cron/telegram-post`)** : même principe que `scheduled-post` (rotation stateless
+dérivée de la date, protégé par le même `CRON_SECRET`), mais un poste par jour au lieu de tous les
+2 jours car **l'API Telegram Bot est entièrement gratuite**, aucun coût par message contrairement à
+X. Le pool de messages (`src/lib/telegramPosts.ts`) est écrit pour une audience déjà abonnée au
+canal (rappels/fonctionnalités, pas des pitchs "viens nous découvrir"). Un message sur 3 est
+généré dynamiquement (`prizePoolPost`) en allant chercher le vrai montant du prize pool
+hebdomadaire en cours via `getWeeklyPrizePoolLamports` (`leaderboard.ts`) plutôt qu'un texte figé.
+
+Variables d'environnement nécessaires : `TELEGRAM_BOT_TOKEN` (créé via @BotFather sur Telegram) et
+`TELEGRAM_CHAT_ID` (le canal `@GetBackSOL`, avec le bot ajouté comme administrateur — sinon
+`sendMessage` échoue). Configuration à faire manuellement par l'utilisateur (nécessite d'interagir
+avec @BotFather et les paramètres d'admin du canal) — pas quelque chose que Claude peut faire à sa
+place. Non encore testé en conditions réelles (pas de bot Telegram configuré au moment du build) ;
+vérifié uniquement par build de production + garde d'authentification (401 sans le bon secret).
+
 ## Conventions de code
 
 - Composants de page en `"use client"`, logique de simulation via le hook `useSimulatedTx` pour
