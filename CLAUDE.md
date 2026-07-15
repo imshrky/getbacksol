@@ -260,6 +260,9 @@ elle n'a pas résolu ce cas précis.
 - `src/lib/feeWallet.ts` — adresse du wallet qui reçoit la commission de 15 % (pilotée par
   `NEXT_PUBLIC_FEE_WALLET_ADDRESS`, actuellement une clé unique). À migrer vers un multisig Squads
   — on est déjà en mainnet avec cette clé simple, c'est du vrai risque, pas juste une best practice.
+  Cette variable a été configurée explicitement sur Vercel le 2026-07-15 (`6mBmVBchk7UnW1FdfN3bm6KKTV376UxuZ3je7sEzjpd1`,
+  le wallet Phantom de l'utilisateur) — avant ça, la prod reposait silencieusement sur le fallback
+  codé en dur dans le fichier, qui avait la même valeur par coïncidence.
 - `src/lib/useSimulatedTx.ts` — toujours utilisé par les 7 autres outils (pas Reclaim Rent).
 - `src/app/providers.tsx` — réseau et endpoint RPC lus depuis `NEXT_PUBLIC_SOLANA_NETWORK` /
   `NEXT_PUBLIC_SOLANA_RPC_URL`, fallback sur devnet + RPC public si absents. Ces variables sont
