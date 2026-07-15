@@ -80,3 +80,14 @@ CREATE TABLE IF NOT EXISTS weekly_payouts (
 );
 
 CREATE INDEX IF NOT EXISTS weekly_payouts_week_start_idx ON weekly_payouts (week_start);
+
+-- Per-partner-per-minute request counter for /api/v1/scan (see
+-- src/lib/rateLimit.ts) — a fixed-window counter rather than a per-request
+-- log, so this stays cheap even under real load. Self-prunes old windows
+-- opportunistically instead of needing a separate cron job.
+CREATE TABLE IF NOT EXISTS api_rate_limits (
+  partner_id TEXT NOT NULL,
+  window_start TIMESTAMPTZ NOT NULL,
+  count INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (partner_id, window_start)
+);

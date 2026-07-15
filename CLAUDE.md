@@ -174,14 +174,24 @@ chaque gagnant a reçu exactement le montant attendu, recalculé côté serveur.
 ## Priorité de travail — la suite
 
 Reclaim Rent est live sur mainnet, Safe-Burn et Sell sont câblés, le programme partenaire est en
-ligne, l'audit de sécurité externe est passé. Prochaines étapes, dans l'ordre :
+ligne, l'audit de sécurité externe est passé, le rate limiting sur l'API partenaire est câblé.
+Prochaine étape :
 
 1. **Multisig Squads pour le wallet de frais** : actuellement une clé unique — à migrer vers un
    multisig avant que le volume de frais collectés devienne significatif (voir
-   `docs/backend-architecture.md`).
-2. **Rate limiting sur `/api/v1/scan`** : maintenant que les clés partenaire sont self-service
-   (voir `/partners`), une clé pourrait marteler l'endpoint sans limite — pas encore de
-   protection au-delà du plafond d'inscription par IP.
+   `docs/backend-architecture.md`). **Surtout une tâche opérationnelle, pas de code** : le code
+   lit déjà `NEXT_PUBLIC_FEE_WALLET_ADDRESS` comme une simple variable d'environnement
+   (`feeWallet.ts`), donc une fois le multisig créé sur squads.so (choix des signataires/seuil) et
+   les fonds transférés depuis l'ancien wallet, il suffit de changer cette variable sur Vercel —
+   aucune modification de code nécessaire. Ce que Claude ne peut pas faire à la place de
+   l'utilisateur : créer le multisig (nécessite de connecter un wallet sur squads.so) ni transférer
+   les fonds existants (mouvement d'argent réel, doit être signé par le détenteur de la clé
+   actuelle de `FEE_WALLET`).
+
+**Rate limiting sur `/api/v1/scan` (fait)** : compteur par partenaire et par fenêtre d'une minute
+(`src/lib/rateLimit.ts`, table `api_rate_limits`), 30 requêtes/minute — généreux pour une vraie UI
+partenaire, mais borne l'abus d'une clé self-service non modérée. Auto-nettoyage opportuniste
+(~1% des appels) plutôt qu'un cron dédié, pour ne pas faire grossir la table indéfiniment.
 
 Ne pas commencer par Token Creator (`/token-creator`), Swap ou Liquidity — c'est un choix
 délibéré, pas un oubli.
@@ -257,7 +267,8 @@ elle n'a pas résolu ce cas précis.
   seule fois à la création (jamais récupérable ensuite, seul son hash SHA-256 est stocké).
 - `src/app/api/partners/signup/route.ts` — endpoint d'inscription self-service (POST), protégé
   par un plafond quotidien par IP stocké en base (pas de CAPTCHA pour l'instant).
-- `src/app/api/v1/scan/route.ts` — scan en lecture seule pour les partenaires (`X-API-Key`).
+- `src/app/api/v1/scan/route.ts` — scan en lecture seule pour les partenaires (`X-API-Key`), limité
+  à 30 requêtes/minute par partenaire via `checkScanRateLimit` (`src/lib/rateLimit.ts`).
 - `src/app/api/relay-close/route.ts` — relais gasless ; accepte un `partnerId` optionnel
   (attribution uniquement, ne change jamais la liste blanche d'instructions autorisées) et
   enregistre la commission après confirmation de la transaction. Autorise aussi le programme

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey, clusterApiUrl, type Cluster } from "@solana/web3.js";
 import { scanWalletForRentAccounts } from "@/lib/scanWallet";
 import { resolvePartnerByApiKey } from "@/lib/partners";
+import { checkScanRateLimit } from "@/lib/rateLimit";
 import { RECLAIM_FEE_RATE } from "@/lib/mockTokens";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
@@ -18,13 +19,20 @@ const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
  * /api/relay-close) once a referred transaction actually confirms.
  *
  * Auth: X-API-Key header, resolved against the partners table (see
- * partners.ts). Partners self-provision a key at /partners.
+ * partners.ts). Partners self-provision a key at /partners — no manual
+ * review — so every key is also rate limited (see rateLimit.ts) to bound
+ * how hard a single key can hit this endpoint.
  */
 export async function GET(req: NextRequest) {
   const apiKey = req.headers.get("x-api-key");
   const partner = await resolvePartnerByApiKey(apiKey);
   if (!partner) {
     return NextResponse.json({ error: "Invalid or missing X-API-Key." }, { status: 401 });
+  }
+
+  const withinLimit = await checkScanRateLimit(partner.id);
+  if (!withinLimit) {
+    return NextResponse.json({ error: "Rate limit exceeded. Try again in a minute." }, { status: 429 });
   }
 
   const walletParam = req.nextUrl.searchParams.get("wallet");

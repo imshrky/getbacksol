@@ -147,6 +147,7 @@ const SHIPPED_ACHIEVEMENTS = [
   { date: "Jul 2026", text: "Self-service Partner Program" },
   { date: "Jul 2026", text: "Automatic wallet affiliate program" },
   { date: "Jul 2026", text: "External security audit passed" },
+  { date: "Jul 2026", text: "Rate limiting on the Partner API" },
 ];
 
 const ROADMAP_COLUMNS = [
@@ -155,7 +156,7 @@ const ROADMAP_COLUMNS = [
     dotClassName: "bg-[var(--accent)]",
     items: [
       { date: "Now", text: "Migrating the fee wallet to a Squads multisig" },
-      { date: "Now", text: "Rate limiting on the Partner API" },
+      { date: "Now", text: "Phantom dApp directory listing" },
     ],
   },
   {
