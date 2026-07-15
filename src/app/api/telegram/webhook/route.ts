@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey, clusterApiUrl, type Cluster } from "@solana/web3.js";
 import { scanWalletForRentAccounts } from "@/lib/scanWallet";
-import { sendTelegramMessage, answerCallbackQuery, type InlineKeyboard } from "@/lib/telegramClient";
+import {
+  sendTelegramMessage,
+  editTelegramMessage,
+  answerCallbackQuery,
+  type InlineKeyboard,
+} from "@/lib/telegramClient";
 import { RECLAIM_FEE_RATE } from "@/lib/mockTokens";
 import { FAQ_ITEMS } from "@/lib/faqContent";
 
@@ -83,15 +88,17 @@ export async function POST(req: NextRequest) {
   const callback = update?.callback_query;
   if (callback) {
     const chatId = callback.message?.chat?.id;
+    const messageId = callback.message?.message_id;
     try {
       await answerCallbackQuery(callback.id);
-      if (chatId) {
-        if (callback.data === "show_faq") await sendTelegramMessage(chatId, faqText(), BACK_KEYBOARD);
-        else if (callback.data === "show_help") await sendTelegramMessage(chatId, HELP_TEXT, BACK_KEYBOARD);
+      if (chatId && messageId) {
+        if (callback.data === "show_faq") await editTelegramMessage(chatId, messageId, faqText(), BACK_KEYBOARD);
+        else if (callback.data === "show_help")
+          await editTelegramMessage(chatId, messageId, HELP_TEXT, BACK_KEYBOARD);
         else if (callback.data === "prompt_check")
-          await sendTelegramMessage(chatId, CHECK_PROMPT_TEXT, BACK_KEYBOARD);
+          await editTelegramMessage(chatId, messageId, CHECK_PROMPT_TEXT, BACK_KEYBOARD);
         else if (callback.data === "back_to_menu")
-          await sendTelegramMessage(chatId, WELCOME_TEXT, MAIN_KEYBOARD);
+          await editTelegramMessage(chatId, messageId, WELCOME_TEXT, MAIN_KEYBOARD);
       }
     } catch {
       // best-effort

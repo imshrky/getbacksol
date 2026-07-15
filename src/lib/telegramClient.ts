@@ -42,6 +42,27 @@ export async function sendTelegramMessage(
   return { messageId: json?.result?.message_id };
 }
 
+/**
+ * Edits an existing message's text (and optionally its inline keyboard) in
+ * place, instead of sending a new one — used for button-driven navigation
+ * (see the webhook's callback_query handling) so tapping Back/FAQ/Help
+ * updates the same message rather than piling up a new one per tap.
+ */
+export async function editTelegramMessage(
+  chatId: string | number,
+  messageId: number,
+  text: string,
+  inlineKeyboard?: InlineKeyboard
+): Promise<void> {
+  await callTelegram("editMessageText", {
+    chat_id: chatId,
+    message_id: messageId,
+    text,
+    disable_web_page_preview: false,
+    ...(inlineKeyboard ? { reply_markup: { inline_keyboard: inlineKeyboard } } : {}),
+  });
+}
+
 /** Posts to the GetBackSOL channel specifically (see /api/cron/telegram-post). */
 export async function postToTelegram(text: string): Promise<{ messageId: number }> {
   const chatId = process.env.TELEGRAM_CHAT_ID;
