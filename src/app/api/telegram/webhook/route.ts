@@ -50,14 +50,30 @@ async function checkWallet(walletParam: string): Promise<string> {
 
   try {
     const { accounts, dustAccounts } = await scanWalletForRentAccounts(connection, wallet);
-    if (accounts.length === 0) {
-      return dustAccounts.length > 0
-        ? `No closable accounts right now, but ${dustAccounts.length} account(s) have leftover dust that needs Safe-Burn first — turn that on at ${SITE_URL} to unlock them.`
-        : "No closable token accounts found for that wallet right now — check back after your next trade.";
+
+    if (accounts.length === 0 && dustAccounts.length === 0) {
+      return "No token accounts found for that wallet right now — check back after your next trade.";
     }
-    const gross = accounts.reduce((sum, a) => sum + a.reclaimable, 0);
-    const net = gross * (1 - RECLAIM_FEE_RATE);
-    return `${accounts.length} account${accounts.length === 1 ? "" : "s"} can be closed right now — ~${net.toFixed(6)} SOL reclaimable after the 15% fee.\n\nReclaim it: ${SITE_URL}`;
+
+    // "Potential" always means the full picture: what's closable right now,
+    // plus what dust accounts would add if burned first (Safe-Burn does
+    // this automatically on the site) — not just the immediately-closable
+    // subset, which understates how much is actually recoverable.
+    const closableGross = accounts.reduce((sum, a) => sum + a.reclaimable, 0);
+    const closableNet = closableGross * (1 - RECLAIM_FEE_RATE);
+    const dustGross = dustAccounts.reduce((sum, a) => sum + a.reclaimable, 0);
+    const totalNet = (closableGross + dustGross) * (1 - RECLAIM_FEE_RATE);
+
+    if (accounts.length === 0) {
+      return `No accounts are closable right now, but ${dustAccounts.length} account${dustAccounts.length === 1 ? "" : "s"} hold leftover dust — ~${totalNet.toFixed(6)} SOL potentially reclaimable if you burn them first (Safe-Burn does this automatically).\n\nUnlock it: ${SITE_URL}`;
+    }
+
+    let reply = `${accounts.length} account${accounts.length === 1 ? "" : "s"} can be closed right now — ~${closableNet.toFixed(6)} SOL reclaimable after the 15% fee.`;
+    if (dustAccounts.length > 0) {
+      reply += ` With Safe-Burn on for the ${dustAccounts.length} dust account${dustAccounts.length === 1 ? "" : "s"} too, the total potential is ~${totalNet.toFixed(6)} SOL.`;
+    }
+    reply += `\n\nReclaim it: ${SITE_URL}`;
+    return reply;
   } catch {
     return "Couldn't scan that wallet right now — try again in a moment.";
   }
