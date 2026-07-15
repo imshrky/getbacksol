@@ -54,3 +54,30 @@ export async function getReclaimHistory(limit = 20): Promise<ReclaimHistoryEntry
     createdAt: new Date(row.created_at).toISOString(),
   }));
 }
+
+export type PlatformStats = {
+  totalNetLamports: string;
+  totalAccountsClosed: number;
+  uniqueWallets: number;
+};
+
+/**
+ * All-time real totals across every reclaim ever recorded — powers the
+ * homepage's ImpactStats and the Telegram milestone post (see
+ * telegramPosts.ts). Never a placeholder: genuinely 0 until the first real
+ * reclaim lands, exactly like the number it replaced.
+ */
+export async function getPlatformStats(): Promise<PlatformStats> {
+  const rows = await getSql()`
+    SELECT
+      coalesce(sum(net_lamports), 0) AS total_net,
+      coalesce(sum(accounts_closed), 0)::int AS total_accounts,
+      count(distinct wallet)::int AS unique_wallets
+    FROM reclaims
+  `;
+  return {
+    totalNetLamports: String(rows[0]?.total_net ?? 0),
+    totalAccountsClosed: rows[0]?.total_accounts ?? 0,
+    uniqueWallets: rows[0]?.unique_wallets ?? 0,
+  };
+}

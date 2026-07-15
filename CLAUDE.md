@@ -331,6 +331,18 @@ X. Le pool de messages (`src/lib/telegramPosts.ts`) est écrit pour une audience
 canal (rappels/fonctionnalités, pas des pitchs "viens nous découvrir"). Un message sur 3 est
 généré dynamiquement (`prizePoolPost`) en allant chercher le vrai montant du prize pool
 hebdomadaire en cours via `getWeeklyPrizePoolLamports` (`leaderboard.ts`) plutôt qu'un texte figé.
+Une fois par semaine (`milestonePost`), un message "où on en est" avec les vrais totaux
+all-time (SOL récupéré, comptes fermés, wallets servis) via `getPlatformStats` (`reclaims.ts`) —
+inspiré du type de post le plus efficace chez les concurrents (RefundYourSOL), mais construit
+depuis la vraie base plutôt que tapé à la main.
+
+**`ImpactStats.tsx` (bandeau "reclaimed so far" sur la page d'accueil) branché sur les vraies
+données.** Remplace l'ancien `src/lib/stats.ts` (constante `PLATFORM_STATS` figée à zéro,
+supprimé) — désormais `usePlatformStats.ts` récupère `/api/stats/platform`, qui appelle
+`getPlatformStats()` (`reclaims.ts`, mêmes totaux all-time que le post milestone Telegram
+ci-dessus). N'affiche toujours rien tant qu'il n'y a aucune activité réelle, même logique
+qu'avant, juste avec de vraies données au lieu d'un placeholder qui ne se mettait jamais à jour
+tout seul.
 
 Variables d'environnement nécessaires : `TELEGRAM_BOT_TOKEN` (créé via @BotFather sur Telegram) et
 `TELEGRAM_CHAT_ID` (le canal `@GetBackSOL`, avec le bot ajouté comme administrateur — sinon
