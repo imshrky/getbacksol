@@ -121,6 +121,7 @@ const SHIPPED_ACHIEVEMENTS = [
   { date: "Jul 2026", text: "Automatic wallet affiliate program" },
   { date: "Jul 2026", text: "External security audit passed" },
   { date: "Jul 2026", text: "Rate limiting on the Partner API" },
+  { date: "Jul 2026", text: "Interactive Telegram bot — wallet checks, FAQ, menu" },
 ];
 
 const ROADMAP_COLUMNS = [
