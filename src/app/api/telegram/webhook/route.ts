@@ -30,7 +30,7 @@ const WELCOME_TEXT =
 const HELP_TEXT =
   "Here's what I can do:\n\n/check <wallet address> — see how much SOL a wallet can reclaim, no wallet connection needed\n/scan — link to the full app to actually connect a wallet and reclaim\n/faq — frequently asked questions\n\nEverything here is read-only and non-custodial — I never ask for a private key or seed phrase, and neither does the website.";
 
-const CHECK_PROMPT_TEXT = "Send /check <wallet address> — for example:\n/check 6mBmVBchk7UnW1FdfN3bm6KKTV376UxuZ3je7sEzjpd1";
+const CHECK_PROMPT_TEXT = "Send /check <wallet address> to see how much SOL it can reclaim.";
 
 function faqText(): string {
   const body = FAQ_ITEMS.map((item) => `❓ ${item.q}\n${item.a}`).join("\n\n");
