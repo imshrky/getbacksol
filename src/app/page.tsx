@@ -157,6 +157,7 @@ const ROADMAP_COLUMNS = [
     items: [
       { date: "Now", text: "Migrating the fee wallet to a Squads multisig" },
       { date: "Now", text: "Phantom dApp directory listing" },
+      { date: "Now", text: "Telegram trading bot with live price alerts" },
     ],
   },
   {
