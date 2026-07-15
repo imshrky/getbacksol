@@ -348,8 +348,20 @@ Variables d'environnement nécessaires : `TELEGRAM_BOT_TOKEN` (créé via @BotFa
 `TELEGRAM_CHAT_ID` (le canal `@GetBackSOL`, avec le bot ajouté comme administrateur — sinon
 `sendMessage` échoue). Configuration à faire manuellement par l'utilisateur (nécessite d'interagir
 avec @BotFather et les paramètres d'admin du canal) — pas quelque chose que Claude peut faire à sa
-place. Non encore testé en conditions réelles (pas de bot Telegram configuré au moment du build) ;
-vérifié uniquement par build de production + garde d'authentification (401 sans le bon secret).
+place. **Confirmé fonctionnel en conditions réelles** : bot vérifié (`getMe`), droits admin
+confirmés (`getChatMember`, `can_post_messages: true`), et un vrai message de test envoyé avec
+succès sur le canal.
+
+**Webhook Telegram (`src/app/api/telegram/webhook/route.ts`)** : le bot `@getbacksolbot` peut
+maintenant aussi répondre aux commandes, pas seulement pousser des posts programmés. `/start` (ou
+`/help`) envoie un message de bienvenue ; `/check <adresse wallet>` réutilise exactement la même
+logique de scan que l'API partenaire (`scanWalletForRentAccounts`, voir `/api/v1/scan`) pour
+répondre avec le montant réellement récupérable — sans connexion de wallet, juste une adresse
+publique. Protégé par le mécanisme `secret_token` de Telegram : `TELEGRAM_WEBHOOK_SECRET` (généré
+aléatoirement, pas fourni par l'utilisateur) doit être configuré à la fois sur Vercel et enregistré
+auprès de Telegram via `setWebhook` — sans ça, n'importe qui pourrait poster de fausses updates sur
+cette route. Hébergé sur le même projet Vercel (pas de serveur séparé) — choix explicite de
+l'utilisateur pour rester gratuit et ne pas ajouter un service à gérer.
 
 ## Conventions de code
 
