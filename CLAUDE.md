@@ -372,6 +372,19 @@ l'utilisateur pour rester gratuit et ne pas ajouter un service à gérer.
 - Chaque outil suit le même gabarit : `SectionTitle` avec un `index` numéroté, une `Card`
   centrale avec le formulaire, un `TxStatusBanner` pour le retour utilisateur.
 
+## Pages légales
+
+**`/terms`, `/privacy`, `/copyright`** — ajoutées suite à une demande directe, liées depuis une
+nouvelle ligne en bas du `Footer.tsx` (séparées par des `·`, `noindex` mais `follow`). Contenu
+rédigé à partir du fonctionnement réel du site (non-custodial, ce qui est collecté : adresses
+wallet, IP + email pour le programme partenaire, `localStorage`/`sessionStorage` pour le thème et
+l'attribution de parrainage — pas de cookies de tracking, pas d'analytics tiers) plutôt que du
+texte générique copié-collé. **Ce n'est pas une relecture juridique professionnelle** — vu que le
+site déplace du vrai argent, une vraie révision par un avocat reste recommandée avant de s'appuyer
+dessus en cas de litige réel. À maintenir à jour si les pratiques changent (nouvelle donnée
+collectée, nouveau tiers intégré), même logique que l'audit de sécurité et la roadmap plus haut
+dans ce fichier : un document légal qui ment sur ce que fait le site est pire que pas de document.
+
 ## Commandes utiles
 
 ```bash

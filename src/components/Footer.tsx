@@ -14,6 +14,12 @@ const LINKS = [
   { href: "https://github.com/imshrky/getbacksol", label: "Source code", icon: Code2 },
 ];
 
+const LEGAL_LINKS = [
+  { href: "/terms", label: "Terms of Service" },
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/copyright", label: "Copyright" },
+];
+
 export default function Footer() {
   return (
     <footer className="rule mt-10">
@@ -51,6 +57,22 @@ export default function Footer() {
         <div className="flex flex-col gap-2.5">
           <span className="eyebrow">Status</span>
           <RpcStatus />
+        </div>
+      </div>
+
+      <div className="rule">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-3 gap-y-2 px-4 py-5 sm:justify-start sm:px-6">
+          {LEGAL_LINKS.map((link, i) => (
+            <span key={link.href} className="flex items-center gap-3">
+              {i > 0 && <span className="text-[var(--border-strong)]">·</span>}
+              <Link
+                href={link.href}
+                className="text-xs text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+              >
+                {link.label}
+              </Link>
+            </span>
+          ))}
         </div>
       </div>
     </footer>
