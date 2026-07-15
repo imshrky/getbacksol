@@ -17,6 +17,7 @@ import {
   PartyPopper,
   Flame,
   CheckCircle2,
+  Rocket,
 } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
@@ -161,7 +162,6 @@ const ROADMAP_COLUMNS = [
     status: "Planned",
     dotClassName: "bg-[var(--border-strong)]",
     items: [
-      { date: "Q4 2026", text: "GetBackSOL token launch" },
       { date: "TBA", text: "Taking the remaining tools (Swap, Liquidity, Token Creator...) live on mainnet" },
     ],
   },
@@ -688,6 +688,17 @@ export default function HomePage() {
           title="Where GetBackSOL is headed"
           description="What's already shipped, what we're building right now, and what's next."
         />
+
+        <div className="mb-8 flex flex-col items-center gap-2 rounded-[10px] border border-[var(--accent)] bg-[var(--accent)]/10 px-5 py-5 text-center sm:flex-row sm:justify-between sm:text-left">
+          <span className="flex items-center gap-3">
+            <Rocket className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+            <span>
+              <span className="block text-base font-semibold">GetBackSOL token launch</span>
+              <span className="block text-sm text-[var(--muted)]">Mark your calendar — it's coming soon.</span>
+            </span>
+          </span>
+          <span className="text-2xl font-bold tracking-tight text-[var(--accent)]">Aug 1, 2026</span>
+        </div>
 
         <span className="eyebrow mb-4">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />

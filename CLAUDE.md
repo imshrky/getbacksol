@@ -80,13 +80,18 @@ hero passent `level="h2"`, toutes les autres pages (blog, support, partners, out
 `document.querySelectorAll('h1'|'h2')` dans le navigateur : un seul `h1`, hiérarchie `h1 > h2 >
 h3` correcte partout.
 
-**Section Roadmap (`page.tsx`, sous la FAQ, index "05")** : trois colonnes (Shipped / In
-progress / Planned) avec dates, dérivées de l'historique git réel et de la section "Priorité de
-travail" plus haut dans ce fichier — pas des dates inventées. Contient le lancement du token
-prévu en **Q4 2026** (seule date future annoncée publiquement pour l'instant). À tenir à jour
+**Section Roadmap (`page.tsx`, sous la FAQ, index "06")** : un bandeau mis en avant annonce le
+**lancement du token GetBackSOL le 1er août 2026** (accent rouge, au-dessus de "Shipped" —
+remplace l'ancienne mention "Q4 2026" qui était dans la liste "Planned"), puis trois colonnes
+(Shipped / In progress / Planned) avec dates, dérivées de l'historique git réel et de la section
+"Priorité de travail" plus haut dans ce fichier — pas des dates inventées. À tenir à jour
 manuellement à chaque jalon shippé (déplacer de "In progress"/"Planned" vers "Shipped" avec la
 vraie date), sinon la page finit par mentir sur l'état du projet — même logique que le statut de
 l'audit de sécurité plus haut dans ce fichier.
+
+**FAQ et Roadmap retirés de la navigation du header** (`Header.tsx`) à la demande explicite de
+l'utilisateur, pour désencombrer le menu — les deux sections existent toujours sur la page
+d'accueil (`id="faq"`, `id="roadmap"`), elles ne sont simplement plus liées depuis le nav.
 
 **Canonical URLs + meta keywords ajoutés suite à un second passage d'audit SEO** (item critique :
 "Missing canonical URL" sur toutes les pages). `alternates: { canonical: "..." }` ajouté sur
