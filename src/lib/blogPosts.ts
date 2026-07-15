@@ -344,6 +344,45 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
   },
+  {
+    slug: "closing-vs-burning-vs-selling-solana-dust",
+    title: "Closing vs burning vs selling dust on Solana: what's actually different",
+    description:
+      "Not every dormant token account is the same. Here's the real difference between closing an empty account, burning leftover dust, and selling it — and why the distinction changes how much SOL you actually get back.",
+    publishedAt: "2026-07-16",
+    readingTime: "4 min read",
+    content: [
+      {
+        type: "p",
+        text: "\"Reclaim your locked SOL\" sounds like one action, but a wallet full of old token accounts usually needs more than one. Some accounts are already empty and can be closed outright. Others still hold a balance — sometimes worthless, sometimes not — and closing those requires a decision first: burn it, or try to sell it. Most tools blur this into a single button. The distinction is worth understanding, because it changes how much you actually walk away with.",
+      },
+      { type: "h2", text: "The simple case: an account with a zero balance" },
+      {
+        type: "p",
+        text: "If you've sold or transferred every unit of a token, its account balance sits at zero — but the account itself, and the ~0.00204 SOL rent deposit locked inside it, still exist until something explicitly closes it. The Solana Token Program only allows closeAccount on a zero-balance account, so there's no decision to make here: close it, get the rent back, done.",
+      },
+      { type: "h2", text: "The harder case: an account with leftover dust" },
+      {
+        type: "p",
+        text: "Plenty of accounts aren't empty — they hold a tiny, often worthless residual balance: a fraction of a token from a rounding error, the remains of a memecoin nobody's trading anymore, an NFT-adjacent token with no real market. closeAccount refuses to touch these, so the rent stays locked until that balance is dealt with first. There are two ways to deal with it, and they're not interchangeable.",
+      },
+      { type: "h2", text: "Option one: burn it" },
+      {
+        type: "p",
+        text: "Burning permanently destroys the token balance, which brings it to zero and clears the way to close the account. It's fast, it works on literally anything regardless of whether the token has any market at all, and it's irreversible — whatever was burned is gone for good. For dust that's genuinely worthless (which describes most of it), this is the only option that makes sense, since there's nothing to sell.",
+      },
+      { type: "h2", text: "Option two: sell it first" },
+      {
+        type: "p",
+        text: "Some \"dust\" isn't actually worthless — a small balance of a token that still has a real, if thin, market. Burning it would throw away value that could have been converted to SOL instead. Selling requires an actual swap route to exist (via an aggregator like Jupiter) and the wallet to already hold a small amount of wrapped SOL to route through — conditions that don't hold for every token, which is why this option falls back to burning automatically when there's no viable route rather than leaving the account stuck.",
+      },
+      { type: "h2", text: "Why the difference matters for what you get back" },
+      {
+        type: "p",
+        text: "A tool that only offers closing will simply skip every account with a nonzero balance, understating how much is actually recoverable in a wallet with real dust in it. A tool that only offers burning recovers the rent but silently destroys any residual value along with it. Getting the full picture — and the full amount — needs both: burn what's worthless, sell what isn't, and only fall back to burning when selling genuinely isn't possible.",
+      },
+    ],
+  },
 ];
 
 export function getPostBySlug(slug: string): BlogPost | undefined {
