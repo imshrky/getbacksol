@@ -353,15 +353,23 @@ confirmés (`getChatMember`, `can_post_messages: true`), et un vrai message de t
 succès sur le canal.
 
 **Webhook Telegram (`src/app/api/telegram/webhook/route.ts`)** : le bot `@getbacksolbot` peut
-maintenant aussi répondre aux commandes, pas seulement pousser des posts programmés. `/start` (ou
-`/help`) envoie un message de bienvenue ; `/check <adresse wallet>` réutilise exactement la même
-logique de scan que l'API partenaire (`scanWalletForRentAccounts`, voir `/api/v1/scan`) pour
-répondre avec le montant réellement récupérable — sans connexion de wallet, juste une adresse
-publique. Protégé par le mécanisme `secret_token` de Telegram : `TELEGRAM_WEBHOOK_SECRET` (généré
-aléatoirement, pas fourni par l'utilisateur) doit être configuré à la fois sur Vercel et enregistré
-auprès de Telegram via `setWebhook` — sans ça, n'importe qui pourrait poster de fausses updates sur
-cette route. Hébergé sur le même projet Vercel (pas de serveur séparé) — choix explicite de
-l'utilisateur pour rester gratuit et ne pas ajouter un service à gérer.
+maintenant aussi répondre aux commandes et aux boutons, pas seulement pousser des posts
+programmés. `/check <adresse wallet>` réutilise exactement la même logique de scan que l'API
+partenaire (`scanWalletForRentAccounts`, voir `/api/v1/scan`) pour répondre avec le montant
+réellement récupérable — sans connexion de wallet, juste une adresse publique. `/scan` renvoie un
+lien vers le site (impossible de connecter un vrai wallet depuis Telegram). `/faq` et le bouton FAQ
+utilisent `FAQ_ITEMS` depuis `src/lib/faqContent.ts` — extrait de `page.tsx` pour que le bot et le
+site partagent exactement le même contenu, jamais une copie qui pourrait diverger. `/start` envoie
+un message d'accueil avec un vrai **inline keyboard** (`sendTelegramMessage`'s `inlineKeyboard`
+param, `telegramClient.ts`) : "Scan my wallet" (bouton `url` vers le site), "Check a wallet" et
+"FAQ" et "Help" (boutons `callback_data`, gérés via l'update `callback_query` dans le webhook,
+toujours acquittés par `answerCallbackQuery` sinon le bouton reste bloqué en spinner côté
+utilisateur). Protégé par le mécanisme `secret_token` de Telegram : `TELEGRAM_WEBHOOK_SECRET`
+(généré aléatoirement, pas fourni par l'utilisateur) doit être configuré à la fois sur Vercel et
+enregistré auprès de Telegram via `setWebhook` — sans ça, n'importe qui pourrait poster de fausses
+updates sur cette route. Hébergé sur le même projet Vercel (pas de serveur séparé) — choix explicite
+de l'utilisateur pour rester gratuit et ne pas ajouter un service à gérer. Menu de commandes
+(`/start`, `/check`, `/scan`, `/faq`, `/help`) enregistré côté Telegram via `setMyCommands`.
 
 ## Conventions de code
 
