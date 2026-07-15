@@ -18,16 +18,16 @@ const WalletMultiButtonDynamic = dynamic(
 // another route (e.g. /blog) instead of trying to scroll to an id that only
 // exists on the homepage.
 // Order matches the actual scroll order of the sections on the homepage
-// (reclaim -> how-it-works -> security -> weekly-leaderboard), not
+// (reclaim -> weekly-leaderboard -> how-it-works -> security), not
 // alphabetical or historical order — so the nav reads left-to-right the
 // same way the page reads top-to-bottom. FAQ and Roadmap still exist as
 // sections on the page (see page.tsx) — they're just not linked from the
 // nav anymore, per an explicit request to declutter it.
 const NAV_LINKS = [
   { href: "/#reclaim", section: "reclaim", label: "Reclaim SOL" },
+  { href: "/#weekly-leaderboard", section: "weekly-leaderboard", label: "Leaderboard" },
   { href: "/#how-it-works", section: "how-it-works", label: "How it works" },
   { href: "/#security", section: "security", label: "Security" },
-  { href: "/#weekly-leaderboard", section: "weekly-leaderboard", label: "Leaderboard" },
   { href: "/blog", section: null, label: "Blog" },
   { href: "/partners", section: null, label: "Partners" },
   { href: "/support", section: null, label: "Support" },

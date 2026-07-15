@@ -599,11 +599,25 @@ export default function HomePage() {
         <ImpactStats />
       </section>
 
+      {/* Weekly leaderboard */}
+      <section id="weekly-leaderboard" className="scroll-mt-24 pb-16 sm:pb-20">
+        <SectionTitle
+          level="h2"
+          index="02"
+          eyebrow="Leaderboard"
+          title="Compete for the weekly prize pool"
+          description="Ranked by XP from closing accounts and referrals. Real SOL, split between the top 3 every week."
+        />
+        <div className="mx-auto max-w-2xl">
+          <WeeklyLeaderboard currentWallet={publicKey?.toBase58()} />
+        </div>
+      </section>
+
       {/* How it works */}
       <section id="how-it-works" className="scroll-mt-24 pb-16 sm:pb-20">
         <SectionTitle
           level="h2"
-          index="02"
+          index="03"
           eyebrow="How it works"
           title="Three steps, one transaction"
           description="No accounts, no sign-up — just your wallet."
@@ -626,7 +640,7 @@ export default function HomePage() {
       <section id="security" className="scroll-mt-24 pb-16 sm:pb-20">
         <SectionTitle
           level="h2"
-          index="03"
+          index="04"
           eyebrow="Security"
           title="Built to be verifiable, not just trusted"
           description="No custody, no hidden steps — and we're upfront about what hasn't happened yet."
@@ -659,23 +673,9 @@ export default function HomePage() {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }}
         />
-        <SectionTitle level="h2" index="04" eyebrow="FAQ" title="Questions you might have" />
+        <SectionTitle level="h2" index="05" eyebrow="FAQ" title="Questions you might have" />
         <div className="mx-auto max-w-2xl">
           <Faq items={FAQ_ITEMS} />
-        </div>
-      </section>
-
-      {/* Weekly leaderboard */}
-      <section id="weekly-leaderboard" className="scroll-mt-24 pt-16 sm:pt-20">
-        <SectionTitle
-          level="h2"
-          index="05"
-          eyebrow="Leaderboard"
-          title="Compete for the weekly prize pool"
-          description="Ranked by XP from closing accounts and referrals. Real SOL, split between the top 3 every week."
-        />
-        <div className="mx-auto max-w-2xl">
-          <WeeklyLeaderboard currentWallet={publicKey?.toBase58()} />
         </div>
       </section>
 
@@ -694,7 +694,7 @@ export default function HomePage() {
             <Rocket className="h-5 w-5 shrink-0 text-[var(--accent)]" />
             <span>
               <span className="block text-base font-semibold">GetBackSOL token launch</span>
-              <span className="block text-sm text-[var(--muted)]">Mark your calendar — it's coming soon.</span>
+              <span className="block text-sm text-[var(--muted)]">Mark your calendar — it&apos;s coming soon.</span>
             </span>
           </span>
           <span className="text-2xl font-bold tracking-tight text-[var(--accent)]">Aug 1, 2026</span>
