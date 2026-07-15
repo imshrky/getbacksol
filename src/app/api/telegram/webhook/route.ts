@@ -25,12 +25,21 @@ const MAIN_KEYBOARD: InlineKeyboard = [
 const BACK_KEYBOARD: InlineKeyboard = [[{ text: "⬅️ Back", callback_data: "back_to_menu" }]];
 
 const WELCOME_TEXT =
-  "Welcome to GetBackSOL 👋\n\nEvery empty token account in your Solana wallet is still holding a small SOL deposit — we help you get it back.\n\nPick an option below, or just send /check <wallet address> any time.";
+  "Welcome to GetBackSOL 👋\n\nEvery empty token account in your Solana wallet is still holding a small SOL deposit — we help you get it back.\n\nPick an option below, or just send a wallet address any time.";
 
 const HELP_TEXT =
-  "Here's what I can do:\n\n/check <wallet address> — see how much SOL a wallet can reclaim, no wallet connection needed\n/scan — link to the full app to actually connect a wallet and reclaim\n/faq — frequently asked questions\n\nEverything here is read-only and non-custodial — I never ask for a private key or seed phrase, and neither does the website.";
+  "Here's what I can do:\n\nJust send me a wallet address — no command needed — and I'll tell you how much SOL it can reclaim, no wallet connection required.\n\n/scan — link to the full app to actually connect a wallet and reclaim\n/faq — frequently asked questions\n\nEverything here is read-only and non-custodial — I never ask for a private key or seed phrase, and neither does the website.";
 
-const CHECK_PROMPT_TEXT = "Send /check <wallet address> to see how much SOL it can reclaim.";
+const CHECK_PROMPT_TEXT = "Send a wallet address — just paste it, no command needed — and I'll tell you how much SOL it can reclaim.";
+
+function isSolanaAddress(text: string): boolean {
+  try {
+    new PublicKey(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function faqText(): string {
   const body = FAQ_ITEMS.map((item) => `❓ ${item.q}\n${item.a}`).join("\n\n");
@@ -149,6 +158,11 @@ export async function POST(req: NextRequest) {
       await sendTelegramMessage(chatId, reply);
     } else if (command.startsWith("/")) {
       await sendTelegramMessage(chatId, "Unknown command. Try /help to see what I can do.");
+    } else if (rest.length === 0 && isSolanaAddress(command)) {
+      // No command prefix needed — a bare wallet address is enough.
+      await sendTelegramMessage(chatId, await checkWallet(command));
+    } else {
+      await sendTelegramMessage(chatId, "Send a wallet address, or try /help to see what I can do.");
     }
   } catch {
     // Best-effort — never fail the webhook ack over a delivery hiccup,
