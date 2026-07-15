@@ -197,6 +197,18 @@ partenaire, mais borne l'abus d'une clé self-service non modérée. Auto-nettoy
 Ne pas commencer par Token Creator (`/token-creator`), Swap ou Liquidity — c'est un choix
 délibéré, pas un oubli.
 
+**Bot Telegram de trading (signaux achat/vente + take-profits) : abandonné, pas juste reporté.**
+L'utilisateur avait mentionné vouloir réactiver des alertes de trading (achat + 3 TP, idem vente)
+via TradingView ou un fournisseur gratuit. Deux problèmes soulevés en conversation ont mené à
+l'abandon : (1) publier des signaux d'achat/vente avec objectifs de prix contredirait directement
+la clause "no investment advice" des `/terms` déjà en place — risque légal réel, pas juste
+cosmétique ; (2) même techniquement, le plan gratuit de TradingView limite à 3 alertes de *prix
+simple* et 0 alerte *technique* (déclenchée par un script/indicateur personnalisé) — donc une
+stratégie de signal basée sur un indicateur ne pourrait de toute façon pas se déclencher sans un
+plan payant, indépendamment de la question des webhooks. Décision de l'utilisateur : laisser
+tomber complètement plutôt que de contourner l'un ou l'autre problème. Ne pas reproposer cette
+fonctionnalité sans relire ce paragraphe.
+
 **Listing Phantom (dApp directory) en cours, géré manuellement par l'utilisateur via Phantom
 Portal (`phantom.com/portal`), pas par du code.** App ID Phantom : `d92dd29b-7d8b-4e5a-a37f-
 5121cce8aee0`. Étape en cours : vérification du domaine `getbacksol.com` via un enregistrement

@@ -128,10 +128,7 @@ const ROADMAP_COLUMNS = [
   {
     status: "In progress",
     dotClassName: "bg-[var(--accent)]",
-    items: [
-      { date: "Now", text: "Phantom dApp directory listing" },
-      { date: "Now", text: "Telegram trading bot with live price alerts" },
-    ],
+    items: [{ date: "Now", text: "Phantom dApp directory listing" }],
   },
   {
     status: "Planned",
