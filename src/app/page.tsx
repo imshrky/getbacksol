@@ -155,7 +155,6 @@ const ROADMAP_COLUMNS = [
     status: "In progress",
     dotClassName: "bg-[var(--accent)]",
     items: [
-      { date: "Now", text: "Migrating the fee wallet to a Squads multisig" },
       { date: "Now", text: "Phantom dApp directory listing" },
       { date: "Now", text: "Telegram trading bot with live price alerts" },
     ],
@@ -164,6 +163,7 @@ const ROADMAP_COLUMNS = [
     status: "Planned",
     dotClassName: "bg-[var(--border-strong)]",
     items: [
+      { date: "TBA", text: "Migrating the fee wallet to a Squads multisig" },
       { date: "TBA", text: "Taking the remaining tools (Swap, Liquidity, Token Creator...) live on mainnet" },
     ],
   },

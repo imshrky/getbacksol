@@ -175,18 +175,19 @@ chaque gagnant a reçu exactement le montant attendu, recalculé côté serveur.
 
 Reclaim Rent est live sur mainnet, Safe-Burn et Sell sont câblés, le programme partenaire est en
 ligne, l'audit de sécurité externe est passé, le rate limiting sur l'API partenaire est câblé.
-Prochaine étape :
 
-1. **Multisig Squads pour le wallet de frais** : actuellement une clé unique — à migrer vers un
-   multisig avant que le volume de frais collectés devienne significatif (voir
-   `docs/backend-architecture.md`). **Surtout une tâche opérationnelle, pas de code** : le code
-   lit déjà `NEXT_PUBLIC_FEE_WALLET_ADDRESS` comme une simple variable d'environnement
-   (`feeWallet.ts`), donc une fois le multisig créé sur squads.so (choix des signataires/seuil) et
-   les fonds transférés depuis l'ancien wallet, il suffit de changer cette variable sur Vercel —
-   aucune modification de code nécessaire. Ce que Claude ne peut pas faire à la place de
-   l'utilisateur : créer le multisig (nécessite de connecter un wallet sur squads.so) ni transférer
-   les fonds existants (mouvement d'argent réel, doit être signé par le détenteur de la clé
-   actuelle de `FEE_WALLET`).
+**Multisig Squads pour le wallet de frais : reporté délibérément, pas oublié.** Décision de
+l'utilisateur (2026-07-15) : migrer une fois que le volume de frais collectés commencera à devenir
+significatif, pas avant — actuellement une seule clé (`FEE_WALLET`), risque réel mais jugé
+acceptable tant que le volume reste faible. **Surtout une tâche opérationnelle, pas de code** : le
+code lit déjà `NEXT_PUBLIC_FEE_WALLET_ADDRESS` comme une simple variable d'environnement
+(`feeWallet.ts`), donc une fois le multisig créé sur squads.so (choix des signataires/seuil) et les
+fonds transférés depuis l'ancien wallet, il suffit de changer cette variable sur Vercel — aucune
+modification de code nécessaire. Ce que Claude ne peut pas faire à la place de l'utilisateur :
+créer le multisig (nécessite de connecter un wallet sur squads.so) ni transférer les fonds
+existants (mouvement d'argent réel, doit être signé par le détenteur de la clé actuelle de
+`FEE_WALLET`). Guide étape par étape déjà donné à l'utilisateur en conversation, pas encore
+retranscrit dans un fichier du repo.
 
 **Rate limiting sur `/api/v1/scan` (fait)** : compteur par partenaire et par fenêtre d'une minute
 (`src/lib/rateLimit.ts`, table `api_rate_limits`), 30 requêtes/minute — généreux pour une vraie UI
