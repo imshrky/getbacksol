@@ -9,7 +9,36 @@ const INK = "#f5f5f7";
 const MUTED = "#9a9aa3";
 const BG = "#09090b";
 
-export default function Image() {
+const TEXT =
+  "GetBackSOL Your SOL is trapped. Refund it. Reclaim locked SOL from dormant Solana token accounts — non-custodial, in seconds. getbacksol.com";
+
+/**
+ * Without an explicit font, Satori (next/og's renderer) falls back to its
+ * own generic bundled sans-serif — not Poppins, the typeface the rest of
+ * the site actually uses (see layout.tsx). Fetches the real Poppins glyphs
+ * (both weights actually used below — Satori can only render weights it's
+ * been given, so loading bold alone made the "regular" description text
+ * render bold too) so the image matches the site instead of looking like a
+ * different brand. `text` scopes the request to only the glyphs used here,
+ * and the legacy user-agent is required to get a .ttf back — modern
+ * browsers get woff2, which Satori can't parse.
+ */
+async function loadPoppins(weight: 400 | 700): Promise<ArrayBuffer> {
+  const css = await (
+    await fetch(
+      `https://fonts.googleapis.com/css2?family=Poppins:wght@${weight}&text=${encodeURIComponent(TEXT)}`,
+      { headers: { "User-Agent": "Mozilla/4.0 (Windows 98; U)" } }
+    )
+  ).text();
+  const match = css.match(/src: url\(([^)]+)\) format\('(?:opentype|truetype)'\)/);
+  if (!match) throw new Error("Could not find a truetype font URL in the Google Fonts response.");
+  const fontRes = await fetch(match[1]);
+  return fontRes.arrayBuffer();
+}
+
+export default async function Image() {
+  const [poppinsRegular, poppinsBold] = await Promise.all([loadPoppins(400), loadPoppins(700)]);
+
   return new ImageResponse(
     (
       <div
@@ -21,7 +50,7 @@ export default function Image() {
           justifyContent: "space-between",
           background: BG,
           padding: 80,
-          fontFamily: "sans-serif",
+          fontFamily: "Poppins",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
@@ -61,6 +90,12 @@ export default function Image() {
         </div>
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      fonts: [
+        { name: "Poppins", data: poppinsRegular, weight: 400, style: "normal" },
+        { name: "Poppins", data: poppinsBold, weight: 700, style: "normal" },
+      ],
+    }
   );
 }
