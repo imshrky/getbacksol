@@ -25,12 +25,13 @@ const MAIN_KEYBOARD: InlineKeyboard = [
 const BACK_KEYBOARD: InlineKeyboard = [[{ text: "⬅️ Back", callback_data: "back_to_menu" }]];
 
 const WELCOME_TEXT =
-  "Welcome to GetBackSOL 👋\n\nEvery empty token account in your Solana wallet is still holding a small SOL deposit — we help you get it back.\n\nPick an option below, or just send a wallet address any time.";
+  "Welcome to GetBackSOL 👋\n\nEvery empty token account in your Solana wallet is still holding a small SOL deposit. We help you get it back.\n\nPick an option below, or just send a wallet address any time.";
 
 const HELP_TEXT =
-  "Here's what I can do:\n\nJust send me a wallet address — no command needed — and I'll tell you how much SOL it can reclaim, no wallet connection required.\n\n/scan — link to the full app to actually connect a wallet and reclaim\n/faq — frequently asked questions\n\nEverything here is read-only and non-custodial — I never ask for a private key or seed phrase, and neither does the website.";
+  "Here's what I can do:\n\nJust send me a wallet address, no command needed, and I'll tell you how much SOL it can reclaim. No wallet connection required.\n\n/scan: link to the full app to actually connect a wallet and reclaim\n/faq: frequently asked questions\n\nEverything here is read-only and non-custodial. I never ask for a private key or seed phrase, and neither does the website.";
 
-const CHECK_PROMPT_TEXT = "Send a wallet address — just paste it, no command needed — and I'll tell you how much SOL it can reclaim.";
+const CHECK_PROMPT_TEXT =
+  "Send a wallet address, just paste it, no command needed, and I'll tell you how much SOL it can reclaim.";
 
 function isSolanaAddress(text: string): boolean {
   try {
@@ -61,12 +62,12 @@ async function checkWallet(walletParam: string): Promise<string> {
     const { accounts, dustAccounts } = await scanWalletForRentAccounts(connection, wallet);
 
     if (accounts.length === 0 && dustAccounts.length === 0) {
-      return "No token accounts found for that wallet right now — check back after your next trade.";
+      return "No token accounts found for that wallet right now. Check back after your next trade.";
     }
 
     // "Potential" always means the full picture: what's closable right now,
     // plus what dust accounts would add if burned first (Safe-Burn does
-    // this automatically on the site) — not just the immediately-closable
+    // this automatically on the site), not just the immediately-closable
     // subset, which understates how much is actually recoverable.
     const closableGross = accounts.reduce((sum, a) => sum + a.reclaimable, 0);
     const closableNet = closableGross * (1 - RECLAIM_FEE_RATE);
@@ -74,17 +75,17 @@ async function checkWallet(walletParam: string): Promise<string> {
     const totalNet = (closableGross + dustGross) * (1 - RECLAIM_FEE_RATE);
 
     if (accounts.length === 0) {
-      return `No accounts are closable right now, but ${dustAccounts.length} account${dustAccounts.length === 1 ? "" : "s"} hold leftover dust — ~${totalNet.toFixed(6)} SOL potentially reclaimable if you burn them first (Safe-Burn does this automatically).\n\nUnlock it: ${SITE_URL}`;
+      return `No accounts are closable right now, but ${dustAccounts.length} account${dustAccounts.length === 1 ? "" : "s"} hold leftover dust: ~${totalNet.toFixed(6)} SOL potentially reclaimable if you burn them first (Safe-Burn does this automatically).\n\nClaim now 👉 ${SITE_URL}`;
     }
 
-    let reply = `${accounts.length} account${accounts.length === 1 ? "" : "s"} can be closed right now — ~${closableNet.toFixed(6)} SOL reclaimable after the 15% fee.`;
+    let reply = `${accounts.length} account${accounts.length === 1 ? "" : "s"} can be closed right now: ~${closableNet.toFixed(6)} SOL reclaimable after the 15% fee.`;
     if (dustAccounts.length > 0) {
       reply += ` With Safe-Burn on for the ${dustAccounts.length} dust account${dustAccounts.length === 1 ? "" : "s"} too, the total potential is ~${totalNet.toFixed(6)} SOL.`;
     }
-    reply += `\n\nReclaim it: ${SITE_URL}`;
+    reply += `\n\nClaim now 👉 ${SITE_URL}`;
     return reply;
   } catch {
-    return "Couldn't scan that wallet right now — try again in a moment.";
+    return "Couldn't scan that wallet right now. Try again in a moment.";
   }
 }
 
