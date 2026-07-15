@@ -17,6 +17,8 @@ const MAIN_KEYBOARD: InlineKeyboard = [
   [{ text: "🆘 Help", callback_data: "show_help" }],
 ];
 
+const BACK_KEYBOARD: InlineKeyboard = [[{ text: "⬅️ Back", callback_data: "back_to_menu" }]];
+
 const WELCOME_TEXT =
   "Welcome to GetBackSOL 👋\n\nEvery empty token account in your Solana wallet is still holding a small SOL deposit — we help you get it back.\n\nPick an option below, or just send /check <wallet address> any time.";
 
@@ -84,9 +86,12 @@ export async function POST(req: NextRequest) {
     try {
       await answerCallbackQuery(callback.id);
       if (chatId) {
-        if (callback.data === "show_faq") await sendTelegramMessage(chatId, faqText());
-        else if (callback.data === "show_help") await sendTelegramMessage(chatId, HELP_TEXT);
-        else if (callback.data === "prompt_check") await sendTelegramMessage(chatId, CHECK_PROMPT_TEXT);
+        if (callback.data === "show_faq") await sendTelegramMessage(chatId, faqText(), BACK_KEYBOARD);
+        else if (callback.data === "show_help") await sendTelegramMessage(chatId, HELP_TEXT, BACK_KEYBOARD);
+        else if (callback.data === "prompt_check")
+          await sendTelegramMessage(chatId, CHECK_PROMPT_TEXT, BACK_KEYBOARD);
+        else if (callback.data === "back_to_menu")
+          await sendTelegramMessage(chatId, WELCOME_TEXT, MAIN_KEYBOARD);
       }
     } catch {
       // best-effort
