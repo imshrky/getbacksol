@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 // duplicate-title issue.
 const TITLE = "Partner Program | GetBackSOL";
 const DESCRIPTION =
-  "Earn 30% of the fee on every SOL you help reclaim. Instant, self-service API key — read-only wallet scanning, non-custodial the whole way through.";
+  "Earn 60% of the fee on every SOL you help reclaim. Instant, self-service API key — read-only wallet scanning, non-custodial the whole way through.";
 
 export const metadata: Metadata = {
   title: TITLE,

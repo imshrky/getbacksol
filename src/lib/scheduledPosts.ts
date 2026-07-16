@@ -8,5 +8,5 @@ export const SCHEDULED_POSTS: string[] = [
   "We show you the exact amount before you sign: gross, fee, net 📊 No surprises after the fact. Reclaim locked SOL: getbacksol.com",
   "GetBackSOL is live on Solana mainnet 🟢 Non-custodial, and has passed an external security audit. Check what your wallet is owed: getbacksol.com",
   "Airdrops, one-off swaps, memecoins you tried once 🎯 Every one of them left a dormant token account behind, still holding SOL. Go find them: getbacksol.com",
-  "Got a wallet, a dApp, or just an audience that trusts you? Partner with GetBackSOL and earn 30% of every SOL your users reclaim 🤝 You never touch a key, we handle the rest. getbacksol.com/partners",
+  "Got a wallet, a dApp, or just an audience that trusts you? Partner with GetBackSOL and earn 60% of every SOL your users reclaim 🤝 You never touch a key, we handle the rest. getbacksol.com/partners",
 ];

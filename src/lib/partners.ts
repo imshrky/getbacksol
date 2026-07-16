@@ -7,8 +7,12 @@ import { getSql } from "./db";
 // per-partner negotiable, since self-service signup has no human review —
 // a uniform rate keeps the program simple and fair until a real partner
 // needs a custom deal (at which point it'd be a manual DB update, not a
-// product feature).
-export const PARTNER_REVENUE_SHARE = 0.3;
+// product feature). Raised from 30% to 60% (2026-07) as a deliberate,
+// global decision — applies to every future self-service and wallet-
+// affiliate signup, not a one-off negotiated rate. Existing partner rows
+// keep whatever rate was stored at their own signup time; bump those
+// manually if they should move to the new rate too.
+export const PARTNER_REVENUE_SHARE = 0.6;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_SIGNUPS_PER_IP_PER_DAY = 5;

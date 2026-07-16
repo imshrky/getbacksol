@@ -111,12 +111,20 @@ Un partenaire s'inscrit, reçoit une clé API instantanément (pas de validation
 le scan de wallet dans sa propre UI via `/api/v1/scan`, puis renvoie l'utilisateur vers
 `getbacksol.com/?ref=<partnerId>` pour l'exécution réelle — toujours via notre relais gasless
 existant, jamais via une exécution côté partenaire. La clé API ne donne donc **jamais** accès à
-la construction ou la soumission de transactions. Le partenaire touche 30 % de notre frais de 15 %
+la construction ou la soumission de transactions. Le partenaire touche 60 % de notre frais de 15 %
 sur chaque reclaim référé, calculé côté serveur à partir du montant réel de l'instruction de
 transfert validée dans `/api/relay-close` — jamais depuis une valeur envoyée par le client.
 Nécessite `DATABASE_URL` (Postgres, ex. Neon) en variable d'environnement ; sans elle, le signup
 échoue proprement en 503 plutôt qu'en 500. Voir `src/lib/db.ts`, `src/lib/partners.ts`,
 `scripts/schema.sql` (migration à lancer via `npm run db:migrate`).
+
+**Taux de revenue share relevé de 30 % à 60 % (2026-07), décision globale et délibérée** — pas un
+taux négocié pour un seul partenaire. S'applique à tout futur partenaire self-service et à tout
+futur affilié wallet (les deux lisent `PARTNER_REVENUE_SHARE` dans `partners.ts`). Les partenaires
+déjà inscrits en base gardent le taux enregistré au moment de leur inscription (30 % s'ils
+existaient avant ce changement) — la constante ne s'applique qu'aux nouvelles lignes ; une mise à
+jour manuelle en base serait nécessaire pour aussi relever rétroactivement les partenaires
+existants.
 
 **Affiliation automatique par wallet : tout utilisateur connecté est déjà son propre affilié,
 sans inscription.** Contrairement au programme partenaire (signup, email, clé API), ici l'adresse
@@ -125,7 +133,7 @@ dès la connexion avec le lien `getbacksol.com/?ref=<adresse>` et les gains cumu
 `partners` correspondant (`kind = 'wallet'`) est créé paresseusement par
 `resolveOrCreateWalletAffiliate` dans `partners.ts`, seulement au moment où une vraie commission
 est gagnée — jamais à la connexion elle-même, pour ne pas remplir la table de lignes vides. Même
-taux de 30 % que les partenaires API. `/api/affiliate/stats` renvoie les gains cumulés d'une
+taux de 60 % que les partenaires API. `/api/affiliate/stats` renvoie les gains cumulés d'une
 adresse, en lecture publique (pas d'auth nécessaire, une adresse de wallet n'est pas un secret).
 L'ancien classement top-5 par gains cumulés (`AffiliateLeaderboard.tsx`) a été retiré et remplacé
 par le Weekly XP Leaderboard décrit plus bas — voir cette section pour le classement actuel.
@@ -285,6 +293,13 @@ elle n'a pas résolu ce cas précis.
   par un plafond quotidien par IP stocké en base (pas de CAPTCHA pour l'instant).
 - `src/app/api/v1/scan/route.ts` — scan en lecture seule pour les partenaires (`X-API-Key`), limité
   à 30 requêtes/minute par partenaire via `checkScanRateLimit` (`src/lib/rateLimit.ts`).
+- `src/app/docs/page.tsx` — documentation API publique (auth, endpoint, exemples cURL/JS/Python,
+  codes d'erreur, revenue share). Lié depuis `/partners` après la création d'une clé.
+- `src/app/api/affiliate/stats/route.ts` — bug corrigé (2026-07) : validait à tort le paramètre
+  `wallet` comme une adresse Solana, ce qui rejetait les IDs de partenaires self-service (des
+  slugs comme `acme-abc123`, pas des adresses) avec une 400. La requête sous-jacente
+  (`getAffiliateStats`) fonctionne avec n'importe quelle chaîne comme clé d'attribution — la
+  validation stricte n'avait jamais de raison d'être là.
 - `src/app/api/relay-close/route.ts` — relais gasless ; accepte un `partnerId` optionnel
   (attribution uniquement, ne change jamais la liste blanche d'instructions autorisées) et
   enregistre la commission après confirmation de la transaction. Autorise aussi le programme

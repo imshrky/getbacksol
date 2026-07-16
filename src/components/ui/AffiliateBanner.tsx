@@ -34,13 +34,13 @@ export function AffiliateBanner({ address }: { address: string }) {
       <div className="flex items-start gap-2.5">
         <Users className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">Earn 30% by sharing your link</p>
+          <p className="text-sm font-medium">Earn 60% by sharing your link</p>
           <p className="mt-0.5 text-xs text-[var(--muted)]">
             {stats && stats.referralCount > 0
               ? `${stats.totalEarnedSol.toFixed(6)} SOL earned from ${stats.referralCount} referral${
                   stats.referralCount > 1 ? "s" : ""
                 } so far.`
-              : "Anyone who reclaims SOL through your link earns you 30% of our fee, automatically."}
+              : "Anyone who reclaims SOL through your link earns you 60% of our fee, automatically."}
           </p>
         </div>
       </div>

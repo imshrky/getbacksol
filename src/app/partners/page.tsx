@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Handshake, KeyRound, Copy, Check, ShieldCheck, LineChart, Link2 } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Faq } from "@/components/ui/Faq";
@@ -12,7 +13,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How do you calculate my share?",
-    a: "We charge a 15% fee on every reclaim, taken in the same atomic transaction as the close. When that transaction was referred by your link, we credit your account with 30% of that fee, computed from the actual on-chain transfer amount, not from anything your side reports.",
+    a: "We charge a 15% fee on every reclaim, taken in the same atomic transaction as the close. When that transaction was referred by your link, we credit your account with 60% of that fee, computed from the actual on-chain transfer amount, not from anything your side reports.",
   },
   {
     q: "How and when do I get paid?",
@@ -80,7 +81,7 @@ export default function PartnersPage() {
       <SectionTitle
         eyebrow="Partner Program"
         title="Earn a share of every SOL you help reclaim"
-        description="Show your users the SOL trapped in their own wallets, send them our way to reclaim it, and keep 30% of the fee, automatically attributed to you, no manual reporting."
+        description="Show your users the SOL trapped in their own wallets, send them our way to reclaim it, and keep 60% of the fee, automatically attributed to you, no manual reporting."
       />
 
       <div className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-3">
@@ -94,9 +95,9 @@ export default function PartnersPage() {
         </Card>
         <Card>
           <LineChart className="mb-4 h-5 w-5 text-[var(--accent)]" />
-          <h3 className="text-sm font-semibold">30% revenue share</h3>
+          <h3 className="text-sm font-semibold">60% revenue share</h3>
           <p className="mt-1.5 text-sm text-[var(--muted)]">
-            Every referred reclaim credits your account with 30% of our 15% fee, calculated from
+            Every referred reclaim credits your account with 60% of our 15% fee, calculated from
             the real, confirmed transaction, not self-reported.
           </p>
         </Card>
@@ -159,7 +160,11 @@ export default function PartnersPage() {
             <p className="mt-5 text-xs text-[var(--muted)]">
               Use the API key with <code>X-API-Key</code> against{" "}
               <code>GET /api/v1/scan?wallet=&lt;address&gt;</code>, and send users ready to reclaim
-              to your referral link above.
+              to your referral link above. Full reference, code samples, and error codes:{" "}
+              <Link href="/docs" className="text-[var(--accent)] hover:underline">
+                /docs
+              </Link>
+              .
             </p>
           </div>
         ) : (
