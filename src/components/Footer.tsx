@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AtSign, MessageCircle, Code2 } from "lucide-react";
+import { AtSign, MessageCircle, Code2, FileCode } from "lucide-react";
 import { RpcStatus } from "./ui/RpcStatus";
 import { LogoMark } from "./ui/Logo";
 import { NETWORK } from "@/app/providers";
@@ -9,9 +9,10 @@ import { NETWORK } from "@/app/providers";
 const IS_MAINNET = NETWORK === "mainnet-beta";
 
 const LINKS = [
-  { href: "https://x.com/GetBackSOL", label: "X / Twitter", icon: AtSign },
-  { href: "https://telegram.me/GetBackSOL", label: "Telegram", icon: MessageCircle },
-  { href: "https://github.com/imshrky/getbacksol", label: "Source code", icon: Code2 },
+  { href: "https://x.com/GetBackSOL", label: "X / Twitter", icon: AtSign, external: true },
+  { href: "https://telegram.me/GetBackSOL", label: "Telegram", icon: MessageCircle, external: true },
+  { href: "https://github.com/imshrky/getbacksol", label: "Source code", icon: Code2, external: true },
+  { href: "/docs", label: "API docs", icon: FileCode, external: false },
 ];
 
 const LEGAL_LINKS = [
@@ -40,18 +41,29 @@ export default function Footer() {
 
         <div className="flex flex-col gap-2.5">
           <span className="eyebrow">Links</span>
-          {LINKS.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-            >
-              <link.icon className="h-3.5 w-3.5" />
-              {link.label}
-            </a>
-          ))}
+          {LINKS.map((link) =>
+            link.external ? (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+              >
+                <link.icon className="h-3.5 w-3.5" />
+                {link.label}
+              </a>
+            ) : (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="flex items-center gap-2 text-xs text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+              >
+                <link.icon className="h-3.5 w-3.5" />
+                {link.label}
+              </Link>
+            )
+          )}
         </div>
 
         <div className="flex flex-col gap-2.5">
