@@ -423,6 +423,28 @@ dessus en cas de litige réel. À maintenir à jour si les pratiques changent (n
 collectée, nouveau tiers intégré), même logique que l'audit de sécurité et la roadmap plus haut
 dans ce fichier : un document légal qui ment sur ce que fait le site est pire que pas de document.
 
+## Analytics (Google Tag Manager)
+
+**`src/lib/analytics.ts` (`trackEvent`)** + injection conditionnelle dans `layout.tsx` (script
+`<head>` + `<noscript>` iframe dans `<body>`, pattern standard GTM), activé uniquement si
+`NEXT_PUBLIC_GTM_ID` est configuré — sans cette variable, `trackEvent` ne fait rien (no-op), donc
+le code ne casse jamais en local/dev sans conteneur configuré. L'utilisateur gère déjà des
+conteneurs GTM pour d'autres projets ; celui de `getbacksol.com` reste à créer et à donner en
+variable d'environnement Vercel (pas quelque chose que Claude peut faire à sa place).
+
+4 événements câblés au moment de l'ajout :
+- `wallet_connected` (`page.tsx`, `useEffect` sur `connected`/`publicKey`)
+- `reclaim_completed` (`useReclaimRent.ts`, juste après confirmation on-chain)
+- `referral_link_shared` (`AffiliateBanner.tsx`, bouton Copy + Share X + Share Telegram, `method`
+  distingue lequel)
+- `partner_signup` (`partners/page.tsx`, après un signup réussi)
+
+**Privacy Policy mise à jour en même temps** — elle affirmait auparavant "no third-party
+analytics", ce qui serait redevenu faux dès l'activation. Même logique que le statut de l'audit de
+sécurité et la roadmap : ne jamais laisser une page légale mentir sur ce que fait réellement le
+site. Si de nouveaux événements sont ajoutés plus tard, mettre à jour cette section de la Privacy
+Policy en même temps, pas après coup.
+
 ## Commandes utiles
 
 ```bash

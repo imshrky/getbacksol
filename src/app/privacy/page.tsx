@@ -78,9 +78,13 @@ export default function PrivacyPage() {
 
       <H2>Cookies and tracking</H2>
       <P>
-        We don&apos;t use tracking cookies, and we don&apos;t run any third-party analytics or
-        advertising scripts. The only client-side storage is the local/session storage described
-        above.
+        We use Google Tag Manager to record a small set of product events — wallet connected,
+        reclaim completed, referral link shared, partner signup — so we can tell whether the
+        product is actually being used, not to build an advertising profile of you. It may set its
+        own cookies or browser storage under Google&apos;s control, separate from the
+        local/session storage described above. We don&apos;t run any advertising or retargeting
+        scripts, and event data is anonymous (a wallet address, not a name or email) except where
+        you&apos;ve already given us an email through the partner signup form.
       </P>
 
       <H2>Third parties involved in using GetBackSOL</H2>
@@ -88,6 +92,18 @@ export default function PrivacyPage() {
         <li>Our RPC provider and the Solana network itself process any transaction you submit — inherent to using any Solana application, not specific to us.</li>
         <li>Jupiter&apos;s swap infrastructure is used only if you opt in to &quot;Sell dust for SOL.&quot;</li>
         <li>Our hosting provider (Vercel) and database provider (Neon) may log standard technical data (like IP addresses) as part of normal infrastructure operation, outside our direct control.</li>
+        <li>
+          Google Tag Manager records the product events listed above — see{" "}
+          <a
+            href="https://policies.google.com/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--accent)] hover:underline"
+          >
+            Google&apos;s own privacy policy
+          </a>{" "}
+          for how they handle that data.
+        </li>
       </Ul>
 
       <H2>Data retention and deletion</H2>

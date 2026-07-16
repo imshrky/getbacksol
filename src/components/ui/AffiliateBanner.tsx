@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Users, Copy, Check, X as XIcon, Send } from "lucide-react";
 import { useAffiliateStats } from "@/lib/useAffiliateStats";
+import { trackEvent } from "@/lib/analytics";
 
 const SHARE_TEXT =
   "Your Solana wallet might be holding locked SOL in old, empty token accounts. Reclaim it in seconds, and we both earn:";
@@ -26,6 +27,7 @@ export function AffiliateBanner({ address }: { address: string }) {
   function copy() {
     navigator.clipboard.writeText(link);
     setCopied(true);
+    trackEvent("referral_link_shared", { wallet: address, method: "copy" });
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -64,6 +66,7 @@ export function AffiliateBanner({ address }: { address: string }) {
           href={xShareUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackEvent("referral_link_shared", { wallet: address, method: "x" })}
           className="btn-outline flex flex-1 items-center justify-center gap-1.5 px-3 py-2 text-xs"
         >
           <XIcon className="h-3.5 w-3.5" />
@@ -73,6 +76,7 @@ export function AffiliateBanner({ address }: { address: string }) {
           href={telegramShareUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackEvent("referral_link_shared", { wallet: address, method: "telegram" })}
           className="btn-outline flex flex-1 items-center justify-center gap-1.5 px-3 py-2 text-xs"
         >
           <Send className="h-3.5 w-3.5" />

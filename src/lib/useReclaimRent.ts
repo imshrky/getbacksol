@@ -8,6 +8,7 @@ import { buildCloseAccountBatchTx, batchByInstructionBudget } from "./reclaimRen
 import { RECLAIM_FEE_RATE } from "./mockTokens";
 import type { RentAccount } from "./useRentAccounts";
 import { getReferral } from "./referral";
+import { trackEvent } from "./analytics";
 
 const FEE_PAYER_ADDRESS = process.env.NEXT_PUBLIC_FEE_PAYER_ADDRESS;
 const LAMPORTS_PER_SOL = 1_000_000_000;
@@ -228,6 +229,12 @@ export function useReclaimRent() {
 
         const gross = toBurnOrClose.reduce((sum, a) => sum + a.reclaimable, 0);
         const net = gross * (1 - RECLAIM_FEE_RATE) + soldLamports / LAMPORTS_PER_SOL;
+        trackEvent("reclaim_completed", {
+          wallet: publicKey.toBase58(),
+          accountsClosed: closedCount,
+          accountsSold: soldCount,
+          netSol: net,
+        });
         setStatus("success");
         const parts = [
           closedCount > 0 ? `Closed ${closedCount} account${closedCount > 1 ? "s" : ""}` : null,

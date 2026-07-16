@@ -33,6 +33,7 @@ import { usePortfolio } from "@/lib/usePortfolio";
 import { RECLAIM_FEE_RATE, RENT_PER_ACCOUNT } from "@/lib/mockTokens";
 import { NETWORK } from "@/app/providers";
 import { captureReferral } from "@/lib/referral";
+import { trackEvent } from "@/lib/analytics";
 import { FAQ_ITEMS } from "@/lib/faqContent";
 
 const IS_MAINNET = NETWORK === "mainnet-beta";
@@ -193,6 +194,12 @@ export default function HomePage() {
   useEffect(() => {
     captureReferral();
   }, []);
+
+  useEffect(() => {
+    if (connected && publicKey) {
+      trackEvent("wallet_connected", { wallet: publicKey.toBase58() });
+    }
+  }, [connected, publicKey]);
 
   const allSelected = closableAccounts.length > 0 && selected.size === closableAccounts.length;
 

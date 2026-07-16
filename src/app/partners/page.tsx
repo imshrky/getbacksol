@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Handshake, KeyRound, Copy, Check, ShieldCheck, LineChart, Link2, FileCode } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Faq } from "@/components/ui/Faq";
+import { trackEvent } from "@/lib/analytics";
 
 const FAQ_ITEMS = [
   {
@@ -64,6 +65,7 @@ export default function PartnersPage() {
       }
       setResult(body);
       setState("success");
+      trackEvent("partner_signup", { partnerId: body?.partnerId });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Signup failed.");
       setState("error");
