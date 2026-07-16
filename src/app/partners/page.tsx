@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Handshake, KeyRound, Copy, Check, ShieldCheck, LineChart, Link2 } from "lucide-react";
+import { Handshake, KeyRound, Copy, Check, ShieldCheck, LineChart, Link2, FileCode } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Faq } from "@/components/ui/Faq";
 
@@ -83,6 +83,16 @@ export default function PartnersPage() {
         title="Earn a share of every SOL you help reclaim"
         description="Show your users the SOL trapped in their own wallets, send them our way to reclaim it, and keep 60% of the fee, automatically attributed to you, no manual reporting."
       />
+
+      <div className="mx-auto mb-8 flex max-w-4xl justify-center">
+        <Link
+          href="/docs"
+          className="flex items-center gap-2 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--foreground)]"
+        >
+          <FileCode className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+          Read the full API documentation
+        </Link>
+      </div>
 
       <div className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-3">
         <Card>
