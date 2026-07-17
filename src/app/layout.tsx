@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Providers from "./providers";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -99,6 +100,7 @@ export default function RootLayout({
             <Footer />
           </Providers>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );

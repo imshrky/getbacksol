@@ -423,14 +423,25 @@ dessus en cas de litige réel. À maintenir à jour si les pratiques changent (n
 collectée, nouveau tiers intégré), même logique que l'audit de sécurité et la roadmap plus haut
 dans ce fichier : un document légal qui ment sur ce que fait le site est pire que pas de document.
 
-## Analytics (Google Tag Manager)
+## Analytics
 
-**`src/lib/analytics.ts` (`trackEvent`)** + injection conditionnelle dans `layout.tsx` (script
-`<head>` + `<noscript>` iframe dans `<body>`, pattern standard GTM), activé uniquement si
-`NEXT_PUBLIC_GTM_ID` est configuré — sans cette variable, `trackEvent` ne fait rien (no-op), donc
-le code ne casse jamais en local/dev sans conteneur configuré. L'utilisateur gère déjà des
-conteneurs GTM pour d'autres projets ; celui de `getbacksol.com` reste à créer et à donner en
-variable d'environnement Vercel (pas quelque chose que Claude peut faire à sa place).
+**Google Tag Manager** (`src/lib/analytics.ts`, `trackEvent`) + injection conditionnelle dans
+`layout.tsx` (script `<head>` + `<noscript>` iframe dans `<body>`, pattern standard GTM), activé
+uniquement si `NEXT_PUBLIC_GTM_ID` est configuré — sans cette variable, `trackEvent` ne fait rien
+(no-op), donc le code ne casse jamais en local/dev sans conteneur configuré. Conteneur créé et
+configuré sur Vercel (2026-07, `GTM-TDKGFGX7`) — déjà actif en production.
+
+4 événements câblés au moment de l'ajout :
+- `wallet_connected` (`page.tsx`, `useEffect` sur `connected`/`publicKey`)
+- `reclaim_completed` (`useReclaimRent.ts`, juste après confirmation on-chain)
+- `referral_link_shared` (`AffiliateBanner.tsx`, bouton Copy + Share X + Share Telegram, `method`
+  distingue lequel)
+- `partner_signup` (`partners/page.tsx`, après un signup réussi)
+
+**Vercel Analytics** (`@vercel/analytics/next`, composant `<Analytics />` dans `layout.tsx`) —
+trafic/pages vues natif Vercel, aucune configuration supplémentaire nécessaire (pas d'ID à fournir,
+lié automatiquement au projet). Complémentaire à GTM : Vercel Analytics couvre les visites/pages
+vues, GTM couvre les événements produit ci-dessus.
 
 4 événements câblés au moment de l'ajout :
 - `wallet_connected` (`page.tsx`, `useEffect` sur `connected`/`publicKey`)
