@@ -9,7 +9,7 @@ const REFERRAL_XP_PER_REFERRAL = 1;
 
 // Share of this week's real platform fee revenue that becomes the prize
 // pool — a fraction of actual money collected, not an arbitrary number.
-export const PRIZE_POOL_SHARE = 0.1;
+export const PRIZE_POOL_SHARE = 0.05;
 
 // How the pool splits across the top 3 — must sum to 1.
 export const PAYOUT_SPLIT = [0.5, 0.3, 0.2] as const;

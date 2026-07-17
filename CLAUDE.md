@@ -154,7 +154,8 @@ Roadmap)** remplace l'ancien classement d'affiliation (`AffiliateLeaderboard.tsx
 (reset chaque lundi 00:00 UTC) combinant XP de fermeture de comptes (`reclaims`, 10 XP/compte) et
 XP de parrainage (`referrals`, 1 XP/parrainage) — calcul entièrement dérivé des données
 existantes, pas de nouvelle table de score (voir `src/lib/leaderboard.ts`). Le "prize pool" affiché
-est **réel** : 10 % (`PRIZE_POOL_SHARE`) des frais de plateforme réellement collectés cette
+est **réel** : 5 % (`PRIZE_POOL_SHARE`, baissé de 10 % le 2026-07 via une session parallèle sur
+Mac) des frais de plateforme réellement collectés cette
 semaine (`reclaims.fee_lamports`, nouvelle colonne remplie dans `/api/relay-close` à partir du
 `feeLamports` déjà validé — jamais recalculé), split 50/30/20 entre le top 3 en fin de semaine
 (`/api/leaderboard/weekly` pour l'affichage public, en direct).
