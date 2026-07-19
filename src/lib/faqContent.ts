@@ -17,10 +17,10 @@ export const FAQ_ITEMS = [
   },
   {
     q: "What about accounts with leftover dust?",
-    a: "Turn on Safe-Burn and we'll burn the residual balance first, in the same transaction, so the account qualifies for closing too. You can also turn on Sell dust for SOL — when a token is actually worth something and your wallet already holds wrapped SOL, we'll try to sell it instead of burning it, and you keep 100% of the proceeds; tokens with no viable route just get burned as usual.",
+    a: "Turn on Safe-Burn and we'll burn the residual balance first, in the same transaction, so the account qualifies for closing too. You can also turn on Sell dust for SOL — when a token is actually worth something and your wallet already holds wrapped SOL, we'll try to sell it instead of burning it, with the same service fee applied to the sale proceeds as to the rent; tokens with no viable route just get burned as usual.",
   },
   {
-    q: "Why a 15% fee?",
+    q: "Why a 30% fee?",
     a: "The service fee covers RPC infrastructure and keeps the tool running. It's calculated on the amount reclaimed and sent in the same atomic transaction — you always see the exact net amount before confirming.",
   },
   {
@@ -30,7 +30,7 @@ export const FAQ_ITEMS = [
   {
     q: "Is this live on mainnet?",
     a: IS_MAINNET
-      ? "Yes. GetBackSOL is live on Solana mainnet — every transaction moves real SOL and the 15% fee is real. There's no test mode here anymore."
+      ? "Yes. GetBackSOL is live on Solana mainnet — every transaction moves real SOL and the 30% fee is real. There's no test mode here anymore."
       : "GetBackSOL is currently in devnet testing ahead of a mainnet launch. Connect a devnet wallet to try the full flow — nothing here touches real funds yet.",
   },
 ];

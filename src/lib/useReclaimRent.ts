@@ -4,8 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Transaction } from "@solana/web3.js";
 import type { TxStatus } from "./useSimulatedTx";
-import { buildCloseAccountBatchTx, batchByInstructionBudget } from "./reclaimRent";
-import { RECLAIM_FEE_RATE } from "./mockTokens";
+import { buildCloseAccountBatchTx, batchByInstructionBudget, calculateReclaimSummary } from "./reclaimRent";
 import type { RentAccount } from "./useRentAccounts";
 import { getReferral } from "./referral";
 import { trackEvent } from "./analytics";
@@ -227,8 +226,7 @@ export function useReclaimRent() {
 
         if (isStale()) return;
 
-        const gross = toBurnOrClose.reduce((sum, a) => sum + a.reclaimable, 0);
-        const net = gross * (1 - RECLAIM_FEE_RATE) + soldLamports / LAMPORTS_PER_SOL;
+        const net = calculateReclaimSummary(toBurnOrClose).net + soldLamports / LAMPORTS_PER_SOL;
         trackEvent("reclaim_completed", {
           wallet: publicKey.toBase58(),
           accountsClosed: closedCount,

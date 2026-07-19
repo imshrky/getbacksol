@@ -29,7 +29,7 @@ export default function TermsPage() {
       <H2>1. What GetBackSOL is</H2>
       <P>
         GetBackSOL is a non-custodial tool that helps Solana wallet holders close dormant,
-        zero-balance token accounts and reclaim the SOL rent deposit locked in them. A 15% service
+        zero-balance token accounts and reclaim the SOL rent deposit locked in them. A 30% service
         fee applies to the amount reclaimed, deducted automatically in the same transaction you
         approve.
       </P>
@@ -51,7 +51,7 @@ export default function TermsPage() {
 
       <H2>4. Fees</H2>
       <P>
-        A 15% service fee applies to SOL reclaimed through the standard close/burn flow. The exact
+        A 30% service fee applies to SOL reclaimed through the standard close/burn flow. The exact
         amount — gross, fee, and net — is shown before you sign anything, and the fee is deducted
         in the same atomic transaction as the reclaim itself, never afterward and never hidden.
       </P>

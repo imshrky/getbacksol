@@ -29,6 +29,7 @@ import { ReclaimHistory } from "@/components/ui/ReclaimHistory";
 import { WeeklyLeaderboard } from "@/components/ui/WeeklyLeaderboard";
 import { useRentAccounts } from "@/lib/useRentAccounts";
 import { useReclaimRent } from "@/lib/useReclaimRent";
+import { calculateReclaimSummary } from "@/lib/reclaimRent";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { RECLAIM_FEE_RATE, RENT_PER_ACCOUNT } from "@/lib/mockTokens";
 import { NETWORK } from "@/app/providers";
@@ -74,7 +75,7 @@ const STEPS = [
   {
     icon: Coins,
     title: "Close & get your SOL back",
-    body: "Approve one transaction to close them and receive the locked rent, minus a 15% service fee.",
+    body: "Approve one transaction to close them and receive the locked rent, minus a 30% service fee.",
   },
 ];
 
@@ -218,9 +219,10 @@ export default function HomePage() {
 
   const { gross, fee, net, count } = useMemo(() => {
     const chosen = closableAccounts.filter((a) => selected.has(a.pubkey));
-    const grossVal = chosen.reduce((sum, a) => sum + a.reclaimable, 0);
-    const feeVal = grossVal * RECLAIM_FEE_RATE;
-    return { gross: grossVal, fee: feeVal, net: grossVal - feeVal, count: chosen.length };
+    // Batched, per-transaction fee-floor logic — mirrors exactly what
+    // buildCloseAccountBatchTx will actually charge on-chain.
+    const summary = calculateReclaimSummary(chosen);
+    return { ...summary, count: chosen.length };
   }, [closableAccounts, selected]);
 
   async function handleClose() {
@@ -522,7 +524,7 @@ export default function HomePage() {
                       checked={sellDust}
                       onChange={setSellDust}
                       label="Sell dust for SOL instead of burning"
-                      hint="Tries to sell dust tokens via Jupiter first, keeping 100% of the proceeds — only works when a token has a real market and your wallet already holds wrapped SOL. Falls back to burning otherwise."
+                      hint="Tries to sell dust tokens via Jupiter first — only works when a token has a real market and your wallet already holds wrapped SOL. Falls back to burning otherwise. The same service fee applies to the sale proceeds as to the rent."
                     />
                   </div>
                 )}

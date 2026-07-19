@@ -7,8 +7,8 @@ import {
   answerCallbackQuery,
   type InlineKeyboard,
 } from "@/lib/telegramClient";
-import { RECLAIM_FEE_RATE } from "@/lib/mockTokens";
 import { FAQ_ITEMS } from "@/lib/faqContent";
+import { calculateReclaimSummary } from "@/lib/reclaimRent";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 const SITE_URL = "https://getbacksol.com";
@@ -69,16 +69,14 @@ async function checkWallet(walletParam: string): Promise<string> {
     // plus what dust accounts would add if burned first (Safe-Burn does
     // this automatically on the site), not just the immediately-closable
     // subset, which understates how much is actually recoverable.
-    const closableGross = accounts.reduce((sum, a) => sum + a.reclaimable, 0);
-    const closableNet = closableGross * (1 - RECLAIM_FEE_RATE);
-    const dustGross = dustAccounts.reduce((sum, a) => sum + a.reclaimable, 0);
-    const totalNet = (closableGross + dustGross) * (1 - RECLAIM_FEE_RATE);
+    const closableNet = calculateReclaimSummary(accounts).net;
+    const totalNet = calculateReclaimSummary([...accounts, ...dustAccounts]).net;
 
     if (accounts.length === 0) {
       return `No accounts are closable right now, but ${dustAccounts.length} account${dustAccounts.length === 1 ? "" : "s"} hold leftover dust: ~${totalNet.toFixed(6)} SOL potentially reclaimable if you burn them first (Safe-Burn does this automatically).\n\nClaim now 👉 ${SITE_URL}`;
     }
 
-    let reply = `${accounts.length} account${accounts.length === 1 ? "" : "s"} can be closed right now: ~${closableNet.toFixed(6)} SOL reclaimable after the 15% fee.`;
+    let reply = `${accounts.length} account${accounts.length === 1 ? "" : "s"} can be closed right now: ~${closableNet.toFixed(6)} SOL reclaimable after the 30% fee.`;
     if (dustAccounts.length > 0) {
       reply += ` With Safe-Burn on for the ${dustAccounts.length} dust account${dustAccounts.length === 1 ? "" : "s"} too, the total potential is ~${totalNet.toFixed(6)} SOL.`;
     }

@@ -14,7 +14,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How do you calculate my share?",
-    a: "We charge a 15% fee on every reclaim, taken in the same atomic transaction as the close. When that transaction was referred by your link, we credit your account with 60% of that fee, computed from the actual on-chain transfer amount, not from anything your side reports.",
+    a: "We charge a 30% fee on every reclaim, taken in the same atomic transaction as the close. When that transaction was referred by your link, we credit your account with 60% of that fee, computed from the actual on-chain transfer amount, not from anything your side reports.",
   },
   {
     q: "How and when do I get paid?",
@@ -109,7 +109,7 @@ export default function PartnersPage() {
           <LineChart className="mb-4 h-5 w-5 text-[var(--accent)]" />
           <h3 className="text-sm font-semibold">60% revenue share</h3>
           <p className="mt-1.5 text-sm text-[var(--muted)]">
-            Every referred reclaim credits your account with 60% of our 15% fee, calculated from
+            Every referred reclaim credits your account with 60% of our 30% fee, calculated from
             the real, confirmed transaction, not self-reported.
           </p>
         </Card>

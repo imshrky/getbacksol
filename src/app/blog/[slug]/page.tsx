@@ -104,7 +104,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <Link href="/#reclaim" className="font-medium text-[var(--accent)] hover:underline">
             Scan it with GetBackSOL
           </Link>{" "}
-          — free to check, 15% fee only on what you actually reclaim.
+          — free to check, 30% fee only on what you actually reclaim.
         </p>
       </div>
     </article>

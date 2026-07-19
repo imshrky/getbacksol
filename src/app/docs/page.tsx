@@ -103,11 +103,11 @@ data = res.json()`}</Code>
       <Code>{`{
   "wallet": "6mBmVBchk7UnW1FdfN3bm6KKTV376UxuZ3je7sEzjpd1",
   "network": "mainnet-beta",
-  "feeRate": 0.15,
+  "feeRate": 0.3,
   "closable": {
     "count": 2,
     "grossReclaimable": 0.004079,
-    "netReclaimable": 0.003467,
+    "netReclaimable": 0.002855,
     "accounts": [
       { "pubkey": "...", "mint": "...", "programId": "...", "reclaimable": 0.00204 }
     ]
@@ -144,7 +144,7 @@ data = res.json()`}</Code>
       <H2>Revenue share: 60%</H2>
       <P>
         Every reclaim referred through your <code>?ref=</code> link credits your account with{" "}
-        <b>60% of our 15% service fee</b> — calculated from the real, confirmed on-chain transfer
+        <b>60% of our 30% service fee</b> — calculated from the real, confirmed on-chain transfer
         amount at the moment the transaction lands, never from a number your integration reports.
         Check your running total at any time:
       </P>

@@ -85,7 +85,7 @@ export const BLOG_POSTS: BlogPost[] = [
       { type: "h2", text: "5. Do it with a tool instead of by hand" },
       {
         type: "p",
-        text: "Building and signing raw Solana instructions by hand is possible but unforgiving — one wrong account reference and the transaction just fails (it can't succeed against the wrong account, so the risk is a wasted attempt, not a wrong closure). GetBackSOL handles the scanning, batching, and instruction-building for you: connect your wallet, review the accounts and amounts, and approve once. You keep 85% of whatever's reclaimed; the rest covers the service.",
+        text: "Building and signing raw Solana instructions by hand is possible but unforgiving — one wrong account reference and the transaction just fails (it can't succeed against the wrong account, so the risk is a wasted attempt, not a wrong closure). GetBackSOL handles the scanning, batching, and instruction-building for you: connect your wallet, review the accounts and amounts, and approve once. You keep 70% of whatever's reclaimed; the rest covers the service.",
       },
     ],
   },
@@ -193,7 +193,7 @@ export const BLOG_POSTS: BlogPost[] = [
       { type: "h2", text: "Where the service fee comes from" },
       {
         type: "p",
-        text: "Running a scanner, an RPC connection reliable enough for real transactions, and the infrastructure behind it isn't free. GetBackSOL takes a 15% cut of the SOL reclaimed — calculated on the gross amount, shown before you sign, and transferred in the same atomic transaction as the closure itself. There's no separate charge, no subscription, and nothing deducted after the fact: what you see in the \"you receive\" line before confirming is exactly what lands in your wallet.",
+        text: "Running a scanner, an RPC connection reliable enough for real transactions, and the infrastructure behind it isn't free. GetBackSOL takes a 30% cut of the SOL reclaimed — calculated on the gross amount, shown before you sign, and transferred in the same atomic transaction as the closure itself. There's no separate charge, no subscription, and nothing deducted after the fact: what you see in the \"you receive\" line before confirming is exactly what lands in your wallet.",
       },
       { type: "h2", text: "How long it takes" },
       {

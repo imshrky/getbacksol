@@ -9,7 +9,7 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 const STATIC_POSTS: string[] = [
   "Reminder: every empty token account you never closed is still holding ~0.002 SOL. Come back and check for new ones: getbacksol.com",
   "Your referral link earns you 60% of the fee on every reclaim it brings in — for as long as it keeps happening, not just once. Find yours after connecting a wallet: getbacksol.com",
-  "Turn on Sell dust in Reclaim Rent and we try to sell your dust tokens for SOL via Jupiter instead of burning them — you keep 100% of the proceeds.",
+  "Turn on Sell dust in Reclaim Rent and we try to sell your dust tokens for SOL via Jupiter instead of burning them — turning worthless-to-you dust into real SOL, minus the usual service fee.",
   "New guide on the blog: how Solana rent actually works, and why your wallet keeps piling up dead token accounts. getbacksol.com/blog",
   "GetBackSOL has passed an external security audit — non-custodial the whole way through, code's on GitHub if you want to check yourself.",
 ];

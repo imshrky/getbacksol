@@ -1,5 +1,5 @@
 import "server-only";
-import { PublicKey, TransactionInstruction, SystemProgram } from "@solana/web3.js";
+import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { createCloseAccountInstruction, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export const WSOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
@@ -28,7 +28,11 @@ function toTransactionInstruction(ix: JupiterInstruction): TransactionInstructio
   });
 }
 
-export type SellRoute = { instructions: TransactionInstruction[]; guaranteedLamports: bigint };
+export type SellRoute = {
+  instructions: TransactionInstruction[];
+  needsNewAccount: boolean;
+  minOut: bigint;
+};
 
 /**
  * Fetches instructions to swap a dust SPL token into native SOL via
@@ -44,12 +48,14 @@ export type SellRoute = { instructions: TransactionInstruction[]; guaranteedLamp
  * mean the fee payer permanently loses ~0.002 SOL of real rent on every
  * sale that needs a new account. So when a new account is required, we
  * skip Jupiter's cleanup instruction and substitute our own: close it to
- * the fee payer (recovering the fronted rent plus the full proceeds), then
- * pay the owner the quote's guaranteed minimum (`otherAmountThreshold`)
- * directly. Any amount received above that minimum — positive slippage —
- * covers the rent that was fronted instead of coming out of the fee
- * payer; the owner is never shorted, since the swap itself reverts
- * on-chain if it can't deliver at least that minimum.
+ * the fee payer (recovering the fronted rent plus the full proceeds).
+ * build-sell then pays the owner their net and routes the platform fee —
+ * the payout/fee split lives there so all the money logic is in one place.
+ *
+ * `minOut` (the swap's `otherAmountThreshold`) is the on-chain guaranteed
+ * minimum: the swap reverts if it delivers less, so build-sell uses it as
+ * the safe base for the proceeds fee. Returned for both cases so the fee is
+ * computed the same way whether or not a new account was needed.
  */
 export async function getSellRoute(
   mint: string,
@@ -80,9 +86,13 @@ export async function getSellRoute(
   const outAmount = BigInt(data.outAmount ?? "0");
   if (outAmount < MIN_SELL_OUTPUT_LAMPORTS) return null;
 
+  // Guaranteed minimum the swap must deliver or it reverts on-chain — the
+  // safe base for build-sell's proceeds fee (never charge on the optimistic
+  // quote, which slippage might not deliver).
+  const minOut = BigInt(data.otherAmountThreshold ?? "0");
+  if (minOut <= 0n) return null;
+
   const needsNewAccount = (data.setupInstructions ?? []).length > 0;
-  const guaranteedLamports = needsNewAccount ? BigInt(data.otherAmountThreshold ?? "0") : outAmount;
-  if (guaranteedLamports <= 0n) return null;
 
   const instructions: TransactionInstruction[] = [
     ...(data.computeBudgetInstructions ?? []).map(toTransactionInstruction),
@@ -91,14 +101,17 @@ export async function getSellRoute(
   ];
 
   if (needsNewAccount) {
+    // New wrapped-SOL account: the fee payer fronted its rent, so close it
+    // to the fee payer (recovering that rent + the full proceeds). build-sell
+    // pays the owner their net and splits out the fee.
     const wsolAta = getAssociatedTokenAddressSync(WSOL_MINT, owner);
     instructions.push(createCloseAccountInstruction(wsolAta, feePayer, owner, [], TOKEN_PROGRAM_ID));
-    instructions.push(
-      SystemProgram.transfer({ fromPubkey: feePayer, toPubkey: owner, lamports: guaranteedLamports })
-    );
   } else if (data.cleanupInstruction) {
+    // Existing wrapped-SOL account: Jupiter's own cleanup unwraps the
+    // proceeds back to the owner as native SOL, which build-sell then takes
+    // its fee from.
     instructions.push(toTransactionInstruction(data.cleanupInstruction));
   }
 
-  return { instructions, guaranteedLamports };
+  return { instructions, needsNewAccount, minOut };
 }

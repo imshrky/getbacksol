@@ -3,8 +3,8 @@ import { Connection, PublicKey, Transaction, SystemProgram, clusterApiUrl, type 
 import { createCloseAccountInstruction, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { getFeePayerKeypair } from "@/lib/feePayer";
 import { FEE_WALLET } from "@/lib/feeWallet";
-import { RECLAIM_FEE_RATE } from "@/lib/mockTokens";
 import { getSellRoute } from "@/lib/jupiter";
+import { feeLamportsFor } from "@/lib/reclaimRent";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 const MAX_LEGACY_TX_BYTES = 1232;
@@ -12,9 +12,10 @@ const MAX_LEGACY_TX_BYTES = 1232;
 /**
  * Builds (but does not sign or submit) a Sell transaction for one dust
  * account: Jupiter's swap instructions to convert it to native SOL, plus
- * our own closeAccount and 15% fee transfer — same fee model as a plain
- * close, computed from the account's own rent reserve, not from swap
- * proceeds (the owner keeps 100% of whatever the sale yields).
+ * our own closeAccount and two service-fee transfers — the same flat rate
+ * as a plain close, charged on both the account's rent reserve and the sale
+ * proceeds (based on the swap's guaranteed minimum, so a fee can never
+ * exceed what actually arrives).
  *
  * The client signs what this returns and posts it to /api/relay-close for
  * the fee payer's co-signature and submission, same as every other
@@ -83,12 +84,38 @@ export async function POST(req: NextRequest) {
   const tx = new Transaction();
   tx.feePayer = feePayer.publicKey;
   for (const ix of route.instructions) tx.add(ix);
+
+  // Close the dust token account itself — its rent goes to the owner.
   tx.add(createCloseAccountInstruction(tokenAccount, owner, owner, [], tokenProgramId));
 
+  // Two fees at the flat platform rate, both to FEE_WALLET: one on the
+  // account's rent, one on the sale proceeds. The proceeds fee is based on
+  // the swap's guaranteed minimum (route.minOut), never the optimistic
+  // quote, so it can never exceed what actually arrives and force a revert;
+  // positive slippage above the minimum simply stays with whoever holds it
+  // (the owner when the WSOL account already existed, the fee payer when a
+  // new one had to be created), never shorting anyone.
   const rentLamports = accountInfo.value?.lamports ?? 0;
-  const feeLamports = Math.round(rentLamports * RECLAIM_FEE_RATE);
-  if (feeLamports > 0) {
-    tx.add(SystemProgram.transfer({ fromPubkey: owner, toPubkey: FEE_WALLET, lamports: feeLamports }));
+  const rentFee = BigInt(feeLamportsFor(rentLamports));
+  const proceedsFee = BigInt(feeLamportsFor(Number(route.minOut)));
+  const ownerProceeds = route.minOut - proceedsFee;
+
+  if (route.needsNewAccount) {
+    // Proceeds are with the fee payer (it holds the closed WSOL account's
+    // balance): pay the owner their net, send the proceeds fee to
+    // FEE_WALLET, and take the rent fee from the owner's reclaimed rent.
+    tx.add(SystemProgram.transfer({ fromPubkey: feePayer.publicKey, toPubkey: owner, lamports: ownerProceeds }));
+    tx.add(SystemProgram.transfer({ fromPubkey: feePayer.publicKey, toPubkey: FEE_WALLET, lamports: proceedsFee }));
+    if (rentFee > 0n) {
+      tx.add(SystemProgram.transfer({ fromPubkey: owner, toPubkey: FEE_WALLET, lamports: rentFee }));
+    }
+  } else {
+    // Proceeds are already with the owner (Jupiter unwrapped them to native
+    // SOL): take both fees from the owner in a single transfer.
+    const totalFee = rentFee + proceedsFee;
+    if (totalFee > 0n) {
+      tx.add(SystemProgram.transfer({ fromPubkey: owner, toPubkey: FEE_WALLET, lamports: totalFee }));
+    }
   }
 
   const { blockhash } = await connection.getLatestBlockhash();
@@ -101,6 +128,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     transaction: serialized.toString("base64"),
-    outAmount: route.guaranteedLamports.toString(),
+    outAmount: ownerProceeds.toString(),
   });
 }

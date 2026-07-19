@@ -4,6 +4,7 @@ import { scanWalletForRentAccounts } from "@/lib/scanWallet";
 import { resolvePartnerByApiKey } from "@/lib/partners";
 import { checkScanRateLimit } from "@/lib/rateLimit";
 import { RECLAIM_FEE_RATE } from "@/lib/mockTokens";
+import { calculateReclaimSummary } from "@/lib/reclaimRent";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 
@@ -53,8 +54,10 @@ export async function GET(req: NextRequest) {
   try {
     const { accounts, dustAccounts } = await scanWalletForRentAccounts(connection, wallet);
 
-    const grossReclaimable = accounts.reduce((sum, a) => sum + a.reclaimable, 0);
-    const netReclaimable = grossReclaimable * (1 - RECLAIM_FEE_RATE);
+    // Same flat-rate fee math the actual close transaction applies, via the
+    // shared helper — so a partner's estimate never drifts from what the
+    // reclaim will really net.
+    const { gross: grossReclaimable, net: netReclaimable } = calculateReclaimSummary(accounts);
 
     return NextResponse.json({
       wallet: walletParam,

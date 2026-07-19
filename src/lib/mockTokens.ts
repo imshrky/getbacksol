@@ -30,6 +30,11 @@ export const MOCK_LEADERBOARD = [
 // useRentAccounts.ts) — this constant is only used for illustrative copy.
 export const RENT_PER_ACCOUNT = 0.00203928;
 
+// Flat service fee on reclaimed SOL. NOTE: production reads this from the
+// NEXT_PUBLIC_RECLAIM_FEE_RATE env var on Vercel — this 0.30 default only
+// applies if that var is unset. If it's currently pinned to 0.15 there, it
+// must be changed to 0.30 (or removed) for the new rate to actually take
+// effect on the live site.
 export const RECLAIM_FEE_RATE = process.env.NEXT_PUBLIC_RECLAIM_FEE_RATE
   ? Number(process.env.NEXT_PUBLIC_RECLAIM_FEE_RATE)
-  : 0.15;
+  : 0.3;

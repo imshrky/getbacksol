@@ -15,6 +15,35 @@ const MAX_INSTRUCTIONS_PER_TX = 10;
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 
+// Flat platform fee: a straight percentage of whatever's reclaimed, with no
+// minimum floor — small reclaims just pay proportionally less, never a
+// fixed cut that would eat most of a tiny account. Exported so
+// /api/build-sell charges the exact same way.
+export function feeLamportsFor(grossLamports: number): number {
+  return Math.round(grossLamports * RECLAIM_FEE_RATE);
+}
+
+export type ReclaimSummary = { gross: number; fee: number; net: number };
+
+/**
+ * The exact gross/fee/net a selection will produce, exposed so the UI can
+ * preview it before the user signs and so partner/bot estimates match what
+ * `buildCloseAccountBatchTx` actually charges — one source of truth.
+ */
+export function calculateReclaimSummary(accounts: RentAccount[]): ReclaimSummary {
+  const grossLamports = accounts.reduce(
+    (sum, a) => sum + Math.round(a.reclaimable * LAMPORTS_PER_SOL),
+    0
+  );
+  const feeLamports = feeLamportsFor(grossLamports);
+
+  return {
+    gross: grossLamports / LAMPORTS_PER_SOL,
+    fee: feeLamports / LAMPORTS_PER_SOL,
+    net: (grossLamports - feeLamports) / LAMPORTS_PER_SOL,
+  };
+}
+
 export function chunk<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
@@ -48,10 +77,11 @@ export function batchByInstructionBudget(accounts: RentAccount[]): RentAccount[]
 
 /**
  * Builds one atomic transaction that closes every account in `batch` and
- * sends the platform's 15% fee to FEE_WALLET — the user receives the
- * remaining 85% automatically, since closeAccount pays the rent directly
- * to `owner` and the fee transfer only moves the cut on top of that.
- * Accounts with `needsBurn` get a burn instruction (for their exact
+ * sends the platform's fee to FEE_WALLET — a flat percentage of the batch's
+ * gross (see feeLamportsFor / RECLAIM_FEE_RATE). The user receives whatever's
+ * left automatically, since closeAccount pays the rent directly to `owner`
+ * and the fee transfer only moves the cut on top of that. Accounts with
+ * `needsBurn` get a burn instruction (for their exact
  * `rawAmount`) before the close, so a residual dust balance doesn't block
  * closeAccount's zero-balance requirement.
  *
@@ -98,7 +128,7 @@ export function buildCloseAccountBatchTx(owner: PublicKey, batch: RentAccount[])
     lamports += Math.round(account.reclaimable * LAMPORTS_PER_SOL);
   }
 
-  const feeLamports = Math.round(lamports * RECLAIM_FEE_RATE);
+  const feeLamports = feeLamportsFor(lamports);
   if (feeLamports > 0) {
     tx.add(
       SystemProgram.transfer({ fromPubkey: owner, toPubkey: FEE_WALLET, lamports: feeLamports })
