@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import type { TxStatus } from "./useSimulatedTx";
 import { buildCloseAccountBatchTx, batchByInstructionBudget, calculateReclaimSummary } from "./reclaimRent";
 import type { RentAccount } from "./useRentAccounts";
@@ -11,6 +11,10 @@ import { trackEvent } from "./analytics";
 
 const FEE_PAYER_ADDRESS = process.env.NEXT_PUBLIC_FEE_PAYER_ADDRESS;
 const LAMPORTS_PER_SOL = 1_000_000_000;
+// One signature's base fee (5,000 lamports) plus margin for a
+// wallet-added priority fee — the bar for letting the owner pay their own
+// network fee instead of having the relay pay it for them.
+const LAMPORTS_PER_TX_WITH_MARGIN = 10_000;
 // Closing the wallet extension's own approval popup (its window X, not a
 // Cancel button inside it) doesn't reliably reject signTransaction() —
 // some wallets only reject on an explicit in-app dismissal, so the
@@ -198,23 +202,19 @@ export function useReclaimRent() {
 
         const batches = batchByInstructionBudget(toBurnOrClose);
 
-        if (batches.length > 0) {
-          // The owner pays their own network fee on each batch below (see
-          // reclaimRent.ts for why) — top them up with just enough SOL to
-          // cover it first. Fully server-signed, no wallet interaction.
-          const topUpRes = await fetch("/api/relay-topup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ owner: publicKey.toBase58(), count: batches.length }),
-          });
-          if (!topUpRes.ok) {
-            const body = await topUpRes.json().catch(() => ({}));
-            throw new Error(body?.error || "Could not prepare network fees.");
-          }
-        }
+        // Who pays the network fee. The owner paying it themselves is the
+        // most widely compatible shape, so that stays the default whenever
+        // they can actually afford it. A wallet holding (almost) nothing
+        // can't — and can't be topped up either, since Solana rejects any
+        // transaction that leaves a wallet holding less than the
+        // rent-exempt minimum, which a small top-up always did. For those,
+        // the relay pays and co-signs instead (see /api/relay-close).
+        const ownerBalance = await connection.getBalance(publicKey);
+        const ownerCanPayFees = ownerBalance >= batches.length * LAMPORTS_PER_TX_WITH_MARGIN;
+        const batchFeePayer = ownerCanPayFees ? publicKey : new PublicKey(FEE_PAYER_ADDRESS);
 
         for (const batch of batches) {
-          const tx = buildCloseAccountBatchTx(publicKey, batch);
+          const tx = buildCloseAccountBatchTx(publicKey, batch, batchFeePayer);
           const { blockhash } = await connection.getLatestBlockhash();
           tx.recentBlockhash = blockhash;
 

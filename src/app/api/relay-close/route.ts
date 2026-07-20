@@ -112,12 +112,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unexpected instruction count." }, { status: 400 });
   }
 
-  // Two valid shapes: the relay pays the network fee (legacy — still used
-  // by the Sell flow, which needs the relay to front WSOL account rent),
-  // or the owner pays their own tiny network fee after a top-up (see
-  // /api/relay-topup) — the everyday close/burn flow uses this shape for
-  // wider wallet compatibility (see CLAUDE.md for the Trust Wallet
-  // investigation this came out of).
+  // Two valid shapes, both current. The relay pays the network fee for the
+  // Sell flow (which needs it to front WSOL account rent) and for any owner
+  // whose wallet is too empty to pay it themselves — such a wallet can't be
+  // topped up either, since Solana rejects leaving a wallet below the
+  // rent-exempt minimum. Otherwise the owner pays their own tiny network
+  // fee, the more widely compatible shape (see CLAUDE.md for the Trust
+  // Wallet investigation this came out of).
   const isSelfFunded = !tx.feePayer.equals(feePayer.publicKey);
   let ownerPubkey: PublicKey;
 
