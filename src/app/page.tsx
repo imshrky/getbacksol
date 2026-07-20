@@ -31,7 +31,7 @@ import { useRentAccounts } from "@/lib/useRentAccounts";
 import { useReclaimRent } from "@/lib/useReclaimRent";
 import { calculateReclaimSummary } from "@/lib/reclaimRent";
 import { usePortfolio } from "@/lib/usePortfolio";
-import { RECLAIM_FEE_RATE, RENT_PER_ACCOUNT } from "@/lib/mockTokens";
+import { RENT_PER_ACCOUNT } from "@/lib/mockTokens";
 import { NETWORK } from "@/app/providers";
 import { captureReferral } from "@/lib/referral";
 import { trackEvent } from "@/lib/analytics";
@@ -535,7 +535,7 @@ export default function HomePage() {
                     <span>{gross.toFixed(6)} SOL</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[var(--muted)]">Service fee ({(RECLAIM_FEE_RATE * 100).toFixed(0)}%)</span>
+                    <span className="text-[var(--muted)]">Service fee</span>
                     <span>−{fee.toFixed(6)} SOL</span>
                   </div>
                   <div className="flex justify-between border-t border-[var(--border)] pt-1.5 font-semibold">
