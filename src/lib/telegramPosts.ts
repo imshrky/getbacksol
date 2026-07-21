@@ -8,10 +8,10 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 // traffic) — reminders and features, not "come check us out" pitches.
 const STATIC_POSTS: string[] = [
   "Reminder: every empty token account you never closed is still holding ~0.002 SOL. Come back and check for new ones: getbacksol.com",
-  "Your referral link earns you 60% of the fee on every reclaim it brings in — for as long as it keeps happening, not just once. Find yours after connecting a wallet: getbacksol.com",
-  "Turn on Sell dust in Reclaim Rent and we try to sell your dust tokens for SOL via Jupiter instead of burning them — turning worthless-to-you dust into real SOL, minus the usual service fee.",
+  "Your referral link earns you 60% of the fee on every reclaim it brings in, for as long as it keeps happening, not just once. Find yours after connecting a wallet: getbacksol.com",
+  "Turn on Sell dust in Reclaim Rent and we try to sell your dust tokens for SOL via Jupiter instead of burning them. Worthless-to-you dust becomes real SOL, minus the usual service fee.",
   "New guide on the blog: how Solana rent actually works, and why your wallet keeps piling up dead token accounts. getbacksol.com/blog",
-  "GetBackSOL has passed an external security audit — non-custodial the whole way through, code's on GitHub if you want to check yourself.",
+  "GetBackSOL has passed an external security audit. Non-custodial the whole way through, and the code's on GitHub if you want to check yourself.",
 ];
 
 // Every 3rd rotation pulls the real, current leaderboard prize pool instead
@@ -28,7 +28,7 @@ async function prizePoolPost(): Promise<string> {
     const window = getCurrentWeekWindow();
     const poolLamports = await getWeeklyPrizePoolLamports(window);
     const poolSol = (Number(poolLamports) / LAMPORTS_PER_SOL).toFixed(4);
-    return `This week's leaderboard prize pool is at ${poolSol} SOL so far — split 50/30/20 between the top 3 closers/referrers. Check your rank: getbacksol.com/#weekly-leaderboard`;
+    return `This week's leaderboard prize pool is at ${poolSol} SOL so far, split 50/30/20 between the top 3 closers/referrers. Check your rank: getbacksol.com/#weekly-leaderboard`;
   } catch {
     return STATIC_POSTS[0];
   }
@@ -39,7 +39,7 @@ async function milestonePost(): Promise<string> {
     const stats = await getPlatformStats();
     if (stats.totalAccountsClosed <= 0) return STATIC_POSTS[0];
     const solReclaimed = (Number(stats.totalNetLamports) / LAMPORTS_PER_SOL).toFixed(2);
-    return `Where we're at right now:\n\n${solReclaimed} SOL reclaimed\n${stats.totalAccountsClosed.toLocaleString()} accounts closed\n${stats.uniqueWallets.toLocaleString()} wallets served\n\nReal numbers, pulled straight from the chain — verify any of it on Solscan. getbacksol.com`;
+    return `Where we're at right now:\n\n${solReclaimed} SOL reclaimed\n${stats.totalAccountsClosed.toLocaleString()} accounts closed\n${stats.uniqueWallets.toLocaleString()} wallets served\n\nReal numbers, pulled straight from the chain. Verify any of it on Solscan. getbacksol.com`;
   } catch {
     return STATIC_POSTS[0];
   }
