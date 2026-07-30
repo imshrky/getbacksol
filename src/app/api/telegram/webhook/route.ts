@@ -47,12 +47,21 @@ function faqText(): string {
   return `${body}\n\nMore questions? Ask on Telegram: https://telegram.me/GetBackSOL`;
 }
 
-async function checkWallet(walletParam: string): Promise<string> {
+type CheckResult = { text: string; keyboard?: InlineKeyboard };
+
+// The button always deep-links to the site rather than acting here: burning
+// and closing are on-chain transactions the owner has to sign with their own
+// wallet, which can't be connected from inside Telegram. The button's job is
+// to get them to the one place that can, in one tap.
+const RECLAIM_BUTTON: InlineKeyboard = [[{ text: "💰 Reclaim now", url: SITE_URL }]];
+const BURN_BUTTON: InlineKeyboard = [[{ text: "🔥 Burn & reclaim now", url: SITE_URL }]];
+
+async function checkWallet(walletParam: string): Promise<CheckResult> {
   let wallet: PublicKey;
   try {
     wallet = new PublicKey(walletParam);
   } catch {
-    return "That doesn't look like a valid Solana address.";
+    return { text: "That doesn't look like a valid Solana address." };
   }
 
   const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(NETWORK);
@@ -62,7 +71,7 @@ async function checkWallet(walletParam: string): Promise<string> {
     const { accounts, dustAccounts } = await scanWalletForRentAccounts(connection, wallet);
 
     if (accounts.length === 0 && dustAccounts.length === 0) {
-      return "No token accounts found for that wallet right now. Check back after your next trade.";
+      return { text: "No token accounts found for that wallet right now. Check back after your next trade." };
     }
 
     // "Potential" always means the full picture: what's closable right now,
@@ -73,7 +82,11 @@ async function checkWallet(walletParam: string): Promise<string> {
     const totalNet = calculateReclaimSummary([...accounts, ...dustAccounts]).net;
 
     if (accounts.length === 0) {
-      return `No accounts are closable right now, but ${dustAccounts.length} account${dustAccounts.length === 1 ? "" : "s"} hold leftover dust: ~${totalNet.toFixed(6)} SOL potentially reclaimable if you burn them first (Safe-Burn does this automatically).\n\nClaim now 👉 ${SITE_URL}`;
+      // Dust only — nothing closes without burning first, so the CTA is Burn.
+      return {
+        text: `No accounts are closable right now, but ${dustAccounts.length} account${dustAccounts.length === 1 ? "" : "s"} hold leftover dust: ~${totalNet.toFixed(6)} SOL potentially reclaimable if you burn them first (Safe-Burn does this automatically).\n\nClaim now 👉 ${SITE_URL}`,
+        keyboard: BURN_BUTTON,
+      };
     }
 
     let reply = `${accounts.length} account${accounts.length === 1 ? "" : "s"} can be closed right now: ~${closableNet.toFixed(6)} SOL reclaimable after the 30% fee.`;
@@ -81,9 +94,11 @@ async function checkWallet(walletParam: string): Promise<string> {
       reply += ` With Safe-Burn on for the ${dustAccounts.length} dust account${dustAccounts.length === 1 ? "" : "s"} too, the total potential is ~${totalNet.toFixed(6)} SOL.`;
     }
     reply += `\n\nClaim now 👉 ${SITE_URL}`;
-    return reply;
+    // Closable accounts (with or without dust on top) — CTA is Reclaim; the
+    // site's Safe-Burn toggle handles any dust once they're there.
+    return { text: reply, keyboard: dustAccounts.length > 0 ? BURN_BUTTON : RECLAIM_BUTTON };
   } catch {
-    return "Couldn't scan that wallet right now. Try again in a moment.";
+    return { text: "Couldn't scan that wallet right now. Try again in a moment." };
   }
 }
 
@@ -153,13 +168,18 @@ export async function POST(req: NextRequest) {
       ]);
     } else if (command === "/check") {
       const walletParam = rest[0];
-      const reply = walletParam ? await checkWallet(walletParam) : "Usage: /check <wallet address>";
-      await sendTelegramMessage(chatId, reply);
+      if (walletParam) {
+        const { text: reply, keyboard } = await checkWallet(walletParam);
+        await sendTelegramMessage(chatId, reply, keyboard);
+      } else {
+        await sendTelegramMessage(chatId, "Usage: /check <wallet address>");
+      }
     } else if (command.startsWith("/")) {
       await sendTelegramMessage(chatId, "Unknown command. Try /help to see what I can do.");
     } else if (rest.length === 0 && isSolanaAddress(command)) {
       // No command prefix needed — a bare wallet address is enough.
-      await sendTelegramMessage(chatId, await checkWallet(command));
+      const { text: reply, keyboard } = await checkWallet(command);
+      await sendTelegramMessage(chatId, reply, keyboard);
     } else {
       await sendTelegramMessage(chatId, "Send a wallet address, or try /help to see what I can do.");
     }
