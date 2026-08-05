@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateTelegramInitData } from "@/lib/telegramAuth";
 import { unmuteChatMember } from "@/lib/telegramClient";
 
+// Never cache: this route validates a fresh captcha token + Telegram session
+// on every call and must run server-side each time.
+export const dynamic = "force-dynamic";
+
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
 /**
