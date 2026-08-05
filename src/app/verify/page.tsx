@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Public site key — safe to expose. Without it the page can't render the
 // captcha, so it says so plainly rather than showing an empty box.
@@ -8,16 +8,19 @@ const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type Status = "loading" | "ready" | "verifying" | "done" | "error";
 
+type TurnstileApi = {
+  render: (el: HTMLElement, opts: { sitekey: string; callback: (token: string) => void }) => void;
+};
+
 export default function VerifyPage() {
   const [status, setStatus] = useState<Status>("loading");
   const [message, setMessage] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!SITE_KEY) return;
 
-    // Turnstile calls this global with the solved token. Defined before the
-    // scripts load so it always exists by the time it's invoked.
-    (window as unknown as Record<string, unknown>).onTurnstileSuccess = async (token: string) => {
+    async function onSolved(token: string) {
       setStatus("verifying");
       try {
         const chat = new URLSearchParams(window.location.search).get("chat") ?? "";
@@ -42,6 +45,18 @@ export default function VerifyPage() {
         setStatus("error");
         setMessage("Verification failed. Please try again.");
       }
+    }
+
+    // Explicit render (rather than the implicit data-callback auto-render):
+    // Turnstile's auto-render fights React over the DOM node and loses the
+    // widget on the next re-render. Rendering into a stable ref once the
+    // script loads avoids that entirely.
+    (window as unknown as Record<string, unknown>).onTurnstileLoad = () => {
+      const api = (window as unknown as { turnstile?: TurnstileApi }).turnstile;
+      if (api && containerRef.current) {
+        api.render(containerRef.current, { sitekey: SITE_KEY!, callback: onSolved });
+        setStatus("ready");
+      }
     };
 
     const tgScript = document.createElement("script");
@@ -49,10 +64,9 @@ export default function VerifyPage() {
     document.head.appendChild(tgScript);
 
     const tsScript = document.createElement("script");
-    tsScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    tsScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad";
     tsScript.async = true;
     tsScript.defer = true;
-    tsScript.onload = () => setStatus("ready");
     document.head.appendChild(tsScript);
   }, []);
 
@@ -87,9 +101,9 @@ export default function VerifyPage() {
             Quick check to unlock the chat. Solve the captcha below to confirm you&apos;re human.
           </p>
 
-          {(status === "loading" || status === "ready") && (
-            <div className="cf-turnstile" data-sitekey={SITE_KEY} data-callback="onTurnstileSuccess" />
-          )}
+          {/* Stable container Turnstile renders into — never conditionally unmounted. */}
+          <div ref={containerRef} style={{ minHeight: 65 }} />
+
           {status === "verifying" && <p style={{ opacity: 0.8 }}>Verifying…</p>}
           {status === "done" && <p style={{ color: "#14F195", maxWidth: 320 }}>{message}</p>}
           {status === "error" && <p style={{ color: "#ff6b6b", maxWidth: 320 }}>{message}</p>}
