@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { ExternalLink, History } from "lucide-react";
 import { useReclaimHistory } from "@/lib/useReclaimHistory";
 import { NETWORK } from "@/app/providers";
 
 const IS_MAINNET = NETWORK === "mainnet-beta";
+const PAGE_SIZE = 10;
 
 function shortenAddress(address: string) {
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
@@ -39,6 +41,10 @@ function formatTimestamp(iso: string) {
  */
 export function ReclaimHistory() {
   const rows = useReclaimHistory();
+  const [visible, setVisible] = useState(PAGE_SIZE);
+
+  const shown = rows ? rows.slice(0, visible) : [];
+  const remaining = rows ? rows.length - visible : 0;
 
   return (
     <div className="rounded-[10px] border border-[var(--border)] bg-[var(--surface)] p-4">
@@ -64,7 +70,7 @@ export function ReclaimHistory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
-              {rows.map((row) => (
+              {shown.map((row) => (
                 <tr key={row.txSignature}>
                   <td className="py-2 pr-3 font-mono">{shortenAddress(row.wallet)}</td>
                   <td className="py-2 pr-3">{row.accountsClosed}</td>
@@ -87,6 +93,23 @@ export function ReclaimHistory() {
               ))}
             </tbody>
           </table>
+
+          {remaining > 0 && (
+            <button
+              onClick={() => setVisible((v) => v + PAGE_SIZE)}
+              className="mt-3 w-full rounded-[8px] border border-[var(--border)] py-2 text-xs font-medium text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--foreground)]"
+            >
+              Show {Math.min(remaining, PAGE_SIZE)} more
+            </button>
+          )}
+          {visible > PAGE_SIZE && remaining <= 0 && (
+            <button
+              onClick={() => setVisible(PAGE_SIZE)}
+              className="mt-3 w-full rounded-[8px] border border-[var(--border)] py-2 text-xs font-medium text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--foreground)]"
+            >
+              Show less
+            </button>
+          )}
         </div>
       )}
     </div>
