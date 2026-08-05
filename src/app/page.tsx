@@ -127,6 +127,7 @@ const SHIPPED_ACHIEVEMENTS = [
   { date: "Jul 2026", text: "Interactive Telegram bot — wallet checks, FAQ, menu" },
   { date: "Aug 2026", text: "Anti-scam captcha verification for the community" },
   { date: "Aug 2026", text: "Discord community server launched" },
+  { date: "Aug 2026", text: "Fee wallet ownership verified on Solscan" },
 ];
 
 const ROADMAP_COLUMNS = [
