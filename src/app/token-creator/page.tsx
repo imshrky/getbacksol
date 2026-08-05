@@ -6,10 +6,16 @@ import { Card, SectionTitle } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
 import { Faq } from "@/components/ui/Faq";
 import { TxStatusBanner } from "@/components/ui/TxStatusBanner";
-import { useSimulatedTx } from "@/lib/useSimulatedTx";
+import { useCreateToken, CREATE_BASE_FEE_SOL, REVOKE_FEE_SOL } from "@/lib/useCreateToken";
 
-const BASE_COST = 0.2;
-const TOGGLE_COST = 0.1;
+const BASE_COST = CREATE_BASE_FEE_SOL;
+const TOGGLE_COST = REVOKE_FEE_SOL;
+
+// Safety gate: real token creation stays OFF until this is explicitly enabled,
+// so the untested mainnet flow can be tested first (ideally on devnet) before
+// it charges any real user. Flip NEXT_PUBLIC_TOKEN_CREATOR_LIVE to "true" once
+// verified.
+const TOKEN_CREATOR_LIVE = process.env.NEXT_PUBLIC_TOKEN_CREATOR_LIVE === "true";
 
 const STEPS = [
   "Connect your Solana wallet.",
@@ -29,7 +35,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Is it safe to create tokens here?",
-    a: "This build is a UI mockup. Once wired to a real program (see the backend architecture doc), all actions happen through your own wallet signature — funds and mint authority stay in your control.",
+    a: "The whole transaction is built in your browser and signed by your own wallet — we never touch your keys. You start as the mint authority and can revoke it in the same transaction. The token is a standard SPL token; anyone can verify the mint on a block explorer afterwards.",
   },
   {
     q: "How long does it take?",
@@ -37,7 +43,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How much does it cost?",
-    a: "Example pricing shown here: a 0.2 SOL base fee, plus 0.1 SOL for each optional authority revoke. Final pricing is configurable in the backend.",
+    a: "A small service fee shown as 'Total cost' before you sign, plus the usual Solana network and rent costs for creating a mint. The exact amount is displayed up front — nothing is charged afterwards.",
   },
   {
     q: "Which wallets are supported?",
@@ -59,7 +65,7 @@ export default function TokenCreatorPage() {
   const [twitter, setTwitter] = useState("");
   const [telegram, setTelegram] = useState("");
 
-  const { status, message, run } = useSimulatedTx();
+  const { status, message, run } = useCreateToken();
 
   const totalCost = useMemo(() => {
     let cost = BASE_COST;
@@ -235,12 +241,25 @@ export default function TokenCreatorPage() {
 
         <button
           className="btn-primary mt-5 w-full"
-          disabled={!canSubmit || status === "pending"}
+          disabled={!TOKEN_CREATOR_LIVE || !canSubmit || status === "pending"}
           onClick={() =>
-            run(`"${name || symbol}" created. Mint address will appear here once live on-chain.`)
+            run({
+              name,
+              symbol,
+              decimals,
+              supply,
+              description,
+              imageDataUrl: imagePreview,
+              revokeFreeze,
+              revokeMint,
+            })
           }
         >
-          {status === "pending" ? "Creating token…" : "Create Token"}
+          {!TOKEN_CREATOR_LIVE
+            ? "Live soon — final testing"
+            : status === "pending"
+              ? "Creating token…"
+              : "Create Token"}
         </button>
 
         <TxStatusBanner status={status} message={message} />
