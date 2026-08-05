@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Send, ExternalLink, X as XIcon } from "lucide-react";
+import { Send, ExternalLink, MessagesSquare, X as XIcon } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Faq } from "@/components/ui/Faq";
 
@@ -20,6 +20,12 @@ const CHANNELS = [
     icon: Send,
     title: "Telegram",
     body: "Fastest way to reach us for account or transaction questions.",
+  },
+  {
+    href: "https://discord.gg/2x8gbQrjg",
+    icon: MessagesSquare,
+    title: "Discord",
+    body: "Join the community server for help, updates, and chat.",
   },
   {
     href: "https://x.com/GetBackSOL",

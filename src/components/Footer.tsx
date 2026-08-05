@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AtSign, MessageCircle, Code2, FileCode } from "lucide-react";
+import { AtSign, MessageCircle, MessagesSquare, Code2, FileCode } from "lucide-react";
 import { RpcStatus } from "./ui/RpcStatus";
 import { LogoMark } from "./ui/Logo";
 import { NETWORK } from "@/app/providers";
@@ -11,6 +11,7 @@ const IS_MAINNET = NETWORK === "mainnet-beta";
 const LINKS = [
   { href: "https://x.com/GetBackSOL", label: "X / Twitter", icon: AtSign, external: true },
   { href: "https://telegram.me/GetBackSOL", label: "Telegram", icon: MessageCircle, external: true },
+  { href: "https://discord.gg/2x8gbQrjg", label: "Discord", icon: MessagesSquare, external: true },
   { href: "https://github.com/imshrky/getbacksol", label: "Source code", icon: Code2, external: true },
   { href: "/docs", label: "API docs", icon: FileCode, external: false },
 ];

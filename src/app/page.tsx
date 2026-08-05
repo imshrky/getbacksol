@@ -126,6 +126,7 @@ const SHIPPED_ACHIEVEMENTS = [
   { date: "Jul 2026", text: "Rate limiting on the Partner API" },
   { date: "Jul 2026", text: "Interactive Telegram bot — wallet checks, FAQ, menu" },
   { date: "Aug 2026", text: "Anti-scam captcha verification for the community" },
+  { date: "Aug 2026", text: "Discord community server launched" },
 ];
 
 const ROADMAP_COLUMNS = [
@@ -134,7 +135,6 @@ const ROADMAP_COLUMNS = [
     dotClassName: "bg-[var(--accent)]",
     items: [
       { date: "Aug 20", text: "$GBS token launch" },
-      { date: "Now", text: "Building the Discord community server" },
       { date: "Now", text: "Phantom dApp directory listing" },
     ],
   },
