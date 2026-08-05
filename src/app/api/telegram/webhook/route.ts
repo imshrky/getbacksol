@@ -5,34 +5,49 @@ import {
   sendTelegramMessage,
   editTelegramMessage,
   answerCallbackQuery,
-  restrictChatMember,
+  muteChatMember,
+  unmuteChatMember,
   deleteTelegramMessage,
   type InlineKeyboard,
-  type ChatPermissions,
 } from "@/lib/telegramClient";
 import { FAQ_ITEMS } from "@/lib/faqContent";
 import { calculateReclaimSummary } from "@/lib/reclaimRent";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 const SITE_URL = "https://getbacksol.com";
+const BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || "getbacksolbot";
 
-// New members are muted on join until they tap the captcha button, then
-// restored. A scammer who never taps simply can't post — no auto-kick needed,
-// since a stateless webhook has nowhere to schedule one from.
-const MUTED_PERMISSIONS: ChatPermissions = {
-  can_send_messages: false,
-  can_send_media_messages: false,
-  can_send_polls: false,
-  can_send_other_messages: false,
-  can_add_web_page_previews: false,
-};
-const UNMUTED_PERMISSIONS: ChatPermissions = {
-  can_send_messages: true,
-  can_send_media_messages: true,
-  can_send_polls: true,
-  can_send_other_messages: true,
-  can_add_web_page_previews: true,
-};
+// Turnstile is the real anti-bot check; it's only active once both keys are
+// configured on Vercel. Until then the bot falls back to a lightweight emoji
+// captcha so joins are still gated, just less strongly.
+const TURNSTILE_ENABLED =
+  !!process.env.TURNSTILE_SECRET_KEY && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+// Emoji-captcha pool (fallback). Distinct entries so exactly one option in a
+// challenge matches the target.
+const EMOJI_POOL = ["🐶", "🐱", "🦊", "🐼", "🐵", "🐸", "🦁", "🐯", "🐨", "🐷", "🐮", "🐔", "🐧", "🦉", "🐝", "🦋"];
+
+function shuffle<T>(items: T[]): T[] {
+  const a = [...items];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Builds a "tap the 🐶" challenge whose buttons carry the joiner's own id, so
+// only they can answer it. The correct button is flagged `1`, the rest `0`.
+function buildEmojiCaptcha(userId: number, name: string): { text: string; keyboard: InlineKeyboard } {
+  const options = shuffle(EMOJI_POOL).slice(0, 6);
+  const target = options[Math.floor(Math.random() * options.length)];
+  const buttons = options.map((emoji) => ({
+    text: emoji,
+    callback_data: `cap:${userId}:${emoji === target ? "1" : "0"}`,
+  }));
+  const text = `Welcome ${name}! 👋\n\nQuick anti-bot check — tap the ${target} below to unlock the chat.\n\n⚠️ We will NEVER ask you to connect a wallet or sign anything to verify. Anyone who does is a scammer.`;
+  return { text, keyboard: [buttons.slice(0, 3), buttons.slice(3, 6)] };
+}
 
 const MAIN_KEYBOARD: InlineKeyboard = [
   [{ text: "🔍 Scan my wallet", url: SITE_URL }],
@@ -150,18 +165,22 @@ export async function POST(req: NextRequest) {
     const chatId = callback.message?.chat?.id;
     const messageId = callback.message?.message_id;
 
-    // Anti-scam captcha: the join button encodes the new member's own id, so
-    // only that person can pass their own check — a scammer can't tap someone
-    // else's button to get let in.
-    if (typeof callback.data === "string" && callback.data.startsWith("verify:")) {
-      const targetId = Number(callback.data.slice("verify:".length));
+    // Emoji-captcha answer (fallback path). The button encodes the joiner's
+    // own id and whether it's the right emoji, so only they can answer, and a
+    // wrong tap just leaves them muted to try again — no one else's check can
+    // be passed on their behalf.
+    if (typeof callback.data === "string" && callback.data.startsWith("cap:")) {
+      const [, uidStr, correct] = callback.data.split(":");
+      const targetId = Number(uidStr);
       try {
-        if (chatId && callback.from?.id === targetId) {
-          await restrictChatMember(chatId, targetId, UNMUTED_PERMISSIONS);
+        if (!chatId || callback.from?.id !== targetId) {
+          await answerCallbackQuery(callback.id, "This verification isn't for you.");
+        } else if (correct === "1") {
+          await unmuteChatMember(chatId, targetId);
           await answerCallbackQuery(callback.id, "Verified — welcome! 🎉");
           if (messageId) await deleteTelegramMessage(chatId, messageId);
         } else {
-          await answerCallbackQuery(callback.id, "This verification button isn't for you.");
+          await answerCallbackQuery(callback.id, "❌ Wrong one — look again and tap the right emoji.");
         }
       } catch {
         // best-effort — e.g. the bot lost its admin/restrict rights
@@ -195,20 +214,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // Someone joined a group → mute them and post a captcha only they can pass.
-  // Bots (including this one being added) are skipped.
+  // Someone joined a group → mute them and post a verification only they can
+  // pass. Bots (including this one being added) are skipped.
   const newMembers = message?.new_chat_members;
   if (Array.isArray(newMembers) && (chatType === "group" || chatType === "supergroup")) {
     for (const member of newMembers) {
       if (!member || member.is_bot) continue;
       try {
-        await restrictChatMember(chatId, member.id, MUTED_PERMISSIONS);
+        await muteChatMember(chatId, member.id);
         const name = typeof member.first_name === "string" ? member.first_name : "there";
-        await sendTelegramMessage(
-          chatId,
-          `Welcome ${name}! 👋\n\nTap the button below to verify you're human and unlock the chat.\n\n⚠️ Anti-scam check: we will NEVER ask you to connect a wallet or sign anything to verify. If a "verification" ever asks for that, it's a scam.`,
-          [[{ text: "✅ I'm human", callback_data: `verify:${member.id}` }]]
-        );
+
+        if (TURNSTILE_ENABLED) {
+          // web_app buttons aren't allowed in groups, so send them into a DM
+          // with the bot (carrying this group's id) where the Mini App can
+          // open — see the /start verify_ handler below.
+          await sendTelegramMessage(
+            chatId,
+            `Welcome ${name}! 👋\n\nTo unlock the chat, tap below to complete a quick human check with the bot.\n\n⚠️ It will NEVER ask you to connect a wallet or sign anything. Anyone who does is a scammer.`,
+            [[{ text: "🔓 Verify I'm human", url: `https://t.me/${BOT_USERNAME}?start=verify_${chatId}` }]]
+          );
+        } else {
+          const { text: capText, keyboard } = buildEmojiCaptcha(member.id, name);
+          await sendTelegramMessage(chatId, capText, keyboard);
+        }
       } catch {
         // best-effort — if the bot isn't an admin with restrict rights, skip
       }
@@ -228,7 +256,20 @@ export async function POST(req: NextRequest) {
 
   try {
     if (command === "/start") {
-      await sendTelegramMessage(chatId, WELCOME_TEXT, MAIN_KEYBOARD);
+      // Deep-link from a group's verify button: open the captcha Mini App,
+      // carrying the group id so the backend knows where to unmute (see
+      // /api/telegram/verify). web_app buttons are allowed here in the DM.
+      const payload = rest[0];
+      if (TURNSTILE_ENABLED && payload?.startsWith("verify_")) {
+        const groupChatId = payload.slice("verify_".length);
+        await sendTelegramMessage(
+          chatId,
+          "One quick check to unlock the chat — tap below and solve the captcha. We never ask you to connect a wallet.",
+          [[{ text: "🔓 Verify I'm human", web_app: { url: `${SITE_URL}/verify?chat=${encodeURIComponent(groupChatId)}` } }]]
+        );
+      } else {
+        await sendTelegramMessage(chatId, WELCOME_TEXT, MAIN_KEYBOARD);
+      }
     } else if (command === "/help") {
       await sendTelegramMessage(chatId, HELP_TEXT);
     } else if (command === "/faq") {

@@ -1,6 +1,14 @@
 import "server-only";
 
-export type InlineKeyboardButton = { text: string; url?: string; callback_data?: string };
+export type InlineKeyboardButton = {
+  text: string;
+  url?: string;
+  callback_data?: string;
+  // Opens a Telegram Mini App. NOTE: only allowed in PRIVATE chats — Telegram
+  // rejects web_app inline buttons in groups, which is why group verification
+  // deep-links the user into a DM with the bot first (see the webhook).
+  web_app?: { url: string };
+};
 export type InlineKeyboard = InlineKeyboardButton[][];
 
 function botApiUrl(method: string): string {
@@ -108,6 +116,31 @@ export async function restrictChatMember(
     user_id: userId,
     permissions,
   });
+}
+
+const MUTED_PERMISSIONS: ChatPermissions = {
+  can_send_messages: false,
+  can_send_media_messages: false,
+  can_send_polls: false,
+  can_send_other_messages: false,
+  can_add_web_page_previews: false,
+};
+const UNMUTED_PERMISSIONS: ChatPermissions = {
+  can_send_messages: true,
+  can_send_media_messages: true,
+  can_send_polls: true,
+  can_send_other_messages: true,
+  can_add_web_page_previews: true,
+};
+
+/** Mutes a group member (join-verification: locked until they pass the check). */
+export async function muteChatMember(chatId: string | number, userId: number): Promise<void> {
+  await restrictChatMember(chatId, userId, MUTED_PERMISSIONS);
+}
+
+/** Restores a group member's send permissions once they've verified. */
+export async function unmuteChatMember(chatId: string | number, userId: number): Promise<void> {
+  await restrictChatMember(chatId, userId, UNMUTED_PERMISSIONS);
 }
 
 /** Deletes a message (best-effort) — used to clear the captcha once passed. */
