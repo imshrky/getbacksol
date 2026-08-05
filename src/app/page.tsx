@@ -125,13 +125,18 @@ const SHIPPED_ACHIEVEMENTS = [
   { date: "Jul 2026", text: "External security audit passed" },
   { date: "Jul 2026", text: "Rate limiting on the Partner API" },
   { date: "Jul 2026", text: "Interactive Telegram bot — wallet checks, FAQ, menu" },
+  { date: "Aug 2026", text: "Anti-scam captcha verification for the community" },
 ];
 
 const ROADMAP_COLUMNS = [
   {
     status: "In progress",
     dotClassName: "bg-[var(--accent)]",
-    items: [{ date: "Now", text: "Phantom dApp directory listing" }],
+    items: [
+      { date: "Aug 20", text: "$GBS token launch" },
+      { date: "Now", text: "Building the Discord community server" },
+      { date: "Now", text: "Phantom dApp directory listing" },
+    ],
   },
   {
     status: "Planned",
