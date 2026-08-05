@@ -24,7 +24,20 @@ export async function POST(req: NextRequest) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
   if (!botToken || !turnstileSecret) {
-    return NextResponse.json({ error: "Verification is not configured." }, { status: 503 });
+    // TEMP diagnostic — booleans/lengths only, never the values. Remove once
+    // the env config is confirmed working.
+    return NextResponse.json(
+      {
+        error: "Verification is not configured.",
+        debug: {
+          hasBotToken: !!botToken,
+          hasTurnstileSecret: !!turnstileSecret,
+          turnstileSecretLen: turnstileSecret?.length ?? 0,
+          sawKeys: Object.keys(process.env).filter((k) => k.includes("TURNSTILE")),
+        },
+      },
+      { status: 503 }
+    );
   }
 
   const body = await req.json().catch(() => null);
