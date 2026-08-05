@@ -17,10 +17,11 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 
 // Flat platform fee: a straight percentage of whatever's reclaimed, with no
 // minimum floor — small reclaims just pay proportionally less, never a
-// fixed cut that would eat most of a tiny account. Exported so
-// /api/build-sell charges the exact same way.
-export function feeLamportsFor(grossLamports: number): number {
-  return Math.round(grossLamports * RECLAIM_FEE_RATE);
+// fixed cut that would eat most of a tiny account. `rate` defaults to the
+// standard RECLAIM_FEE_RATE; a lower rate is passed for $GBS holders (see
+// tokenDiscount.ts). Exported so /api/build-sell charges the exact same way.
+export function feeLamportsFor(grossLamports: number, rate: number = RECLAIM_FEE_RATE): number {
+  return Math.round(grossLamports * rate);
 }
 
 export type ReclaimSummary = { gross: number; fee: number; net: number };
@@ -28,14 +29,18 @@ export type ReclaimSummary = { gross: number; fee: number; net: number };
 /**
  * The exact gross/fee/net a selection will produce, exposed so the UI can
  * preview it before the user signs and so partner/bot estimates match what
- * `buildCloseAccountBatchTx` actually charges — one source of truth.
+ * `buildCloseAccountBatchTx` actually charges — one source of truth. `rate`
+ * defaults to the standard fee; pass a holder's discounted rate to preview it.
  */
-export function calculateReclaimSummary(accounts: RentAccount[]): ReclaimSummary {
+export function calculateReclaimSummary(
+  accounts: RentAccount[],
+  rate: number = RECLAIM_FEE_RATE
+): ReclaimSummary {
   const grossLamports = accounts.reduce(
     (sum, a) => sum + Math.round(a.reclaimable * LAMPORTS_PER_SOL),
     0
   );
-  const feeLamports = feeLamportsFor(grossLamports);
+  const feeLamports = feeLamportsFor(grossLamports, rate);
 
   return {
     gross: grossLamports / LAMPORTS_PER_SOL,
@@ -102,7 +107,8 @@ export function batchByInstructionBudget(accounts: RentAccount[]): RentAccount[]
 export function buildCloseAccountBatchTx(
   owner: PublicKey,
   batch: RentAccount[],
-  feePayer: PublicKey = owner
+  feePayer: PublicKey = owner,
+  rate: number = RECLAIM_FEE_RATE
 ): Transaction {
   const tx = new Transaction();
   tx.feePayer = feePayer;
@@ -133,7 +139,7 @@ export function buildCloseAccountBatchTx(
     lamports += Math.round(account.reclaimable * LAMPORTS_PER_SOL);
   }
 
-  const feeLamports = feeLamportsFor(lamports);
+  const feeLamports = feeLamportsFor(lamports, rate);
   if (feeLamports > 0) {
     tx.add(
       SystemProgram.transfer({ fromPubkey: owner, toPubkey: FEE_WALLET, lamports: feeLamports })

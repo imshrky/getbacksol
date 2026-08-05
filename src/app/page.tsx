@@ -30,6 +30,7 @@ import { WeeklyLeaderboard } from "@/components/ui/WeeklyLeaderboard";
 import { useRentAccounts } from "@/lib/useRentAccounts";
 import { useReclaimRent } from "@/lib/useReclaimRent";
 import { calculateReclaimSummary } from "@/lib/reclaimRent";
+import { useHolderFeeRate } from "@/lib/tokenDiscount";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { RENT_PER_ACCOUNT } from "@/lib/mockTokens";
 import { NETWORK } from "@/app/providers";
@@ -171,6 +172,7 @@ export default function HomePage() {
   }, []);
   const { accounts, dustAccounts, loading, error, refresh } = useRentAccounts();
   const { status, message, run } = useReclaimRent();
+  const feeRate = useHolderFeeRate();
   const portfolio = usePortfolio();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [view, setView] = useState<"close" | "portfolio">("close");
@@ -219,11 +221,12 @@ export default function HomePage() {
 
   const { gross, fee, net, count } = useMemo(() => {
     const chosen = closableAccounts.filter((a) => selected.has(a.pubkey));
-    // Batched, per-transaction fee-floor logic — mirrors exactly what
-    // buildCloseAccountBatchTx will actually charge on-chain.
-    const summary = calculateReclaimSummary(chosen);
+    // Uses the connected wallet's applicable rate (discounted for $GBS holders,
+    // standard otherwise) so the preview matches what buildCloseAccountBatchTx
+    // actually charges on-chain.
+    const summary = calculateReclaimSummary(chosen, feeRate);
     return { ...summary, count: chosen.length };
-  }, [closableAccounts, selected]);
+  }, [closableAccounts, selected, feeRate]);
 
   async function handleClose() {
     const chosen = closableAccounts.filter((a) => selected.has(a.pubkey));

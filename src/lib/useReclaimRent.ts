@@ -5,6 +5,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import type { TxStatus } from "./useSimulatedTx";
 import { buildCloseAccountBatchTx, batchByInstructionBudget, calculateReclaimSummary } from "./reclaimRent";
+import { getHolderFeeRate } from "./tokenDiscount";
 import type { RentAccount } from "./useRentAccounts";
 import { getReferral } from "./referral";
 import { trackEvent } from "./analytics";
@@ -202,6 +203,12 @@ export function useReclaimRent() {
 
         const batches = batchByInstructionBudget(toBurnOrClose);
 
+        // Discounted service fee for $GBS holders, standard rate otherwise.
+        // Resolved fresh here (not trusted from the UI) so the charged fee is
+        // computed from the wallet's real on-chain balance. Falls back to the
+        // standard rate when the token isn't configured or the check fails.
+        const feeRate = await getHolderFeeRate(connection, publicKey);
+
         // Who pays the network fee. The owner paying it themselves is the
         // most widely compatible shape, so that stays the default whenever
         // they can actually afford it. A wallet holding (almost) nothing
@@ -214,7 +221,7 @@ export function useReclaimRent() {
         const batchFeePayer = ownerCanPayFees ? publicKey : new PublicKey(FEE_PAYER_ADDRESS);
 
         for (const batch of batches) {
-          const tx = buildCloseAccountBatchTx(publicKey, batch, batchFeePayer);
+          const tx = buildCloseAccountBatchTx(publicKey, batch, batchFeePayer, feeRate);
           const { blockhash } = await connection.getLatestBlockhash();
           tx.recentBlockhash = blockhash;
 
@@ -226,7 +233,7 @@ export function useReclaimRent() {
 
         if (isStale()) return;
 
-        const net = calculateReclaimSummary(toBurnOrClose).net + soldLamports / LAMPORTS_PER_SOL;
+        const net = calculateReclaimSummary(toBurnOrClose, feeRate).net + soldLamports / LAMPORTS_PER_SOL;
         trackEvent("reclaim_completed", {
           wallet: publicKey.toBase58(),
           accountsClosed: closedCount,
