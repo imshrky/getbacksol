@@ -12,6 +12,7 @@ const STATIC_POSTS: string[] = [
   "Turn on Sell dust in Reclaim Rent and we try to sell your dust tokens for SOL via Jupiter instead of burning them. Worthless-to-you dust becomes real SOL, minus the usual service fee.",
   "New guide on the blog: how Solana rent actually works, and why your wallet keeps piling up dead token accounts. getbacksol.com/blog",
   "GetBackSOL has passed an external security audit. Non-custodial the whole way through, and the code's on GitHub if you want to check yourself.",
+  "The GetBackSOL Discord is live. Support, community, and announcements first, including the $GBS token launch on Aug 20. Join us: https://discord.gg/2x8gbQrjg",
 ];
 
 // Every 3rd rotation pulls the real, current leaderboard prize pool instead
