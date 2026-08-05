@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTelegramInitData } from "@/lib/telegramAuth";
-import { unmuteChatMember } from "@/lib/telegramClient";
+import { unmuteChatMember, deleteTelegramMessage } from "@/lib/telegramClient";
 
 // Never cache: this route validates a fresh captcha token + Telegram session
 // on every call and must run server-side each time.
@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
   const token = body?.token;
   const initData = body?.initData;
   const chat = body?.chat;
+  // Optional: the group's verification-prompt message id, to delete once done.
+  const promptMessageId = Number(body?.msg);
   if (typeof token !== "string" || typeof initData !== "string" || typeof chat !== "string" || !chat) {
     return NextResponse.json({ error: "Missing verification data." }, { status: 400 });
   }
@@ -64,6 +66,16 @@ export async function POST(req: NextRequest) {
       { error: "Verified, but couldn't unlock the chat. The bot may have lost its admin rights." },
       { status: 500 }
     );
+  }
+
+  // Clean up the group's verification prompt now that they're through — best
+  // effort, never fails the unlock over a leftover message.
+  if (Number.isFinite(promptMessageId) && promptMessageId > 0) {
+    try {
+      await deleteTelegramMessage(chat, promptMessageId);
+    } catch {
+      // leave it; the member is already unlocked
+    }
   }
 
   return NextResponse.json({ ok: true });

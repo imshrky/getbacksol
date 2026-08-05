@@ -23,14 +23,16 @@ export default function VerifyPage() {
     async function onSolved(token: string) {
       setStatus("verifying");
       try {
-        const chat = new URLSearchParams(window.location.search).get("chat") ?? "";
+        const params = new URLSearchParams(window.location.search);
+        const chat = params.get("chat") ?? "";
+        const msg = params.get("msg") ?? "";
         const tg = (window as unknown as { Telegram?: { WebApp?: { initData?: string; close?: () => void } } })
           .Telegram?.WebApp;
         const initData = tg?.initData ?? "";
         const res = await fetch("/api/telegram/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, initData, chat }),
+          body: JSON.stringify({ token, initData, chat, msg }),
         });
         if (res.ok) {
           setStatus("done");

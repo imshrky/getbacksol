@@ -227,12 +227,24 @@ export async function POST(req: NextRequest) {
         if (TURNSTILE_ENABLED) {
           // web_app buttons aren't allowed in groups, so send them into a DM
           // with the bot (carrying this group's id) where the Mini App can
-          // open — see the /start verify_ handler below.
-          await sendTelegramMessage(
-            chatId,
-            `Welcome ${name}! 👋\n\nTo unlock the chat, tap below to complete a quick human check with the bot.\n\n⚠️ It will NEVER ask you to connect a wallet or sign anything. Anyone who does is a scammer.`,
-            [[{ text: "🔓 Verify I'm human", url: `https://t.me/${BOT_USERNAME}?start=verify_${chatId}` }]]
-          );
+          // open — see the /start verify_ handler below. The message's own id
+          // is baked into the deep-link too (via a follow-up edit, since it
+          // isn't known until after sending) so the backend can delete this
+          // prompt once the member is verified.
+          const welcomeText = `Welcome ${name}! 👋\n\nTo unlock the chat, tap below to complete a quick human check with the bot.\n\n⚠️ It will NEVER ask you to connect a wallet or sign anything. Anyone who does is a scammer.`;
+          const sent = await sendTelegramMessage(chatId, welcomeText, [
+            [{ text: "🔓 Verify I'm human", url: `https://t.me/${BOT_USERNAME}?start=verify_${chatId}` }],
+          ]);
+          if (sent.messageId) {
+            await editTelegramMessage(chatId, sent.messageId, welcomeText, [
+              [
+                {
+                  text: "🔓 Verify I'm human",
+                  url: `https://t.me/${BOT_USERNAME}?start=verify_${chatId}_${sent.messageId}`,
+                },
+              ],
+            ]);
+          }
         } else {
           const { text: capText, keyboard } = buildEmojiCaptcha(member.id, name);
           await sendTelegramMessage(chatId, capText, keyboard);
@@ -261,11 +273,21 @@ export async function POST(req: NextRequest) {
       // /api/telegram/verify). web_app buttons are allowed here in the DM.
       const payload = rest[0];
       if (TURNSTILE_ENABLED && payload?.startsWith("verify_")) {
-        const groupChatId = payload.slice("verify_".length);
+        // Payload is verify_<groupChatId> or verify_<groupChatId>_<messageId>.
+        // The group id has no underscore (it's a signed number), so the last
+        // underscore, if any, separates the welcome message's id — passed on
+        // so the backend can delete that prompt after verification.
+        const rest2 = payload.slice("verify_".length);
+        const usc = rest2.lastIndexOf("_");
+        const groupChatId = usc > 0 ? rest2.slice(0, usc) : rest2;
+        const promptMessageId = usc > 0 ? rest2.slice(usc + 1) : "";
+        const verifyUrl =
+          `${SITE_URL}/verify?chat=${encodeURIComponent(groupChatId)}` +
+          (promptMessageId ? `&msg=${encodeURIComponent(promptMessageId)}` : "");
         await sendTelegramMessage(
           chatId,
           "One quick check to unlock the chat — tap below and solve the captcha. We never ask you to connect a wallet.",
-          [[{ text: "🔓 Verify I'm human", web_app: { url: `${SITE_URL}/verify?chat=${encodeURIComponent(groupChatId)}` } }]]
+          [[{ text: "🔓 Verify I'm human", web_app: { url: verifyUrl } }]]
         );
       } else {
         await sendTelegramMessage(chatId, WELCOME_TEXT, MAIN_KEYBOARD);
