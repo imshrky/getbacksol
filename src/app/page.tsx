@@ -679,7 +679,7 @@ export default function HomePage() {
               <span className="block text-sm text-[var(--muted)]">Mark your calendar — it&apos;s coming soon.</span>
             </span>
           </span>
-          <span className="text-2xl font-bold tracking-tight text-[var(--accent)]">Aug 1, 2026</span>
+          <span className="text-2xl font-bold tracking-tight text-[var(--accent)]">Aug 20, 2026</span>
         </div>
 
         <span className="eyebrow mb-4">
