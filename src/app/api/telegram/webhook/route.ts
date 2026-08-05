@@ -5,13 +5,34 @@ import {
   sendTelegramMessage,
   editTelegramMessage,
   answerCallbackQuery,
+  restrictChatMember,
+  deleteTelegramMessage,
   type InlineKeyboard,
+  type ChatPermissions,
 } from "@/lib/telegramClient";
 import { FAQ_ITEMS } from "@/lib/faqContent";
 import { calculateReclaimSummary } from "@/lib/reclaimRent";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 const SITE_URL = "https://getbacksol.com";
+
+// New members are muted on join until they tap the captcha button, then
+// restored. A scammer who never taps simply can't post — no auto-kick needed,
+// since a stateless webhook has nowhere to schedule one from.
+const MUTED_PERMISSIONS: ChatPermissions = {
+  can_send_messages: false,
+  can_send_media_messages: false,
+  can_send_polls: false,
+  can_send_other_messages: false,
+  can_add_web_page_previews: false,
+};
+const UNMUTED_PERMISSIONS: ChatPermissions = {
+  can_send_messages: true,
+  can_send_media_messages: true,
+  can_send_polls: true,
+  can_send_other_messages: true,
+  can_add_web_page_previews: true,
+};
 
 const MAIN_KEYBOARD: InlineKeyboard = [
   [{ text: "🔍 Scan my wallet", url: SITE_URL }],
@@ -128,6 +149,26 @@ export async function POST(req: NextRequest) {
   if (callback) {
     const chatId = callback.message?.chat?.id;
     const messageId = callback.message?.message_id;
+
+    // Anti-scam captcha: the join button encodes the new member's own id, so
+    // only that person can pass their own check — a scammer can't tap someone
+    // else's button to get let in.
+    if (typeof callback.data === "string" && callback.data.startsWith("verify:")) {
+      const targetId = Number(callback.data.slice("verify:".length));
+      try {
+        if (chatId && callback.from?.id === targetId) {
+          await restrictChatMember(chatId, targetId, UNMUTED_PERMISSIONS);
+          await answerCallbackQuery(callback.id, "Verified — welcome! 🎉");
+          if (messageId) await deleteTelegramMessage(chatId, messageId);
+        } else {
+          await answerCallbackQuery(callback.id, "This verification button isn't for you.");
+        }
+      } catch {
+        // best-effort — e.g. the bot lost its admin/restrict rights
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     try {
       await answerCallbackQuery(callback.id);
       if (chatId && messageId) {
@@ -147,9 +188,39 @@ export async function POST(req: NextRequest) {
 
   const message = update?.message;
   const chatId = message?.chat?.id;
+  const chatType: string | undefined = message?.chat?.type;
   const text: string | undefined = message?.text;
 
-  if (!chatId || !text) {
+  if (!chatId) {
+    return NextResponse.json({ ok: true });
+  }
+
+  // Someone joined a group → mute them and post a captcha only they can pass.
+  // Bots (including this one being added) are skipped.
+  const newMembers = message?.new_chat_members;
+  if (Array.isArray(newMembers) && (chatType === "group" || chatType === "supergroup")) {
+    for (const member of newMembers) {
+      if (!member || member.is_bot) continue;
+      try {
+        await restrictChatMember(chatId, member.id, MUTED_PERMISSIONS);
+        const name = typeof member.first_name === "string" ? member.first_name : "there";
+        await sendTelegramMessage(
+          chatId,
+          `Welcome ${name}! 👋\n\nTap the button below to verify you're human and unlock the chat.\n\n⚠️ Anti-scam check: we will NEVER ask you to connect a wallet or sign anything to verify. If a "verification" ever asks for that, it's a scam.`,
+          [[{ text: "✅ I'm human", callback_data: `verify:${member.id}` }]]
+        );
+      } catch {
+        // best-effort — if the bot isn't an admin with restrict rights, skip
+      }
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  // Everything below is for private 1:1 chats only. Once the bot is a group
+  // admin (required to restrict members) it receives every group message, so
+  // reacting to normal group chatter here would spam the group — only the
+  // join handling above runs in groups.
+  if (chatType !== "private" || !text) {
     return NextResponse.json({ ok: true });
   }
 

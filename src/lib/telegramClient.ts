@@ -83,3 +83,34 @@ export async function answerCallbackQuery(callbackQueryId: string, text?: string
     ...(text ? { text } : {}),
   });
 }
+
+export type ChatPermissions = {
+  can_send_messages?: boolean;
+  can_send_media_messages?: boolean;
+  can_send_polls?: boolean;
+  can_send_other_messages?: boolean;
+  can_add_web_page_previews?: boolean;
+};
+
+/**
+ * Sets what a single group member is allowed to do — used by the new-member
+ * captcha flow (see the webhook): mute on join, restore on verify. Requires
+ * the bot to be an admin of the group with the "restrict members" right;
+ * throws otherwise, which callers swallow (nothing to do if we can't moderate).
+ */
+export async function restrictChatMember(
+  chatId: string | number,
+  userId: number,
+  permissions: ChatPermissions
+): Promise<void> {
+  await callTelegram("restrictChatMember", {
+    chat_id: chatId,
+    user_id: userId,
+    permissions,
+  });
+}
+
+/** Deletes a message (best-effort) — used to clear the captcha once passed. */
+export async function deleteTelegramMessage(chatId: string | number, messageId: number): Promise<void> {
+  await callTelegram("deleteMessage", { chat_id: chatId, message_id: messageId });
+}
