@@ -644,7 +644,7 @@ export default function HomePage() {
             </Card>
           ))}
         </div>
-        <div className="mx-auto mt-4 max-w-2xl">
+        <div className="mx-auto mt-4 flex max-w-2xl flex-col gap-3">
           <a
             href="https://github.com/imshrky/getbacksol"
             target="_blank"
@@ -653,6 +653,15 @@ export default function HomePage() {
           >
             <Code2 className="h-4 w-4 shrink-0 text-[var(--accent)]" />
             Verify the code yourself on GitHub
+          </a>
+          <a
+            href="https://solscan.io/verifiedsignatures/6a738327fab26734ee0c83ba"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--foreground)]"
+          >
+            <BadgeCheck className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+            Fee wallet ownership verified on Solscan
           </a>
         </div>
       </section>
