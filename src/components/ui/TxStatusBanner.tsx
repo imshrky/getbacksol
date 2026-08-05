@@ -21,8 +21,8 @@ export function TxStatusBanner({
       text: pendingText,
     },
     success: {
-      icon: <CheckCircle2 className="h-4 w-4" />,
-      className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
+      icon: <CheckCircle2 className="check-pop h-5 w-5 shrink-0" />,
+      className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400 font-medium",
       text: message,
     },
     "needs-wallet": {

@@ -196,6 +196,27 @@ h1, h2, h3 {
   }
 }
 
+/* Success check pop — a small celebratory beat when a reclaim confirms. */
+@media (prefers-reduced-motion: no-preference) {
+  .check-pop {
+    animation: checkPop 0.4s ease-out both;
+  }
+}
+
+@keyframes checkPop {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .scrollbar-thin::-webkit-scrollbar {
   height: 6px;
   width: 6px;
