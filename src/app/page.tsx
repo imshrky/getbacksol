@@ -586,6 +586,17 @@ export default function HomePage() {
             ? "Live on Solana mainnet — non-custodial, externally audited"
             : "Devnet preview — non-custodial, no funds at risk"}
         </p>
+        {IS_MAINNET && (
+          <a
+            href="https://solscan.io/verifiedsignatures/6a738327fab26734ee0c83ba"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pill mx-auto mt-2 inline-flex w-fit items-center gap-1.5 transition-colors hover:border-[var(--accent)] hover:text-[var(--foreground)]"
+          >
+            <BadgeCheck className="h-3.5 w-3.5 text-[var(--accent)]" />
+            Fee wallet verified on Solscan
+          </a>
+        )}
         <ImpactStats />
       </section>
 
