@@ -14,23 +14,18 @@ const WalletMultiButtonDynamic = dynamic(
   { ssr: false }
 );
 
-// Hash links point through "/" so they navigate home first when clicked from
-// another route (e.g. /blog) instead of trying to scroll to an id that only
-// exists on the homepage.
-// Order matches the actual scroll order of the sections on the homepage
-// (reclaim -> weekly-leaderboard -> how-it-works -> security), not
-// alphabetical or historical order — so the nav reads left-to-right the
-// same way the page reads top-to-bottom. FAQ and Roadmap still exist as
-// sections on the page (see page.tsx) — they're just not linked from the
-// nav anymore, per an explicit request to declutter it.
+// Homepage hash links point through "/" so they navigate home first when
+// clicked from another route (e.g. /token-creator) instead of trying to scroll
+// to an id that only exists on the homepage. Order and contents set by an
+// explicit request — the two products (reclaim, launch token) first, then
+// partner/support/security. Leaderboard, How it works, FAQ, Roadmap and Blog
+// still exist as sections/pages, just not linked from the nav to keep it lean.
 const NAV_LINKS = [
   { href: "/#reclaim", section: "reclaim", label: "Reclaim SOL" },
-  { href: "/#weekly-leaderboard", section: "weekly-leaderboard", label: "Leaderboard" },
-  { href: "/#how-it-works", section: "how-it-works", label: "How it works" },
-  { href: "/#security", section: "security", label: "Security" },
-  { href: "/blog", section: null, label: "Blog" },
+  { href: "/token-creator", section: null, label: "Launch Token" },
   { href: "/partners", section: null, label: "Partners" },
   { href: "/support", section: null, label: "Support" },
+  { href: "/#security", section: "security", label: "Security" },
 ] as const;
 
 const SECTION_IDS = NAV_LINKS.filter((l) => l.section).map((l) => l.section as string);
