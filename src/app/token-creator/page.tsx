@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ImagePlus, ChevronDown } from "lucide-react";
+import { ImagePlus, ChevronDown, Droplets, ExternalLink, Copy } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
 import { Faq } from "@/components/ui/Faq";
@@ -48,6 +48,10 @@ const FAQ_ITEMS = [
     q: "Which wallets are supported?",
     a: "Any Wallet Standard–compatible wallet, including Phantom, Solflare, and Backpack.",
   },
+  {
+    q: "How do I make my token tradeable / list it on Jupiter?",
+    a: "Creating the token just mints it into your wallet — it isn't tradeable until it has a liquidity pool. After creation we point you to Raydium to add liquidity (pairing your token with SOL). Once the pool exists, Jupiter and other aggregators pick it up automatically, so it becomes swappable everywhere, with its logo. Native in-app pool creation is coming later.",
+  },
 ];
 
 export default function TokenCreatorPage() {
@@ -64,7 +68,7 @@ export default function TokenCreatorPage() {
   const [twitter, setTwitter] = useState("");
   const [telegram, setTelegram] = useState("");
 
-  const { status, message, run } = useCreateToken();
+  const { status, message, mintAddress, run } = useCreateToken();
 
   const totalCost = useMemo(() => {
     let cost = BASE_COST;
@@ -262,6 +266,43 @@ export default function TokenCreatorPage() {
         </button>
 
         <TxStatusBanner status={status} message={message} />
+
+        {status === "success" && mintAddress && (
+          <div className="mt-4 rounded-[10px] border border-[var(--accent)]/40 bg-[var(--accent)]/5 p-5">
+            <div className="flex items-center gap-2">
+              <Droplets className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+              <h3 className="text-sm font-semibold">Next: make it tradeable</h3>
+            </div>
+            <p className="mt-1.5 text-sm text-[var(--muted)]">
+              Your token exists, but it needs a liquidity pool before anyone can buy it. Add liquidity
+              on Raydium and it will show up on Jupiter automatically, logo and all.
+            </p>
+
+            <div className="mt-3 flex items-center gap-2 rounded-[8px] bg-[var(--surface-2)] px-3 py-2">
+              <span className="min-w-0 flex-1 truncate font-mono text-xs">{mintAddress}</span>
+              <button
+                onClick={() => navigator.clipboard?.writeText(mintAddress)}
+                className="flex shrink-0 items-center gap-1 text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
+                aria-label="Copy mint address"
+              >
+                <Copy className="h-3.5 w-3.5" /> Copy
+              </button>
+            </div>
+
+            <a
+              href="https://raydium.io/liquidity/create-pool/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary mt-4 flex w-full items-center justify-center gap-2"
+            >
+              Add liquidity on Raydium
+              <ExternalLink className="h-4 w-4" />
+            </a>
+            <p className="mt-2 text-center text-xs text-[var(--muted)]">
+              Paste the mint address above into Raydium&apos;s pool creator.
+            </p>
+          </div>
+        )}
       </Card>
 
       <section className="mx-auto mt-16 max-w-3xl">
