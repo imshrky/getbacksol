@@ -128,23 +128,22 @@ const SHIPPED_ACHIEVEMENTS = [
   { date: "Aug 2026", text: "Anti-scam captcha verification for the community" },
   { date: "Aug 2026", text: "Discord community server launched" },
   { date: "Aug 2026", text: "Fee wallet ownership verified on Solscan" },
+  { date: "Aug 2026", text: "Token Creator live on mainnet" },
 ];
 
 const ROADMAP_COLUMNS = [
   {
     status: "In progress",
     dotClassName: "bg-[var(--accent)]",
-    items: [
-      { date: "Aug 20", text: "$GBS token launch" },
-      { date: "Now", text: "Phantom dApp directory listing" },
-    ],
+    items: [{ date: "Aug 20", text: "$GBS token launch" }],
   },
   {
     status: "Planned",
     dotClassName: "bg-[var(--border-strong)]",
     items: [
+      { date: "TBA", text: "Native liquidity pools + automatic Jupiter listing" },
       { date: "TBA", text: "Migrating the fee wallet to a Squads multisig" },
-      { date: "TBA", text: "Taking the remaining tools (Swap, Liquidity, Token Creator...) live on mainnet" },
+      { date: "TBA", text: "The remaining tools (Swap, Burn, Leaderboard...) live on mainnet" },
     ],
   },
 ];
