@@ -11,11 +11,10 @@ import { useCreateToken, CREATE_BASE_FEE_SOL, REVOKE_FEE_SOL } from "@/lib/useCr
 const BASE_COST = CREATE_BASE_FEE_SOL;
 const TOGGLE_COST = REVOKE_FEE_SOL;
 
-// Safety gate: real token creation stays OFF until this is explicitly enabled,
-// so the untested mainnet flow can be tested first (ideally on devnet) before
-// it charges any real user. Flip NEXT_PUBLIC_TOKEN_CREATOR_LIVE to "true" once
-// verified.
-const TOKEN_CREATOR_LIVE = process.env.NEXT_PUBLIC_TOKEN_CREATOR_LIVE === "true";
+// Live by default. Kept as a kill-switch: set NEXT_PUBLIC_TOKEN_CREATOR_LIVE
+// to "false" on Vercel to disable creation instantly (no redeploy) if anything
+// misbehaves in production.
+const TOKEN_CREATOR_LIVE = process.env.NEXT_PUBLIC_TOKEN_CREATOR_LIVE !== "false";
 
 const STEPS = [
   "Connect your Solana wallet.",
@@ -256,7 +255,7 @@ export default function TokenCreatorPage() {
           }
         >
           {!TOKEN_CREATOR_LIVE
-            ? "Live soon — final testing"
+            ? "Temporarily unavailable"
             : status === "pending"
               ? "Creating token…"
               : "Create Token"}
