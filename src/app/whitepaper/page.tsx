@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SectionTitle } from "@/components/ui/Card";
+import { DownloadPdfButton } from "@/components/ui/DownloadPdfButton";
 
 const TITLE = "Whitepaper | GetBackSOL";
 const DESCRIPTION =
@@ -31,6 +32,10 @@ export default function WhitepaperPage() {
         title="GetBackSOL"
         description="Reclaim locked SOL from dormant Solana accounts — safely, transparently, non-custodially."
       />
+
+      <div className="mx-auto mb-6 flex max-w-2xl justify-center">
+        <DownloadPdfButton />
+      </div>
 
       <article className="mx-auto max-w-2xl">
         <H2>1. Abstract</H2>
