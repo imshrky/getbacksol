@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AtSign, MessageCircle, MessagesSquare, Code2, FileCode } from "lucide-react";
+import { AtSign, MessageCircle, MessagesSquare, Code2, FileCode, FileText } from "lucide-react";
 import { RpcStatus } from "./ui/RpcStatus";
 import { LogoMark } from "./ui/Logo";
 import { NETWORK } from "@/app/providers";
@@ -70,6 +70,13 @@ export default function Footer() {
         <div className="flex flex-col gap-2.5">
           <span className="eyebrow">Status</span>
           <RpcStatus />
+          <Link
+            href="/whitepaper"
+            className="flex items-center gap-2 text-xs text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            Whitepaper
+          </Link>
         </div>
       </div>
 
