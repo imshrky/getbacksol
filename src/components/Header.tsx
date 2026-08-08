@@ -23,6 +23,7 @@ const WalletMultiButtonDynamic = dynamic(
 const NAV_LINKS = [
   { href: "/#reclaim", section: "reclaim", label: "Reclaim SOL" },
   { href: "/token-creator", section: null, label: "Launch Token" },
+  { href: "/create-liquidity", section: null, label: "Add Liquidity" },
   { href: "/partners", section: null, label: "Partners" },
   { href: "/support", section: null, label: "Support" },
   { href: "/#security", section: "security", label: "Security" },
