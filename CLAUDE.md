@@ -51,6 +51,27 @@ officiel), seuls les comptes source/destination et les plafonds sont vérifiés 
 avec un vrai compte dust mainnet (transaction décodée et vérifiée instruction par instruction,
 jamais signée ni soumise).
 
+**Bug corrigé (2026-08-07) : Sell retombait silencieusement sur le burn presque à chaque fois.**
+Diagnostiqué et fixé sur la tour PC — voir `docs/TOWER-TODO.md` pour le détail complet. Cause
+réelle : `build-sell` construisait une transaction **legacy**, qui ne peut pas référencer de
+address lookup table (ALT) — donc les 30-40+ comptes d'une vraie route Jupiter devaient être
+inlinés en pubkeys complètes, dépassant presque toujours la limite réseau de 1232 octets, ce qui
+faisait échouer la route ("too complex") et basculait sur le burn. Fix : transaction **versionnée
+(v0)** sur tout le chemin (`jupiter.ts` → `build-sell` → `relay-close` → `useReclaimRent.ts`), avec
+les vraies ALTs de la route Jupiter. `relay-close` distingue maintenant legacy (burn/close normal,
+chemin inchangé) de v0 (Sell uniquement) via un `try { Transaction.from(...) } catch` — cette
+méthode échoue de façon fiable et distincte sur des bytes v0 (vérifié empiriquement), donc aucun
+risque de mal interpréter silencieusement l'un pour l'autre. Piège trouvé en cours de route : le
+champ de la réponse Jupiter `/swap/v2/build` contenant les ALTs n'est **pas**
+`addressLookupTableAddresses` (ce que supposait le diagnostic initial) mais
+`addressesByLookupTableAddress` (un objet indexé par adresse de table) — vérifié contre une vraie
+réponse avant de s'appuyer dessus, sinon le fix n'aurait rien changé en silence. Vérifié
+structurellement contre l'API Jupiter réelle + un vrai RPC mainnet (aucun fonds déplacé, build
+seul) : une vraie route USDC→SOL nécessite 3 ALTs et compile à 1052 octets en v0 contre 1630 en
+legacy — confirme le diagnostic et le fix. **Pas encore testé signé-et-soumis avec un vrai compte
+dust dans l'UI réelle** — à faire avant de faire confiance à 100%, même logique que le test manuel
+déjà fait sur le chemin burn/close.
+
 Les textes du site (hero, FAQ, footer) s'adaptent automatiquement selon `NETWORK` — ne jamais
 coder en dur "devnet preview" ou "no funds at risk" quelque part, toujours passer par la
 constante `IS_MAINNET` (dérivée de `NETWORK`) comme dans `page.tsx` et `Footer.tsx`, sinon le site

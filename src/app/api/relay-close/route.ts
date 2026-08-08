@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  AddressLookupTableAccount,
   Connection,
   Transaction,
+  VersionedTransaction,
   SystemProgram,
   PublicKey,
   ComputeBudgetProgram,
   clusterApiUrl,
   type Cluster,
+  type Keypair,
 } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getFeePayerKeypair } from "@/lib/feePayer";
@@ -49,6 +52,248 @@ const MAX_ATA_INSTRUCTIONS = 1;
 // — real dust sales never come close to this; it's a backstop against a
 // miscalculated or tampered payout amount, not a realistic ceiling.
 const MAX_SELL_PAYOUT_LAMPORTS = 2_000_000_000n; // 2 SOL
+
+type NormalizedInstruction = { programId: PublicKey; keys: PublicKey[]; data: Buffer };
+
+type InstructionValidation =
+  | { ok: true; feeLamports: bigint; accountsClosedForOwner: number }
+  | { ok: false; error: string };
+
+/**
+ * The allow-list at the heart of the relay: every instruction must be one
+ * of these known shapes before we'll co-sign. Shared by both transaction
+ * shapes below (legacy burn/close and versioned Sell) — each normalizes its
+ * own instruction representation into this common {programId, keys, data}
+ * form first, so this security-critical logic exists exactly once rather
+ * than as two copies that could quietly drift apart.
+ */
+function validateInstructions(
+  instructions: NormalizedInstruction[],
+  ownerPubkey: PublicKey,
+  feePayerPubkey: PublicKey
+): InstructionValidation {
+  let hasCloseAccount = false;
+  let feeLamports = 0n;
+  let sellPayoutLamports = 0n;
+  let jupiterCount = 0;
+  let ataCount = 0;
+  // Only counts closes that pay the owner directly — excludes the Sell
+  // flow's internal WSOL-account close (destination = fee payer), which
+  // isn't one of "their" accounts from the user's point of view.
+  let accountsClosedForOwner = 0;
+
+  for (const ix of instructions) {
+    if (ix.programId.equals(ComputeBudgetProgram.programId) || ix.programId.equals(GUARD_PROGRAM_ID)) {
+      continue;
+    }
+
+    if (ix.programId.equals(JUPITER_PROGRAM_ID)) {
+      jupiterCount++;
+      if (jupiterCount > MAX_JUPITER_INSTRUCTIONS) {
+        return { ok: false, error: "Too many swap instructions." };
+      }
+      continue;
+    }
+
+    if (ix.programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)) {
+      ataCount++;
+      if (ataCount > MAX_ATA_INSTRUCTIONS) {
+        return { ok: false, error: "Too many account-creation instructions." };
+      }
+      continue;
+    }
+
+    const isTokenProgram = ix.programId.equals(TOKEN_PROGRAM_ID) || ix.programId.equals(TOKEN_2022_PROGRAM_ID);
+    const isSystemProgram = ix.programId.equals(SystemProgram.programId);
+
+    if (isTokenProgram) {
+      const discriminator = ix.data[0];
+      if (
+        ix.data.length < 1 ||
+        (discriminator !== CLOSE_ACCOUNT_DISCRIMINATOR && discriminator !== BURN_DISCRIMINATOR)
+      ) {
+        return { ok: false, error: "Only closeAccount and burn instructions are allowed." };
+      }
+      if (discriminator === CLOSE_ACCOUNT_DISCRIMINATOR) {
+        hasCloseAccount = true;
+        if (ix.keys[1]?.equals(ownerPubkey)) accountsClosedForOwner++;
+      }
+    } else if (isSystemProgram) {
+      if (ix.data.length < 4 || ix.data.readUInt32LE(0) !== SYSTEM_TRANSFER_DISCRIMINATOR) {
+        return { ok: false, error: "Only transfer instructions are allowed." };
+      }
+      const source = ix.keys[0];
+      const destination = ix.keys[1];
+      const lamports = ix.data.readBigUInt64LE(4);
+
+      if (destination?.equals(FEE_WALLET)) {
+        feeLamports += lamports;
+      } else if (source?.equals(feePayerPubkey) && destination?.equals(ownerPubkey)) {
+        // Fee payer paying out guaranteed Sell proceeds (see
+        // build-sell/route.ts) — bounded so a miscalculated or tampered
+        // amount can't drain more than a dust sale ever plausibly yields.
+        sellPayoutLamports += lamports;
+        if (sellPayoutLamports > MAX_SELL_PAYOUT_LAMPORTS) {
+          return { ok: false, error: "Sell payout too large." };
+        }
+      } else {
+        return { ok: false, error: "Unexpected transfer source or destination." };
+      }
+    } else {
+      return { ok: false, error: "Unexpected program in transaction." };
+    }
+  }
+
+  if (!hasCloseAccount) {
+    return { ok: false, error: "No closeAccount instruction found." };
+  }
+
+  return { ok: true, feeLamports, accountsClosedForOwner };
+}
+
+/**
+ * Submits an already fully-signed transaction and records the results —
+ * shared tail for both transaction shapes, since neither submission nor the
+ * bookkeeping that follows it depends on legacy vs. versioned.
+ */
+async function submitAndRecord(
+  connection: Connection,
+  rawTx: Uint8Array,
+  ownerPubkey: PublicKey,
+  feeLamports: bigint,
+  accountsClosedForOwner: number,
+  partnerId: string | null
+): Promise<NextResponse> {
+  try {
+    const signature = await connection.sendRawTransaction(rawTx, { skipPreflight: false });
+    await confirmSignature(connection, signature);
+
+    if (partnerId && feeLamports > 0n) {
+      // Best-effort bookkeeping only — the SOL has already moved on-chain
+      // by this point, so a DB hiccup here must never surface as an error
+      // to the user.
+      try {
+        const partner = (await partnerExists(partnerId)) ?? (await resolveOrCreateWalletAffiliate(partnerId));
+        if (partner) await recordReferral(partner.id, signature, feeLamports, partner.revenueShare);
+      } catch {
+        // swallow — attribution is not part of the transaction's success
+      }
+    }
+
+    // Public activity feed — every reclaim, not just referred ones. Reads
+    // the owner's actual pre/post SOL balance from the confirmed
+    // transaction rather than trying to compute it ourselves: closeAccount
+    // releases whatever the account's real on-chain balance is at
+    // execution time, which isn't encoded in the instruction itself.
+    try {
+      const details = await connection.getTransaction(signature, {
+        commitment: "confirmed",
+        maxSupportedTransactionVersion: 0,
+      });
+      const accountKeys = details?.transaction.message.getAccountKeys().staticAccountKeys;
+      const ownerIndex = accountKeys?.findIndex((k) => k.equals(ownerPubkey)) ?? -1;
+      if (details?.meta && ownerIndex >= 0) {
+        const netLamports =
+          BigInt(details.meta.postBalances[ownerIndex]) - BigInt(details.meta.preBalances[ownerIndex]);
+        if (netLamports > 0n) {
+          await recordReclaim(ownerPubkey.toBase58(), signature, accountsClosedForOwner, netLamports, feeLamports);
+        }
+      }
+    } catch {
+      // swallow — the activity feed is cosmetic, never the transaction's success
+    }
+
+    return NextResponse.json({ signature });
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Transaction failed." },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Validates, co-signs and submits a versioned (v0) transaction — today only
+ * ever produced by /api/build-sell, since Jupiter swap routes need address
+ * lookup tables to fit under the 1232-byte limit (see docs/TOWER-TODO.md).
+ * Always the relay-pays shape: two required signers (us at index 0, the
+ * owner at index 1), never self-funded, since Sell needs us to front the
+ * new WSOL account's rent. Wrapped in a single try/catch at the call site
+ * so any malformed or adversarial input becomes a clean 400 rather than an
+ * unhandled 500.
+ */
+async function handleVersionedTransaction(
+  buf: Buffer,
+  connection: Connection,
+  feePayer: Keypair,
+  partnerId: string | null
+): Promise<NextResponse> {
+  const tx = VersionedTransaction.deserialize(buf);
+  const message = tx.message;
+
+  if (message.compiledInstructions.length === 0 || message.compiledInstructions.length > MAX_INSTRUCTIONS) {
+    return NextResponse.json({ error: "Unexpected instruction count." }, { status: 400 });
+  }
+
+  let lookupTableAccounts: AddressLookupTableAccount[] = [];
+  if (message.addressTableLookups.length > 0) {
+    const resolved = await Promise.all(
+      message.addressTableLookups.map((lookup) => connection.getAddressLookupTable(lookup.accountKey))
+    );
+    if (resolved.some((r) => !r.value)) {
+      return NextResponse.json({ error: "Unknown address lookup table." }, { status: 400 });
+    }
+    lookupTableAccounts = resolved.map((r) => r.value!);
+  }
+
+  const accountKeys = message.getAccountKeys({ addressLookupTableAccounts: lookupTableAccounts });
+
+  if (message.header.numRequiredSignatures !== 2) {
+    return NextResponse.json({ error: "Unexpected signature state." }, { status: 400 });
+  }
+
+  const feePayerInTx = accountKeys.get(0);
+  const ownerPubkey = accountKeys.get(1);
+  if (!feePayerInTx || !ownerPubkey || !feePayerInTx.equals(feePayer.publicKey)) {
+    return NextResponse.json({ error: "Unexpected signature state." }, { status: 400 });
+  }
+
+  const feePayerSigned = !tx.signatures[0].every((b) => b === 0);
+  const ownerSigned = !tx.signatures[1].every((b) => b === 0);
+  if (feePayerSigned || !ownerSigned) {
+    return NextResponse.json({ error: "Unexpected signature state." }, { status: 400 });
+  }
+
+  const normalized: NormalizedInstruction[] = message.compiledInstructions.map((ix) => {
+    const programId = accountKeys.get(ix.programIdIndex);
+    if (!programId) throw new Error("Unresolvable account index.");
+    return {
+      programId,
+      keys: ix.accountKeyIndexes.map((i) => {
+        const key = accountKeys.get(i);
+        if (!key) throw new Error("Unresolvable account index.");
+        return key;
+      }),
+      data: Buffer.from(ix.data),
+    };
+  });
+
+  const validation = validateInstructions(normalized, ownerPubkey, feePayer.publicKey);
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
+  tx.sign([feePayer]);
+
+  return submitAndRecord(
+    connection,
+    tx.serialize(),
+    ownerPubkey,
+    validation.feeLamports,
+    validation.accountsClosedForOwner,
+    partnerId
+  );
+}
 
 async function confirmSignature(connection: Connection, signature: string, timeoutMs = 60_000) {
   const start = Date.now();
@@ -97,11 +342,26 @@ export async function POST(req: NextRequest) {
       ? body.partnerId
       : null;
 
+  const buf = Buffer.from(b64, "base64");
+  const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(NETWORK);
+  const connection = new Connection(endpoint, "confirmed");
+
+  // Legacy transactions (burn/close, both the self-funded and relay-pays
+  // shapes) are the large majority of traffic — everything below this
+  // point for that case is unchanged from before. Transaction.from() throws
+  // a specific error for v0-shaped bytes rather than silently misparsing
+  // them (verified empirically before relying on it here), which is the
+  // signal used to fall through to the versioned branch only for
+  // genuinely versioned (Sell) transactions — see docs/TOWER-TODO.md.
   let tx: Transaction;
   try {
-    tx = Transaction.from(Buffer.from(b64, "base64"));
+    tx = Transaction.from(buf);
   } catch {
-    return NextResponse.json({ error: "Invalid transaction." }, { status: 400 });
+    try {
+      return await handleVersionedTransaction(buf, connection, feePayer, partnerId);
+    } catch {
+      return NextResponse.json({ error: "Invalid transaction." }, { status: 400 });
+    }
   }
 
   if (!tx.feePayer) {
@@ -138,83 +398,16 @@ export async function POST(req: NextRequest) {
     ownerPubkey = ownerEntry.publicKey;
   }
 
-  let hasCloseAccount = false;
-  let feeLamports = 0n;
-  let sellPayoutLamports = 0n;
-  let jupiterCount = 0;
-  let ataCount = 0;
-  // Only counts closes that pay the owner directly — excludes the
-  // Sell flow's internal WSOL-account close (destination = fee payer),
-  // which isn't one of "their" accounts from the user's point of view.
-  let accountsClosedForOwner = 0;
-  for (const ix of tx.instructions) {
-    if (ix.programId.equals(ComputeBudgetProgram.programId) || ix.programId.equals(GUARD_PROGRAM_ID)) {
-      continue;
-    }
-
-    if (ix.programId.equals(JUPITER_PROGRAM_ID)) {
-      jupiterCount++;
-      if (jupiterCount > MAX_JUPITER_INSTRUCTIONS) {
-        return NextResponse.json({ error: "Too many swap instructions." }, { status: 400 });
-      }
-      continue;
-    }
-
-    if (ix.programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)) {
-      ataCount++;
-      if (ataCount > MAX_ATA_INSTRUCTIONS) {
-        return NextResponse.json({ error: "Too many account-creation instructions." }, { status: 400 });
-      }
-      continue;
-    }
-
-    const isTokenProgram = ix.programId.equals(TOKEN_PROGRAM_ID) || ix.programId.equals(TOKEN_2022_PROGRAM_ID);
-    const isSystemProgram = ix.programId.equals(SystemProgram.programId);
-
-    if (isTokenProgram) {
-      const discriminator = ix.data[0];
-      if (
-        ix.data.length < 1 ||
-        (discriminator !== CLOSE_ACCOUNT_DISCRIMINATOR && discriminator !== BURN_DISCRIMINATOR)
-      ) {
-        return NextResponse.json(
-          { error: "Only closeAccount and burn instructions are allowed." },
-          { status: 400 }
-        );
-      }
-      if (discriminator === CLOSE_ACCOUNT_DISCRIMINATOR) {
-        hasCloseAccount = true;
-        if (ix.keys[1]?.pubkey?.equals(ownerPubkey)) accountsClosedForOwner++;
-      }
-    } else if (isSystemProgram) {
-      if (ix.data.length < 4 || ix.data.readUInt32LE(0) !== SYSTEM_TRANSFER_DISCRIMINATOR) {
-        return NextResponse.json({ error: "Only transfer instructions are allowed." }, { status: 400 });
-      }
-      const source = ix.keys[0]?.pubkey;
-      const destination = ix.keys[1]?.pubkey;
-      const lamports = ix.data.readBigUInt64LE(4);
-
-      if (destination?.equals(FEE_WALLET)) {
-        feeLamports += lamports;
-      } else if (source?.equals(feePayer.publicKey) && destination?.equals(ownerPubkey)) {
-        // Fee payer paying out guaranteed Sell proceeds (see
-        // build-sell/route.ts) — bounded so a miscalculated or tampered
-        // amount can't drain more than a dust sale ever plausibly yields.
-        sellPayoutLamports += lamports;
-        if (sellPayoutLamports > MAX_SELL_PAYOUT_LAMPORTS) {
-          return NextResponse.json({ error: "Sell payout too large." }, { status: 400 });
-        }
-      } else {
-        return NextResponse.json({ error: "Unexpected transfer source or destination." }, { status: 400 });
-      }
-    } else {
-      return NextResponse.json({ error: "Unexpected program in transaction." }, { status: 400 });
-    }
+  const normalized: NormalizedInstruction[] = tx.instructions.map((ix) => ({
+    programId: ix.programId,
+    keys: ix.keys.map((k) => k.pubkey),
+    data: ix.data,
+  }));
+  const validation = validateInstructions(normalized, ownerPubkey, feePayer.publicKey);
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
-
-  if (!hasCloseAccount) {
-    return NextResponse.json({ error: "No closeAccount instruction found." }, { status: 400 });
-  }
+  const { feeLamports, accountsClosedForOwner } = validation;
 
   if (isSelfFunded) {
     // Already fully signed by the owner alone — verify cryptographically
@@ -231,53 +424,5 @@ export async function POST(req: NextRequest) {
     tx.partialSign(feePayer);
   }
 
-  const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(NETWORK);
-  const connection = new Connection(endpoint, "confirmed");
-
-  try {
-    const signature = await connection.sendRawTransaction(tx.serialize(), { skipPreflight: false });
-    await confirmSignature(connection, signature);
-
-    if (partnerId && feeLamports > 0n) {
-      // Best-effort bookkeeping only — the SOL has already moved on-chain
-      // by this point, so a DB hiccup here must never surface as an error
-      // to the user.
-      try {
-        const partner = (await partnerExists(partnerId)) ?? (await resolveOrCreateWalletAffiliate(partnerId));
-        if (partner) await recordReferral(partner.id, signature, feeLamports, partner.revenueShare);
-      } catch {
-        // swallow — attribution is not part of the transaction's success
-      }
-    }
-
-    // Public activity feed — every reclaim, not just referred ones. Reads
-    // the owner's actual pre/post SOL balance from the confirmed
-    // transaction rather than trying to compute it ourselves: closeAccount
-    // releases whatever the account's real on-chain balance is at
-    // execution time, which isn't encoded in the instruction itself.
-    try {
-      const details = await connection.getTransaction(signature, {
-        commitment: "confirmed",
-        maxSupportedTransactionVersion: 0,
-      });
-      const accountKeys = details?.transaction.message.getAccountKeys().staticAccountKeys;
-      const ownerIndex = accountKeys?.findIndex((k) => k.equals(ownerPubkey)) ?? -1;
-      if (details?.meta && ownerIndex >= 0) {
-        const netLamports =
-          BigInt(details.meta.postBalances[ownerIndex]) - BigInt(details.meta.preBalances[ownerIndex]);
-        if (netLamports > 0n) {
-          await recordReclaim(ownerPubkey.toBase58(), signature, accountsClosedForOwner, netLamports, feeLamports);
-        }
-      }
-    } catch {
-      // swallow — the activity feed is cosmetic, never the transaction's success
-    }
-
-    return NextResponse.json({ signature });
-  } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Transaction failed." },
-      { status: 500 }
-    );
-  }
+  return submitAndRecord(connection, tx.serialize(), ownerPubkey, feeLamports, accountsClosedForOwner, partnerId);
 }

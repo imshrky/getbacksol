@@ -1,5 +1,5 @@
 import "server-only";
-import { PublicKey, TransactionInstruction } from "@solana/web3.js";
+import { AddressLookupTableAccount, Connection, PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { createCloseAccountInstruction, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export const WSOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
@@ -32,7 +32,30 @@ export type SellRoute = {
   instructions: TransactionInstruction[];
   needsNewAccount: boolean;
   minOut: bigint;
+  lookupTables: AddressLookupTableAccount[];
 };
+
+/**
+ * Resolves Jupiter's lookup table addresses into the full accounts
+ * `TransactionMessage.compileToV0Message` needs — a real swap route
+ * references 30-40+ accounts, and without ALTs those would have to be
+ * embedded inline as full 32-byte pubkeys, blowing past the 1232-byte
+ * transaction size limit (this was the actual cause of Sell silently
+ * falling back to burn: see docs/TOWER-TODO.md). Returns null if any table
+ * Jupiter referenced doesn't resolve — safer to treat the whole route as
+ * unusable than build a transaction that can never land.
+ */
+async function resolveLookupTables(
+  connection: Connection,
+  addresses: string[]
+): Promise<AddressLookupTableAccount[] | null> {
+  if (addresses.length === 0) return [];
+  const resolved = await Promise.all(
+    addresses.map((addr) => connection.getAddressLookupTable(new PublicKey(addr)))
+  );
+  if (resolved.some((r) => !r.value)) return null;
+  return resolved.map((r) => r.value!);
+}
 
 /**
  * Fetches instructions to swap a dust SPL token into native SOL via
@@ -58,6 +81,7 @@ export type SellRoute = {
  * computed the same way whether or not a new account was needed.
  */
 export async function getSellRoute(
+  connection: Connection,
   mint: string,
   rawAmount: string,
   owner: PublicKey,
@@ -92,6 +116,16 @@ export async function getSellRoute(
   const minOut = BigInt(data.otherAmountThreshold ?? "0");
   if (minOut <= 0n) return null;
 
+  // Jupiter's actual response field is `addressesByLookupTableAddress` — an
+  // object keyed by table address (not the `addressLookupTableAddresses`
+  // array assumed in the original diagnosis; confirmed against a real
+  // /swap/v2/build response before relying on it here). We only need the
+  // keys: the real on-chain account (fetched below) is the source of truth
+  // for what each table actually contains.
+  const lookupTableAddresses = Object.keys(data.addressesByLookupTableAddress ?? {});
+  const lookupTables = await resolveLookupTables(connection, lookupTableAddresses);
+  if (lookupTables === null) return null;
+
   const needsNewAccount = (data.setupInstructions ?? []).length > 0;
 
   const instructions: TransactionInstruction[] = [
@@ -113,5 +147,5 @@ export async function getSellRoute(
     instructions.push(toTransactionInstruction(data.cleanupInstruction));
   }
 
-  return { instructions, needsNewAccount, minOut };
+  return { instructions, needsNewAccount, minOut, lookupTables };
 }

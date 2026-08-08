@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction, VersionedTransaction } from "@solana/web3.js";
 import type { TxStatus } from "./useSimulatedTx";
 import { buildCloseAccountBatchTx, batchByInstructionBudget, calculateReclaimSummary } from "./reclaimRent";
 import { getHolderFeeRate } from "./tokenDiscount";
@@ -122,7 +122,7 @@ export function useReclaimRent() {
       // signatures that are present": the fee payer's slot may still be
       // empty at this point on the legacy (Sell flow) code path, that's
       // expected and not itself an error.
-      async function signWithTimeout(tx: Transaction): Promise<Transaction> {
+      async function signWithTimeout<T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
         const signed = await Promise.race([
           signTransaction!(tx),
           new Promise<never>((_, reject) =>
@@ -132,7 +132,12 @@ export function useReclaimRent() {
             )
           ),
         ]);
-        if (!signed.verifySignatures(false)) {
+        // VersionedTransaction (the Sell flow, see trySell below) has no
+        // equivalent convenience method — an invalid signature there just
+        // surfaces as a less specific error from the relay/network instead,
+        // which is an acceptable tradeoff rather than hand-rolling ed25519
+        // verification here.
+        if (signed instanceof Transaction && !signed.verifySignatures(false)) {
           throw new Error(
             "Your wallet returned a signature that doesn't verify. This is a known compatibility issue with a small number of wallets — please try Phantom, Solflare, or Backpack instead."
           );
@@ -173,9 +178,13 @@ export function useReclaimRent() {
           if (!buildRes.ok) return false;
           const { transaction, outAmount } = await buildRes.json();
 
-          const tx = Transaction.from(Buffer.from(transaction, "base64"));
+          // Sell routes are versioned (v0) transactions with address lookup
+          // tables — required to fit a real Jupiter swap's 30-40+ accounts
+          // under the 1232-byte limit (see docs/TOWER-TODO.md). The
+          // burn/close batch path below stays legacy.
+          const tx = VersionedTransaction.deserialize(Buffer.from(transaction, "base64"));
           const signed = await signWithTimeout(tx);
-          await relay(signed.serialize({ requireAllSignatures: false }));
+          await relay(Buffer.from(signed.serialize()));
 
           soldLamports += Number(outAmount);
           return true;

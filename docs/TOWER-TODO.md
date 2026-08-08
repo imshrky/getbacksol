@@ -20,10 +20,25 @@ The Token Creator currently links out to Raydium instead (safe interim).
 
 ---
 
-## 2. Fix the Sell-dust flow (BROKEN — diagnosed)
+## 2. Fix the Sell-dust flow — FIXED (2026-08-07)
 
-Status: the code is in prod but almost never works — it silently falls back to
-burning instead of selling. Diagnosis below.
+Status: done. `jupiter.ts` / `build-sell` / `relay-close` / `useReclaimRent.ts`
+now build and validate a real v0 transaction with ALTs. Verified structurally
+against the real Jupiter API + real mainnet RPC (no funds moved, build-only):
+a real USDC→SOL route needed 3 ALTs, compiled to **1052 bytes** (under the
+1232 limit) — the equivalent legacy transaction would have been **1630
+bytes**, confirming both the original diagnosis and the fix. Not yet tested
+signed-and-submitted with a real dust account in the live UI — do that before
+fully trusting it (decode the tx instruction-by-instruction first, per the
+original test plan below).
+
+One correction to the diagnosis: Jupiter's `/swap/v2/build` response does
+**not** have an `addressLookupTableAddresses` field — it's
+`addressesByLookupTableAddress` (an object keyed by table address). Confirmed
+against a live response before relying on it; the original diagnosis assumed
+the wrong field name, which would have silently no-opped the whole fix.
+
+Original diagnosis kept below for reference.
 
 ### Files involved
 - `src/lib/jupiter.ts` — fetches the Jupiter route

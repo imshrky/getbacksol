@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Connection, PublicKey, Transaction, SystemProgram, clusterApiUrl, type Cluster } from "@solana/web3.js";
+import {
+  Connection,
+  PublicKey,
+  SystemProgram,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
+  clusterApiUrl,
+  type Cluster,
+} from "@solana/web3.js";
 import { createCloseAccountInstruction, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { getFeePayerKeypair } from "@/lib/feePayer";
 import { FEE_WALLET } from "@/lib/feeWallet";
@@ -7,7 +16,12 @@ import { getSellRoute } from "@/lib/jupiter";
 import { feeLamportsFor } from "@/lib/reclaimRent";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
-const MAX_LEGACY_TX_BYTES = 1232;
+// The network's wire-size limit — applies to v0 transactions exactly the
+// same as legacy ones. ALTs don't raise this ceiling, they just let a swap
+// route's 30-40+ accounts be referenced by 1-byte indices instead of
+// embedded inline as full pubkeys, which is what actually keeps a real
+// Jupiter route under it (see docs/TOWER-TODO.md).
+const MAX_TX_BYTES = 1232;
 
 /**
  * Builds (but does not sign or submit) a Sell transaction for one dust
@@ -74,19 +88,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Account details don't match on-chain state." }, { status: 400 });
   }
 
-  const route = await getSellRoute(mint.toBase58(), rawAmount, owner, feePayer.publicKey);
+  const route = await getSellRoute(connection, mint.toBase58(), rawAmount, owner, feePayer.publicKey);
   if (!route) {
     return NextResponse.json({ error: "No viable sell route for this token." }, { status: 404 });
   }
 
   const tokenProgramId = programIdParam === TOKEN_2022_PROGRAM_ID.toBase58() ? TOKEN_2022_PROGRAM_ID : undefined;
 
-  const tx = new Transaction();
-  tx.feePayer = feePayer.publicKey;
-  for (const ix of route.instructions) tx.add(ix);
+  const instructions: TransactionInstruction[] = [...route.instructions];
 
   // Close the dust token account itself — its rent goes to the owner.
-  tx.add(createCloseAccountInstruction(tokenAccount, owner, owner, [], tokenProgramId));
+  instructions.push(createCloseAccountInstruction(tokenAccount, owner, owner, [], tokenProgramId));
 
   // Two fees at the flat platform rate, both to FEE_WALLET: one on the
   // account's rent, one on the sale proceeds. The proceeds fee is based on
@@ -104,25 +116,40 @@ export async function POST(req: NextRequest) {
     // Proceeds are with the fee payer (it holds the closed WSOL account's
     // balance): pay the owner their net, send the proceeds fee to
     // FEE_WALLET, and take the rent fee from the owner's reclaimed rent.
-    tx.add(SystemProgram.transfer({ fromPubkey: feePayer.publicKey, toPubkey: owner, lamports: ownerProceeds }));
-    tx.add(SystemProgram.transfer({ fromPubkey: feePayer.publicKey, toPubkey: FEE_WALLET, lamports: proceedsFee }));
+    instructions.push(
+      SystemProgram.transfer({ fromPubkey: feePayer.publicKey, toPubkey: owner, lamports: ownerProceeds })
+    );
+    instructions.push(
+      SystemProgram.transfer({ fromPubkey: feePayer.publicKey, toPubkey: FEE_WALLET, lamports: proceedsFee })
+    );
     if (rentFee > 0n) {
-      tx.add(SystemProgram.transfer({ fromPubkey: owner, toPubkey: FEE_WALLET, lamports: rentFee }));
+      instructions.push(SystemProgram.transfer({ fromPubkey: owner, toPubkey: FEE_WALLET, lamports: rentFee }));
     }
   } else {
     // Proceeds are already with the owner (Jupiter unwrapped them to native
     // SOL): take both fees from the owner in a single transfer.
     const totalFee = rentFee + proceedsFee;
     if (totalFee > 0n) {
-      tx.add(SystemProgram.transfer({ fromPubkey: owner, toPubkey: FEE_WALLET, lamports: totalFee }));
+      instructions.push(SystemProgram.transfer({ fromPubkey: owner, toPubkey: FEE_WALLET, lamports: totalFee }));
     }
   }
 
   const { blockhash } = await connection.getLatestBlockhash();
-  tx.recentBlockhash = blockhash;
 
-  const serialized = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
-  if (serialized.length > MAX_LEGACY_TX_BYTES) {
+  // Versioned (v0) transaction with the ALTs Jupiter's route needs — a
+  // legacy transaction can't reference a lookup table at all, and without
+  // one every account in a real swap route has to be embedded inline,
+  // which is why Sell used to blow past MAX_TX_BYTES and silently fall
+  // back to burning (see docs/TOWER-TODO.md).
+  const message = new TransactionMessage({
+    payerKey: feePayer.publicKey,
+    recentBlockhash: blockhash,
+    instructions,
+  }).compileToV0Message(route.lookupTables);
+  const tx = new VersionedTransaction(message);
+
+  const serialized = Buffer.from(tx.serialize());
+  if (serialized.length > MAX_TX_BYTES) {
     return NextResponse.json({ error: "Sell route too complex for one transaction." }, { status: 400 });
   }
 
