@@ -64,9 +64,11 @@ ALTER TABLE reclaims ADD COLUMN IF NOT EXISTS fee_lamports BIGINT NOT NULL DEFAU
 
 -- One row per (week, rank) once a weekly leaderboard prize is actually paid
 -- out — see src/lib/leaderboard.ts. Payouts are signed manually by whoever
--- holds the FEE_WALLET key (the app never holds that private key, see
--- feeWallet.ts), so this table only ever records payouts that already
--- happened on-chain; a row here is proof, not a promise.
+-- holds the FEE_WALLET key, so this table only ever records payouts that
+-- already happened on-chain; a row here is proof, not a promise.
+-- (FEE_WALLET's key later became available server-side too, for the
+-- Coinflip game's automatic payouts — see coinflip_rounds below — but this
+-- table's own payouts remain the manual admin flow, unchanged.)
 CREATE TABLE IF NOT EXISTS weekly_payouts (
   id BIGSERIAL PRIMARY KEY,
   week_start DATE NOT NULL,
@@ -91,3 +93,30 @@ CREATE TABLE IF NOT EXISTS api_rate_limits (
   count INT NOT NULL DEFAULT 0,
   PRIMARY KEY (partner_id, window_start)
 );
+
+-- Real-money coin flip (see src/lib/coinflip.ts, /api/coinflip/*). One row
+-- per round, created at commit time (server_seed generated + hashed, hash
+-- shown to the player before they bet) and filled in at resolve time. A row
+-- with resolved_at IS NULL is a commitment that was never followed through
+-- (player never sent a bet, or abandoned the flow) — harmless, never paid
+-- out, safe to ignore. server_seed is only ever populated after resolution
+-- (the whole point of commit-reveal), so a round can't be reconstructed or
+-- predicted before that.
+CREATE TABLE IF NOT EXISTS coinflip_rounds (
+  id BIGSERIAL PRIMARY KEY,
+  commit_hash TEXT NOT NULL UNIQUE,
+  server_seed TEXT,
+  client_seed TEXT,
+  wallet TEXT,
+  side TEXT,
+  wager_lamports BIGINT,
+  bet_tx_signature TEXT UNIQUE,
+  outcome TEXT, -- 'win' | 'loss'
+  payout_lamports BIGINT,
+  payout_tx_signature TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  resolved_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS coinflip_rounds_wallet_idx ON coinflip_rounds (wallet);
+CREATE INDEX IF NOT EXISTS coinflip_rounds_resolved_at_idx ON coinflip_rounds (resolved_at DESC);

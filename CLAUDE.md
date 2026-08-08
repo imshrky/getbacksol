@@ -260,6 +260,66 @@ devnet d'abord — voir `docs/RAYDIUM-POOL-TODO.md` et `docs/TOWER-TODO.md` pour
 complet. Même discipline que pour Sell et le burn/close d'origine : décoder la transaction
 instruction par instruction avant de lui faire confiance.
 
+**Coinflip (`/coinflip`) : vrai jeu d'argent réel, câblé mais éteint par défaut (2026-08-07).**
+Demande explicite de l'utilisateur, inspirée de claimfreesol.com/flip. **Ce n'est pas un mini-jeu
+cosmétique — c'est du vrai pari en argent réel**, signalé clairement à l'utilisateur avant de
+construire (risque légal gambling, distinct et généralement plus sévère que le risque "conseil en
+investissement" qui avait fait abandonner le bot de trading ci-dessous), confirmé explicitement
+malgré l'avertissement. Mécanique : l'utilisateur mise du SOL réel (`0.01` à `0.5`, presets fixes),
+choisit pile ou face, et double sa mise ou perd tout — RTP (return to player) de 97%, soit 3% de
+marge maison, encodé dans `COINFLIP_WIN_PROBABILITY` (`src/lib/coinflipConfig.ts`), jamais un vrai
+50/50 malgré l'apparence pile/face (le côté choisi n'affecte pas les odds, c'est purement
+cosmétique — seul le montant misé et le résultat aléatoire comptent).
+
+**Provablement équitable via commit-reveal** (`src/lib/coinflip.ts`) : à chaque round, le serveur
+génère un `serverSeed` secret et n'en révèle que le hash SHA-256 (`/api/coinflip/commit`) **avant**
+que le joueur mise — il ne peut donc pas changer de seed après avoir vu le pari. Le résultat est
+calculé à la résolution (`/api/coinflip/resolve`) à partir de `serverSeed + clientSeed + roundId`,
+et le `serverSeed` est révélé dans la réponse pour que n'importe qui puisse recalculer le résultat
+et vérifier qu'il correspond au hash engagé au départ — affiché dans l'UI sous "Verify this flip
+was fair". Validé statistiquement (200 000 essais en local, taux de victoire mesuré 48.52% contre
+48.5% attendu).
+
+**Architecture radicalement différente du reste du site : la "maison" doit pouvoir payer les
+gagnants depuis sa propre trésorerie**, pas juste collecter une commission comme Reclaim/Sell/
+Raydium. Décision explicite de l'utilisateur (après alternative proposée et refusée : un wallet
+dédié séparé) : réutiliser `FEE_WALLET` — le wallet Phantom personnel de l'utilisateur qui reçoit
+déjà tous les frais de la plateforme — comme banque du jeu. Problème technique soulevé et accepté
+en connaissance de cause : le serveur n'a jamais eu la clé privée de `FEE_WALLET` (seulement son
+adresse publique, voir `feeWallet.ts`) — impossible donc de payer automatiquement un gagnant sans
+elle. `src/lib/feeWalletSigner.ts` (nouveau) lit `FEE_WALLET_SECRET_KEY` depuis l'environnement,
+vérifie que la clé fournie correspond bien à `FEE_WALLET` au démarrage (échec bruyant sinon), et
+sert uniquement à cette fonctionnalité — **Claude n'a pas manipulé cette clé lui-même** (ni tapée,
+ni collée, ni vue) : c'est à l'utilisateur de la configurer directement sur Vercel/`.env.local`,
+même règle que pour tout secret dans ce projet. Conséquence assumée et documentée : une
+compromission du relais expose désormais potentiellement tout l'historique de frais déjà collectés
+sur `FEE_WALLET`, pas seulement le capital du jeu — risque réel, accepté explicitement par
+l'utilisateur après explication claire.
+
+**Vérification côté serveur, jamais de confiance dans les montants client** (`/api/coinflip/
+resolve`) : le montant réellement misé est lu depuis le vrai delta de solde de `FEE_WALLET` dans la
+transaction confirmée (même principe que `relay-close`), pas depuis une valeur envoyée par le
+client ; seuls les montants des presets sont acceptés ; chaque `bet_tx_signature` ne peut être
+utilisée qu'une fois (contrainte `UNIQUE` en base + vérification explicite) ; le solde de
+`FEE_WALLET` est vérifié avant tout paiement pour ne jamais promettre un gain qu'on ne peut pas
+couvrir (retourne une erreur claire plutôt que de faire perdre injustement le joueur si la banque
+est à sec). Nouvelle table `coinflip_rounds` (`scripts/schema.sql`), migrée en local et vérifiée
+(insertion, lecture, nettoyage des données de test).
+
+**Éteint par défaut via `NEXT_PUBLIC_COINFLIP_LIVE`** (doit valoir explicitement `"true"`, même
+posture que le kill-switch Raydium et pour la même raison). Page `/coinflip` avec écran
+d'avertissement obligatoire avant de jouer (mémorisé en `localStorage`, style identique à
+claimfreesol.com : perte totale possible à chaque flip, transactions finales et irréversibles,
+responsabilité de l'âge légal et de la conformité juridictionnelle), `robots: {index: false}`
+délibéré tant que la conformité légale gambling n'a pas été vérifiée pour les juridictions ciblées.
+`/terms` mis à jour avec une section dédiée (section 6) — même logique que partout ailleurs dans ce
+fichier : ne jamais laisser une page légale ne pas mentionner un vrai risque financier du site.
+**À faire avant d'activer, obligatoire** : (1) configurer `FEE_WALLET_SECRET_KEY` vous-même sur
+Vercel/`.env.local` — jamais via Claude ; (2) vérifier la réglementation gambling de votre
+juridiction, ce n'est pas quelque chose que Claude peut évaluer à votre place ; (3) tester avec un
+vrai wallet et de petits montants, décoder les transactions de mise et de paiement avant de faire
+confiance, même discipline que Sell et Raydium.
+
 **Bot Telegram de trading (signaux achat/vente + take-profits) : abandonné, pas juste reporté.**
 L'utilisateur avait mentionné vouloir réactiver des alertes de trading (achat + 3 TP, idem vente)
 via TradingView ou un fournisseur gratuit. Deux problèmes soulevés en conversation ont mené à
