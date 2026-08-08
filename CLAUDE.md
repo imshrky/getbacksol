@@ -224,8 +224,41 @@ retranscrit dans un fichier du repo.
 partenaire, mais borne l'abus d'une clé self-service non modérée. Auto-nettoyage opportuniste
 (~1% des appels) plutôt qu'un cron dédié, pour ne pas faire grossir la table indéfiniment.
 
-Ne pas commencer par Token Creator (`/token-creator`), Swap ou Liquidity — c'est un choix
-délibéré, pas un oubli.
+Token Creator (`/token-creator`) est maintenant en réel sur mainnet (voir plus bas). Swap reste en
+simulation — pas encore la priorité.
+
+**Création de pool de liquidité Raydium native (`/create-liquidity`) : câblée, mais éteinte par
+défaut (2026-08-07).** `@raydium-io/raydium-sdk-v2` (CPMM, permissionless) construit une vraie
+transaction de création de pool, entièrement construite et signée côté client — même logique que
+Token Creator (`useCreateToken.ts`), pas de relais : le créateur paie tout lui-même depuis son
+propre wallet, puisque c'est lui qui apporte la liquidité. `src/lib/raydiumPool.ts` centralise les
+program IDs (mainnet/devnet), la config de frais CPMM "Standard" (0,25% de frais de trade, vérifiée
+en direct contre l'API réelle de Raydium — 19 configs existent, l'index 0 est celle par défaut de
+leur propre UI) et notre commission plate de 0,1 SOL (pas un pourcentage, contrairement à
+Reclaim/Sell — il n'y a pas de "montant récupéré" ici, juste de la liquidité que le créateur choisit
+d'apporter). `src/lib/useCreatePool.ts` est le hook client ; `src/app/create-liquidity/page.tsx` a
+été entièrement réécrite (l'ancienne UI utilisait des tokens/pools simulés) : adresse de mint
+réelle avec détection du symbole via `/api/token-meta`, montants réels, coût affiché (frais
+protocole Raydium ~0,15 SOL + notre 0,1 SOL). Le bouton "Add liquidity" de Token Creator pointe
+maintenant vers `/create-liquidity?mint=<adresse>` en interne une fois l'interrupteur activé,
+sinon garde le lien externe vers raydium.io (comportement de secours inchangé).
+
+**Éteinte par défaut via `NEXT_PUBLIC_RAYDIUM_POOL_LIVE`** (doit valoir explicitement `"true"` sur
+Vercel — l'inverse du kill-switch de Token Creator, volontairement, parce que ça déplace de la
+vraie liquidité de façon irréversible). Vérifié : lecture du code source réel (non minifié-deviné)
+de `createPool()` du SDK confirmant que le pool/vaults/LP-mint/observation sont tous des PDA — pas
+de keypair éphémère supplémentaire à cosigner, contrairement au mint frais de la création de token.
+`tsc` et `npm run build` propres, page testée dans le navigateur sans erreur console/réseau,
+interrupteur bien désactivé par défaut, préremplissage `?mint=` fonctionnel. **Non vérifié : un
+vrai appel à `createPool()`**, même en construction seule — contrairement à Jupiter (Sell), le SDK
+Raydium lit le vrai solde on-chain du wallet avant de construire quoi que ce soit (confirmé avec un
+keypair factice : refus propre "you don't has some token account" quand le wallet est vide, le bon
+comportement en production, mais ça veut dire qu'un vrai test à blanc a besoin d'un wallet qui
+détient réellement un token SPL réel, indisponible dans cet environnement). **À tester en vrai avant
+d'activer** : créer un token, révoquer freeze, venir ici avec un vrai wallet, petits montants,
+devnet d'abord — voir `docs/RAYDIUM-POOL-TODO.md` et `docs/TOWER-TODO.md` pour le plan de test
+complet. Même discipline que pour Sell et le burn/close d'origine : décoder la transaction
+instruction par instruction avant de lui faire confiance.
 
 **Bot Telegram de trading (signaux achat/vente + take-profits) : abandonné, pas juste reporté.**
 L'utilisateur avait mentionné vouloir réactiver des alertes de trading (achat + 3 TP, idem vente)

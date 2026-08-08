@@ -16,6 +16,10 @@ const TOGGLE_COST = REVOKE_FEE_SOL;
 // misbehaves in production.
 const TOKEN_CREATOR_LIVE = process.env.NEXT_PUBLIC_TOKEN_CREATOR_LIVE !== "false";
 
+// Mirrors create-liquidity/page.tsx's own kill-switch — only route people to
+// the native pool flow once it's actually been enabled there.
+const RAYDIUM_POOL_LIVE = process.env.NEXT_PUBLIC_RAYDIUM_POOL_LIVE === "true";
+
 const STEPS = [
   "Connect your Solana wallet.",
   "Specify the desired name for your token.",
@@ -290,16 +294,22 @@ export default function TokenCreatorPage() {
             </div>
 
             <a
-              href="https://raydium.io/liquidity/create-pool/"
-              target="_blank"
-              rel="noopener noreferrer"
+              href={
+                RAYDIUM_POOL_LIVE
+                  ? `/create-liquidity?mint=${mintAddress}`
+                  : "https://raydium.io/liquidity/create-pool/"
+              }
+              target={RAYDIUM_POOL_LIVE ? undefined : "_blank"}
+              rel={RAYDIUM_POOL_LIVE ? undefined : "noopener noreferrer"}
               className="btn-primary mt-4 flex w-full items-center justify-center gap-2"
             >
-              Add liquidity on Raydium
-              <ExternalLink className="h-4 w-4" />
+              Add liquidity{RAYDIUM_POOL_LIVE ? "" : " on Raydium"}
+              {!RAYDIUM_POOL_LIVE && <ExternalLink className="h-4 w-4" />}
             </a>
             <p className="mt-2 text-center text-xs text-[var(--muted)]">
-              Paste the mint address above into Raydium&apos;s pool creator.
+              {RAYDIUM_POOL_LIVE
+                ? "Your mint address is prefilled — just choose the amounts."
+                : "Paste the mint address above into Raydium's pool creator."}
             </p>
           </div>
         )}

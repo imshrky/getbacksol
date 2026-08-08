@@ -10,13 +10,52 @@ When resuming with Claude on the tower, start by reading this file.
 
 ---
 
-## 1. Native Raydium liquidity pool creation
+## 1. Native Raydium liquidity pool creation — BUILT, gated off (2026-08-07)
 
-Status: on hold. Full plan, cost model and steps in **`docs/RAYDIUM-POOL-TODO.md`**.
-Summary: use `@raydium-io/raydium-sdk-v2` (CPMM, permissionless, free SDK) to
-build a pool-creation tx the user signs; add our fee instruction; gate it OFF
-by default; test with tiny amounts. Jupiter then lists the token automatically.
-The Token Creator currently links out to Raydium instead (safe interim).
+Status: implemented, **not yet enabled**. Full plan, cost model and steps in
+**`docs/RAYDIUM-POOL-TODO.md`** (kept for reference — the implementation
+below follows it). `@raydium-io/raydium-sdk-v2` installed; new
+`src/lib/raydiumPool.ts` (shared constants: program IDs per network, the
+Standard CPMM fee config, our flat 0.1 SOL commission), `src/lib/useCreatePool.ts`
+(client hook, same fully-client-built-and-signed pattern as
+`useCreateToken.ts` — no relay, the creator pays for everything from their
+own wallet since they're the one providing liquidity), and
+`src/app/create-liquidity/page.tsx` rewritten from the old mock UI to a real
+one (token mint input with live symbol lookup via `/api/token-meta`, amount
+inputs, real cost breakdown). Token Creator's "Add liquidity" card now links
+to `/create-liquidity?mint=<address>` once the switch below is on, external
+Raydium link otherwise (unchanged safe interim).
+
+**Gated off by default** via `NEXT_PUBLIC_RAYDIUM_POOL_LIVE` (must be
+explicitly set to `"true"` on Vercel — the opposite default from the Token
+Creator's kill-switch, deliberately, since this moves a creator's real
+liquidity irreversibly). Do not flip it on without real-wallet testing first.
+
+Verified: read the SDK's actual (non-minified-guessed) `createPool`
+implementation to confirm CPMM pool/vault/LP-mint/observation accounts are
+all PDAs — no extra ephemeral keypair needs to co-sign, unlike token
+creation's fresh mint account. Confirmed live against Raydium's real API:
+19 CPMM fee configs exist, index 0 (`D4FPEruKEHrG5TenZ2mpDGEfu1iUvTiqBxvpU8HLBvC2`,
+0.25% trade fee) is the "Standard" tier Raydium's own UI defaults to, and its
+real `createPoolFee` is 150,000,000 lamports (0.15 SOL) — the number now
+shown in the UI's cost preview. tsc and `npm run build` both clean; the page
+loads in the browser with no console/network errors, the kill-switch
+correctly disables the button by default, and the `?mint=` prefill from
+Token Creator works.
+
+**Not verified**: an actual `createPool()` call, even build-only. Unlike
+Sell (where Jupiter's API doesn't check any wallet's real holdings), Raydium's
+SDK reads the owner's *actual* on-chain token balance before it will build
+anything — tested this directly with a dummy keypair and confirmed the SDK
+correctly refuses ("you don't has some token account") when the wallet holds
+nothing, which is exactly the right behavior for production, but it means a
+genuine dry run needs a real wallet that actually holds a real SPL token
+balance, which wasn't available in this environment. **Test this for real
+before enabling**: create a token, revoke freeze, come here with a real
+wallet, tiny amounts (see docs/RAYDIUM-POOL-TODO.md's original test plan —
+devnet first, then mainnet with amounts you can afford to lose), decode the
+built transaction instruction-by-instruction before trusting it, exactly the
+same discipline used for Sell and the original burn/close path.
 
 ---
 
