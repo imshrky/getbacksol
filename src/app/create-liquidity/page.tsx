@@ -18,6 +18,7 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 const RAYDIUM_POOL_LIVE = process.env.NEXT_PUBLIC_RAYDIUM_POOL_LIVE === "true";
 
 const OUR_FEE_SOL = POOL_CREATION_FEE_LAMPORTS / LAMPORTS_PER_SOL;
+const TOTAL_FEES_SOL = RAYDIUM_PROTOCOL_FEE_SOL + OUR_FEE_SOL;
 
 const FAQ_ITEMS = [
   {
@@ -146,12 +147,8 @@ export default function CreateLiquidityPage() {
 
         <div className="mt-5 space-y-2 rounded-[8px] bg-[var(--surface-2)] px-4 py-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-[var(--muted)]">Raydium protocol fee</span>
-            <span>~{RAYDIUM_PROTOCOL_FEE_SOL} SOL</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-[var(--muted)]">Platform fee</span>
-            <span>{OUR_FEE_SOL} SOL</span>
+            <span className="text-[var(--muted)]">Total fees</span>
+            <span>~{TOTAL_FEES_SOL} SOL</span>
           </div>
           <div className="flex justify-between">
             <span className="text-[var(--muted)]">Pool share</span>
