@@ -12,7 +12,11 @@ import {
 } from "@/lib/telegramClient";
 import { FAQ_ITEMS } from "@/lib/faqContent";
 import { calculateReclaimSummary } from "@/lib/reclaimRent";
-import { subscribeWalletAlert } from "@/lib/walletAlerts";
+import {
+  subscribeWalletAlert,
+  getChatSubscriptions,
+  unsubscribeWalletAlert,
+} from "@/lib/walletAlerts";
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 
@@ -58,7 +62,10 @@ const MAIN_KEYBOARD: InlineKeyboard = [
     { text: "💰 Check a wallet", callback_data: "prompt_check" },
     { text: "📖 FAQ", callback_data: "show_faq" },
   ],
-  [{ text: "🆘 Help", callback_data: "show_help" }],
+  [
+    { text: "🔔 My alerts", callback_data: "alerts_list" },
+    { text: "🆘 Help", callback_data: "show_help" },
+  ],
 ];
 
 const BACK_KEYBOARD: InlineKeyboard = [[{ text: "⬅️ Back", callback_data: "back_to_menu" }]];
@@ -67,7 +74,7 @@ const WELCOME_TEXT =
   "Welcome to GetBackSOL 👋\n\nEvery empty token account in your Solana wallet is still holding a small SOL deposit. We help you get it back.\n\nPick an option below, or just send a wallet address any time.";
 
 const HELP_TEXT =
-  "Here's what I can do:\n\nJust send me a wallet address, no command needed, and I'll tell you how much SOL it can reclaim. No wallet connection required.\n\n/scan: link to the full app to actually connect a wallet and reclaim\n/faq: frequently asked questions\n\nEverything here is read-only and non-custodial. I never ask for a private key or seed phrase, and neither does the website.";
+  "Here's what I can do:\n\nJust send me a wallet address, no command needed, and I'll tell you how much SOL it can reclaim. No wallet connection required.\n\n/scan: link to the full app to actually connect a wallet and reclaim\n/alerts: see and manage the wallets I'm watching for you\n/faq: frequently asked questions\n\nEverything here is read-only and non-custodial. I never ask for a private key or seed phrase, and neither does the website.";
 
 const CHECK_PROMPT_TEXT =
   "Send a wallet address, just paste it, no command needed, and I'll tell you how much SOL it can reclaim.";
@@ -84,6 +91,35 @@ function isSolanaAddress(text: string): boolean {
 function faqText(): string {
   const body = FAQ_ITEMS.map((item) => `❓ ${item.q}\n${item.a}`).join("\n\n");
   return `${body}\n\nMore questions? Ask on Telegram: https://telegram.me/GetBackSOL`;
+}
+
+function shortAddr(w: string): string {
+  return `${w.slice(0, 4)}…${w.slice(-4)}`;
+}
+
+// The "My alerts" view: the wallets this chat is subscribed to, each with a
+// one-tap turn-off button. Used both by the /alerts command and the menu
+// button, and re-rendered after a turn-off so the list stays in sync.
+async function alertsListView(chatId: number): Promise<{ text: string; keyboard: InlineKeyboard }> {
+  const wallets = await getChatSubscriptions(chatId);
+  if (wallets.length === 0) {
+    return {
+      text: "🔕 You have no wallet alerts set up.\n\nConnect your wallet on the site and tap “Get Telegram alerts” — I'll then watch it and ping you here whenever it has new reclaimable SOL.",
+      keyboard: [
+        [{ text: "🔍 Open GetBackSOL", url: SITE_URL }],
+        [{ text: "⬅️ Back", callback_data: "back_to_menu" }],
+      ],
+    };
+  }
+  const lines = wallets.map((w) => `• ${shortAddr(w)}`).join("\n");
+  const text = `🔔 I'm watching ${wallets.length} wallet${wallets.length === 1 ? "" : "s"} for you:\n\n${lines}\n\nYou'll get a message here whenever one has new reclaimable SOL. Tap a wallet below to turn its alerts off.`;
+  // callback_data caps at 64 bytes; "alerts_off:" (11) + a base58 address (≤44)
+  // stays well under. Cap the list at 10 buttons to keep the keyboard sane.
+  const keyboard: InlineKeyboard = wallets
+    .slice(0, 10)
+    .map((w) => [{ text: `🔕 Turn off ${shortAddr(w)}`, callback_data: `alerts_off:${w}` }]);
+  keyboard.push([{ text: "⬅️ Back", callback_data: "back_to_menu" }]);
+  return { text, keyboard };
 }
 
 type CheckResult = { text: string; keyboard?: InlineKeyboard };
@@ -201,6 +237,16 @@ export async function POST(req: NextRequest) {
           await editTelegramMessage(chatId, messageId, CHECK_PROMPT_TEXT, BACK_KEYBOARD);
         else if (callback.data === "back_to_menu")
           await editTelegramMessage(chatId, messageId, WELCOME_TEXT, MAIN_KEYBOARD);
+        else if (callback.data === "alerts_list") {
+          const view = await alertsListView(chatId);
+          await editTelegramMessage(chatId, messageId, view.text, view.keyboard);
+        } else if (typeof callback.data === "string" && callback.data.startsWith("alerts_off:")) {
+          const wallet = callback.data.slice("alerts_off:".length);
+          await unsubscribeWalletAlert(chatId, wallet);
+          // Re-render the (now shorter) list so the change is visible.
+          const view = await alertsListView(chatId);
+          await editTelegramMessage(chatId, messageId, view.text, view.keyboard);
+        }
       }
     } catch {
       // best-effort
@@ -322,8 +368,11 @@ export async function POST(req: NextRequest) {
           const short = `${walletParam.slice(0, 4)}…${walletParam.slice(-4)}`;
           await sendTelegramMessage(
             chatId,
-            `🔔 Alerts on!\n\nI'll watch ${short} and message you here whenever it has new reclaimable SOL — no need to check yourself.\n\nReclaim anytime at ${SITE_URL}\n\n⚠️ I will NEVER ask you to connect a wallet or sign anything here. Anyone who does is a scammer.`,
-            [[{ text: "💰 Reclaim now", url: SITE_URL }]]
+            `🔔 Alerts on!\n\nI'll watch ${short} and message you here whenever it has new reclaimable SOL — no need to check yourself.\n\nReclaim anytime at ${SITE_URL}\n\nManage your alerts any time with /alerts.\n\n⚠️ I will NEVER ask you to connect a wallet or sign anything here. Anyone who does is a scammer.`,
+            [
+              [{ text: "💰 Reclaim now", url: SITE_URL }],
+              [{ text: "🔕 Turn off alerts", callback_data: `alerts_off:${walletParam}` }],
+            ]
           );
         } else {
           await sendTelegramMessage(chatId, WELCOME_TEXT, MAIN_KEYBOARD);
@@ -335,6 +384,9 @@ export async function POST(req: NextRequest) {
       await sendTelegramMessage(chatId, HELP_TEXT);
     } else if (command === "/faq") {
       await sendTelegramMessage(chatId, faqText());
+    } else if (command === "/alerts") {
+      const view = await alertsListView(chatId);
+      await sendTelegramMessage(chatId, view.text, view.keyboard);
     } else if (command === "/scan") {
       await sendTelegramMessage(chatId, "Connect your wallet and scan for reclaimable SOL here:", [
         [{ text: "🔍 Open GetBackSOL", url: SITE_URL }],

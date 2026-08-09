@@ -48,6 +48,23 @@ export async function getWalletAlertSubscriptions(limit = 50): Promise<WalletAle
   }));
 }
 
+/** Wallets a given chat is currently subscribed to, oldest first. */
+export async function getChatSubscriptions(chatId: number): Promise<string[]> {
+  const rows = await getSql()`
+    SELECT wallet FROM wallet_alerts
+    WHERE chat_id = ${chatId}
+    ORDER BY created_at ASC
+  `;
+  return rows.map((r) => r.wallet as string);
+}
+
+/** Turns alerts off for one (chat, wallet) pair. No-op if not subscribed. */
+export async function unsubscribeWalletAlert(chatId: number, wallet: string): Promise<void> {
+  await getSql()`
+    DELETE FROM wallet_alerts WHERE chat_id = ${chatId} AND wallet = ${wallet}
+  `;
+}
+
 /**
  * Records the latest observed reclaimable amount. Pass `alerted` when we just
  * messaged the chat, which also bumps last_alerted_at so this subscription
