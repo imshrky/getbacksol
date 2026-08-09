@@ -126,3 +126,55 @@ before trusting it on mainnet.
 ### Not blocking
 Burn/close works fine, so Sell failing just means dust gets burned instead of
 sold. Safe to leave until this is fixed properly with a test loop.
+
+---
+
+## 3. Automatic Telegram wallet alerts — BUILT + DEPLOYED, needs DB migration
+
+Status: code is written, committed and pushed (commit 1714842), so it's already
+live on Vercel. **It won't actually store anything until the DB migration runs**
+— that's the one step left, and it needs Node (this Mac env has no Node, npm or
+psql, which is why it's parked here for the tower).
+
+### The one step: run the migration
+On the tower, with `DATABASE_URL` set (the Neon `neondb`):
+
+```bash
+npm run db:migrate
+```
+
+Idempotent — applies all of `scripts/schema.sql`, including the new
+`wallet_alerts` table. (Alternative, no tower needed: paste the `wallet_alerts`
+CREATE TABLE + two indexes from `scripts/schema.sql` into Neon's SQL Editor.)
+
+### What the feature does (already coded)
+Opt-in, then fully automatic. A connected wallet taps one button on the homepage
+("Get Telegram alerts when this wallet has SOL to reclaim") → deep-links the bot
+with `start=wallet_<address>` → the webhook binds that Telegram chat to the
+wallet. A twice-daily cron re-scans each subscribed wallet and DMs the chat when
+new reclaimable SOL crosses a threshold, never re-announcing the same balance.
+The single opt-in tap is unavoidable (Telegram forbids a bot from messaging a
+chat that never started it); everything after is hands-off.
+
+### Files (for reference)
+- `scripts/schema.sql` — new `wallet_alerts` table (chat_id, wallet,
+  last_seen_lamports, last_alerted_at; PK on (chat_id, wallet))
+- `src/lib/walletAlerts.ts` — subscribe / list / update-seen
+- `src/app/api/telegram/webhook/route.ts` — `/start wallet_<addr>` branch,
+  baselined to the wallet's current reclaimable so the first cron run doesn't
+  re-announce SOL they already had
+- `src/app/api/cron/wallet-alerts/route.ts` — scan + alert, CRON_SECRET-gated,
+  50 wallets/run capped and rotated least-recently-alerted first
+- `src/components/ui/TelegramAlertsButton.tsx` + `src/app/page.tsx` — the button
+- `vercel.json` — cron registered, 08:00 & 20:00 UTC
+
+### Test after migrating
+Connect a wallet on the site → click the alerts button → confirm the bot DMs
+"🔔 Alerts on!". Then hit `/api/cron/wallet-alerts` manually from Vercel (or
+wait for 08:00/20:00 UTC) to confirm the scan + alert path. Optionally set
+`NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` on Vercel if the bot handle isn't
+`getbacksolbot`.
+
+### Not blocking
+Nothing else depends on it. Until the migration runs, the button just shows and
+the opt-in silently no-ops — no errors for other users.
