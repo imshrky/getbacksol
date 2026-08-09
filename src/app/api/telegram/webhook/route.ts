@@ -12,6 +12,9 @@ import {
 } from "@/lib/telegramClient";
 import { FAQ_ITEMS } from "@/lib/faqContent";
 import { calculateReclaimSummary } from "@/lib/reclaimRent";
+import { subscribeWalletAlert } from "@/lib/walletAlerts";
+
+const LAMPORTS_PER_SOL = 1_000_000_000;
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 const SITE_URL = "https://getbacksol.com";
@@ -289,6 +292,42 @@ export async function POST(req: NextRequest) {
           "One quick check to unlock the chat — tap below and solve the captcha. We never ask you to connect a wallet.",
           [[{ text: "🔓 Verify I'm human", web_app: { url: verifyUrl } }]]
         );
+      } else if (payload?.startsWith("wallet_")) {
+        // Deep-link from the site's "Get Telegram alerts" button: bind this
+        // chat to the wallet so the alert cron (/api/cron/wallet-alerts) can
+        // ping it when new reclaimable SOL shows up. This one tap is the only
+        // user action needed — Telegram forbids a bot from messaging anyone who
+        // hasn't started it, so opting in has to happen here.
+        const walletParam = payload.slice("wallet_".length);
+        if (isSolanaAddress(walletParam)) {
+          // Baseline the subscription at whatever's reclaimable right now, so
+          // the cron only alerts on *new* SOL rather than immediately
+          // re-announcing what they already have. Best-effort: if the scan
+          // fails we still subscribe (baseline stays 0, so the first cron run
+          // just tells them their current amount — harmless).
+          let baseline = 0n;
+          try {
+            const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(NETWORK);
+            const connection = new Connection(endpoint, "confirmed");
+            const { accounts, dustAccounts } = await scanWalletForRentAccounts(
+              connection,
+              new PublicKey(walletParam)
+            );
+            const totalSol = [...accounts, ...dustAccounts].reduce((s, a) => s + a.reclaimable, 0);
+            baseline = BigInt(Math.round(totalSol * LAMPORTS_PER_SOL));
+          } catch {
+            // keep baseline 0
+          }
+          await subscribeWalletAlert(chatId, walletParam, baseline);
+          const short = `${walletParam.slice(0, 4)}…${walletParam.slice(-4)}`;
+          await sendTelegramMessage(
+            chatId,
+            `🔔 Alerts on!\n\nI'll watch ${short} and message you here whenever it has new reclaimable SOL — no need to check yourself.\n\nReclaim anytime at ${SITE_URL}\n\n⚠️ I will NEVER ask you to connect a wallet or sign anything here. Anyone who does is a scammer.`,
+            [[{ text: "💰 Reclaim now", url: SITE_URL }]]
+          );
+        } else {
+          await sendTelegramMessage(chatId, WELCOME_TEXT, MAIN_KEYBOARD);
+        }
       } else {
         await sendTelegramMessage(chatId, WELCOME_TEXT, MAIN_KEYBOARD);
       }

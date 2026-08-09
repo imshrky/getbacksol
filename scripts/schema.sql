@@ -120,3 +120,22 @@ CREATE TABLE IF NOT EXISTS coinflip_rounds (
 
 CREATE INDEX IF NOT EXISTS coinflip_rounds_wallet_idx ON coinflip_rounds (wallet);
 CREATE INDEX IF NOT EXISTS coinflip_rounds_resolved_at_idx ON coinflip_rounds (resolved_at DESC);
+
+-- Opt-in Telegram wallet alerts (see src/lib/walletAlerts.ts,
+-- /api/cron/wallet-alerts). A Telegram chat subscribes to a wallet via the
+-- bot's start=wallet_<address> deep link; a cron re-scans each wallet and
+-- pings the chat when new reclaimable SOL appears. last_seen_lamports is the
+-- reclaimable amount last observed, so we only alert on genuine increases and
+-- never re-spam the same balance. One row per (chat, wallet) pair — a chat can
+-- watch several wallets, and the same wallet can be watched by several chats.
+CREATE TABLE IF NOT EXISTS wallet_alerts (
+  chat_id BIGINT NOT NULL,
+  wallet TEXT NOT NULL,
+  last_seen_lamports BIGINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_alerted_at TIMESTAMPTZ,
+  PRIMARY KEY (chat_id, wallet)
+);
+
+CREATE INDEX IF NOT EXISTS wallet_alerts_wallet_idx ON wallet_alerts (wallet);
+CREATE INDEX IF NOT EXISTS wallet_alerts_last_alerted_idx ON wallet_alerts (last_alerted_at ASC NULLS FIRST);

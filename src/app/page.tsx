@@ -25,6 +25,7 @@ import { TxStatusBanner } from "@/components/ui/TxStatusBanner";
 import { Faq } from "@/components/ui/Faq";
 import { ImpactStats } from "@/components/ui/ImpactStats";
 import { AffiliateBanner } from "@/components/ui/AffiliateBanner";
+import { TelegramAlertsButton } from "@/components/ui/TelegramAlertsButton";
 import { ReclaimHistory } from "@/components/ui/ReclaimHistory";
 import { WeeklyLeaderboard } from "@/components/ui/WeeklyLeaderboard";
 import { useRentAccounts } from "@/lib/useRentAccounts";
@@ -573,6 +574,12 @@ export default function HomePage() {
         {connected && publicKey && (
           <div className="mx-auto mt-4 max-w-2xl">
             <AffiliateBanner address={publicKey.toBase58()} />
+          </div>
+        )}
+
+        {connected && publicKey && (
+          <div className="mx-auto mt-4 max-w-2xl">
+            <TelegramAlertsButton address={publicKey.toBase58()} />
           </div>
         )}
 

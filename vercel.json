@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/telegram-post",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/wallet-alerts",
+      "schedule": "0 8,20 * * *"
     }
   ]
 }
