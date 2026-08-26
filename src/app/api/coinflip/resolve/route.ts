@@ -37,16 +37,25 @@ async function confirmSignature(connection: Connection, signature: string, timeo
  */
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  const roundId = body?.roundId;
   const betTxSignature = body?.betTxSignature;
   const side = body?.side;
   const clientSeed = typeof body?.clientSeed === "string" ? body.clientSeed.slice(0, 200) : "";
 
-  if (
-    typeof roundId !== "number" ||
-    typeof betTxSignature !== "string" ||
-    (side !== "heads" && side !== "tails")
-  ) {
+  // `id` is a BIGSERIAL, which the Postgres driver hands back as a *string*
+  // (bigints can exceed Number.MAX_SAFE_INTEGER), so /commit returns a
+  // string and the client sends one back. Accept either shape and keep the
+  // canonical string form: a number-only check here silently rejected every
+  // real round with a 400 — after the player's wager had already landed
+  // on-chain.
+  const rawRoundId = body?.roundId;
+  const roundId =
+    typeof rawRoundId === "string" && /^\d+$/.test(rawRoundId)
+      ? rawRoundId
+      : typeof rawRoundId === "number" && Number.isInteger(rawRoundId) && rawRoundId > 0
+        ? String(rawRoundId)
+        : null;
+
+  if (roundId === null || typeof betTxSignature !== "string" || (side !== "heads" && side !== "tails")) {
     return NextResponse.json({ error: "Missing or invalid round details." }, { status: 400 });
   }
 

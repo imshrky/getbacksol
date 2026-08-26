@@ -62,6 +62,12 @@ export async function getRecentFlips(limit = 30): Promise<RecentFlip[]> {
     SELECT wallet, side, wager_lamports, outcome, resolved_at
     FROM coinflip_rounds
     WHERE resolved_at IS NOT NULL
+      -- Every real resolution path fills all of these in together, but a
+      -- half-written row (a manual DB fix, an interrupted migration) would
+      -- otherwise reach the UI and crash its address-shortening on null.
+      AND wallet IS NOT NULL
+      AND outcome IS NOT NULL
+      AND wager_lamports IS NOT NULL
     ORDER BY resolved_at DESC
     LIMIT ${limit}
   `;
