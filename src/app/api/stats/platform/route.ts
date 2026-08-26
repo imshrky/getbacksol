@@ -9,7 +9,10 @@ export async function GET() {
   try {
     const stats = await getPlatformStats();
     return NextResponse.json(stats);
-  } catch {
+  } catch (e) {
+    // Temporary: logging the real error to diagnose a DATABASE_URL issue —
+    // remove once the underlying connection problem is confirmed fixed.
+    console.error("getPlatformStats failed:", e);
     return NextResponse.json({ error: "Stats are temporarily unavailable." }, { status: 503 });
   }
 }
