@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/wallet-alerts",
-      "schedule": "0 8,20 * * *"
+      "schedule": "0 8 * * *"
     }
   ]
 }
