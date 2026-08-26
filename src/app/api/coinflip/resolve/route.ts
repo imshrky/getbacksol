@@ -92,6 +92,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Bet transaction didn't pay FEE_WALLET." }, { status: 400 });
   }
 
+  // Playing from the house wallet itself makes no sense: the wager would be
+  // a self-transfer (so the balance delta below reads as a network fee, not
+  // a wager) and any payout would pay the house itself. Caught explicitly
+  // because it's an easy mistake to make while testing — FEE_WALLET is a
+  // real personal wallet — and the failure downstream would otherwise be a
+  // confusing "wrong wager size" error.
+  if (accountKeys[0]?.equals(FEE_WALLET)) {
+    return NextResponse.json(
+      { error: "The house wallet can't play its own game — connect a different wallet." },
+      { status: 400 }
+    );
+  }
+
   // The real amount FEE_WALLET received — read from the confirmed balance
   // delta, never trusted from the client, same principle as relay-close's
   // fee validation.
