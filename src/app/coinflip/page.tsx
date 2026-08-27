@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, ExternalLink } from "lucide-react";
+import { AlertTriangle, ExternalLink, FlaskConical, RotateCcw } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Faq } from "@/components/ui/Faq";
 import { useCoinflip, type CoinflipSide } from "@/lib/useCoinflip";
 import { COINFLIP_PRESET_AMOUNTS_SOL, COINFLIP_RTP } from "@/lib/coinflipConfig";
+// --- DEMO SCAFFOLDING (temporary) — remove with useCoinflipDemo.ts ---
+import { useCoinflipDemo } from "@/lib/useCoinflipDemo";
+// --- end demo scaffolding ---
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 
@@ -15,6 +18,16 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 // with tiny amounts. Same off-by-default posture as the Raydium pool
 // creator, for the same reason: this moves real money irreversibly.
 const COINFLIP_LIVE = process.env.NEXT_PUBLIC_COINFLIP_LIVE === "true";
+
+// --- DEMO SCAFFOLDING (temporary) ---
+// Play-money preview for reviewing how the game feels before any real SOL
+// is involved. Runs entirely in the browser — no wallet, no API call, no
+// database write — so it cannot pay anyone even if it were left enabled by
+// mistake. Ignored whenever real play is live, so the two can never be
+// active at once. Delete this, useCoinflipDemo.ts, and the blocks marked
+// "demo scaffolding" below once the feel is signed off.
+const COINFLIP_DEMO = process.env.NEXT_PUBLIC_COINFLIP_DEMO === "true" && !COINFLIP_LIVE;
+// --- end demo scaffolding ---
 
 const RISK_ACK_KEY = "coinflip-risk-ack";
 
@@ -37,7 +50,12 @@ function timeAgo(iso: string) {
 const FAQ_ITEMS = [
   {
     q: "Is this really real money?",
-    a: "Yes. You wager real SOL from your own wallet. Winning pays out double automatically; losing means the wager is gone. There is no simulated or practice mode.",
+    // Kept honest in both modes: claiming "no practice mode exists" while a
+    // practice mode is running would be exactly the kind of false statement
+    // this site avoids everywhere else.
+    a: COINFLIP_DEMO
+      ? "Not right now. You're in a preview mode that uses play money only — no wallet is connected and nothing reaches the blockchain. In the live game you wager real SOL from your own wallet, winning pays out double automatically, and losing means the wager is gone."
+      : "Yes. You wager real SOL from your own wallet. Winning pays out double automatically; losing means the wager is gone. There is no simulated or practice mode.",
   },
   {
     q: "How is the outcome decided?",
@@ -58,13 +76,21 @@ export default function CoinflipPage() {
   const [amount, setAmount] = useState<number>(COINFLIP_PRESET_AMOUNTS_SOL[0]);
   const [side, setSide] = useState<CoinflipSide>("heads");
   const [flips, setFlips] = useState<RecentFlip[]>([]);
-  const { status, message, result, run, reset } = useCoinflip();
+  const real = useCoinflip();
+  // --- DEMO SCAFFOLDING (temporary) ---
+  // Both hooks are always called (React requires unconditional hook calls);
+  // only one is ever driven, since COINFLIP_DEMO is false whenever real
+  // play is live.
+  const demo = useCoinflipDemo();
+  const { status, message, result, run, reset } = COINFLIP_DEMO ? demo : real;
+  // --- end demo scaffolding ---
 
   useEffect(() => {
     setAckRisk(window.localStorage.getItem(RISK_ACK_KEY) === "true");
   }, []);
 
   useEffect(() => {
+    if (COINFLIP_DEMO) return; // demo keeps its own local history
     let cancelled = false;
     fetch("/api/coinflip/history")
       .then((r) => r.json())
@@ -87,8 +113,35 @@ export default function CoinflipPage() {
       <SectionTitle
         eyebrow="Coinflip"
         title="Flip for it"
-        description="A real-money game of chance. Wager SOL from your own wallet, pick a side, double it or lose it."
+        description={
+          COINFLIP_DEMO
+            ? "Preview mode — play money only. Same odds and same flow as the real game, but nothing here touches a wallet or the blockchain."
+            : "A real-money game of chance. Wager SOL from your own wallet, pick a side, double it or lose it."
+        }
       />
+
+      {/* --- DEMO SCAFFOLDING (temporary) --- */}
+      {COINFLIP_DEMO && (
+        <div className="mx-auto mb-6 flex max-w-lg items-center justify-between gap-4 rounded-[10px] border border-[var(--accent)]/40 bg-[var(--accent)]/5 px-4 py-3">
+          <div className="flex items-start gap-2.5">
+            <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
+            <div>
+              <p className="text-sm font-semibold text-[var(--accent)]">Demo mode — no real SOL</p>
+              <p className="mt-0.5 text-xs text-[var(--muted)]">
+                Balance: {demo.balanceSol.toFixed(4)} demo SOL
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={demo.resetBalance}
+            className="btn-outline flex shrink-0 items-center gap-1.5 px-3 py-2 text-xs"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </button>
+        </div>
+      )}
+      {/* --- end demo scaffolding --- */}
 
       {!ackRisk ? (
         <Card className="mx-auto max-w-lg">
@@ -96,6 +149,14 @@ export default function CoinflipPage() {
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[var(--accent)]" />
             <h3 className="text-sm font-semibold">Before you play</h3>
           </div>
+          {/* --- DEMO SCAFFOLDING (temporary) — the note below only --- */}
+          {COINFLIP_DEMO && (
+            <p className="mt-3 rounded-[8px] border border-[var(--accent)]/40 bg-[var(--accent)]/5 px-3 py-2 text-xs text-[var(--muted)]">
+              Preview of the live game&apos;s warning screen. None of it applies right now — this
+              session uses play money and never reaches a wallet or the blockchain.
+            </p>
+          )}
+          {/* --- end demo scaffolding --- */}
           <ul className="mt-4 space-y-2 text-sm text-[var(--muted)]">
             <li>This is a real-money game of chance, not an investment. The outcome is random.</li>
             <li>You can lose the entire amount wagered, on any flip, every time.</li>
@@ -104,7 +165,7 @@ export default function CoinflipPage() {
             <li>You confirm you are of legal age and that this is permitted in your jurisdiction.</li>
           </ul>
           <button className="btn-primary mt-5 w-full" onClick={acceptRisk}>
-            I understand the risk — continue
+            {COINFLIP_DEMO ? "Continue to the demo" : "I understand the risk — continue"}
           </button>
         </Card>
       ) : (
@@ -155,13 +216,17 @@ export default function CoinflipPage() {
 
             <button
               className="btn-primary w-full"
-              disabled={!COINFLIP_LIVE || status === "pending"}
+              disabled={(!COINFLIP_LIVE && !COINFLIP_DEMO) || status === "pending"}
               onClick={() => {
                 reset();
                 run(side, amount);
               }}
             >
-              {!COINFLIP_LIVE ? "Temporarily unavailable" : status === "pending" ? "Flipping…" : `Flip for ${amount} SOL`}
+              {!COINFLIP_LIVE && !COINFLIP_DEMO
+                ? "Temporarily unavailable"
+                : status === "pending"
+                  ? "Flipping…"
+                  : `Flip for ${amount} ${COINFLIP_DEMO ? "demo " : ""}SOL`}
             </button>
 
             {status === "error" && (
@@ -209,7 +274,34 @@ export default function CoinflipPage() {
         </Card>
       )}
 
-      {flips.length > 0 && (
+      {/* --- DEMO SCAFFOLDING (temporary) --- */}
+      {COINFLIP_DEMO && demo.flips.length > 0 && (
+        <section className="mx-auto mt-10 max-w-lg">
+          <h2 className="mb-3 text-sm font-semibold text-[var(--muted)]">Your demo flips</h2>
+          <div className="space-y-1.5">
+            {demo.flips.map((f) => (
+              <div
+                key={f.at}
+                className="flex items-center justify-between rounded-[8px] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs"
+              >
+                <span className="capitalize text-[var(--muted)]">{f.side}</span>
+                <span>
+                  flipped {f.wagerSol.toFixed(2)} demo SOL and{" "}
+                  {f.outcome === "win" ? (
+                    <span className="text-emerald-400">doubled!</span>
+                  ) : (
+                    <span className="text-red-400">zeroed :(</span>
+                  )}
+                </span>
+                <span className="text-[var(--muted)]">{timeAgo(new Date(f.at).toISOString())}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+      {/* --- end demo scaffolding --- */}
+
+      {!COINFLIP_DEMO && flips.length > 0 && (
         <section className="mx-auto mt-10 max-w-lg">
           <h2 className="mb-3 text-sm font-semibold text-[var(--muted)]">Recent flips</h2>
           <div className="space-y-1.5">

@@ -320,6 +320,20 @@ juridiction, ce n'est pas quelque chose que Claude peut évaluer à votre place 
 vrai wallet et de petits montants, décoder les transactions de mise et de paiement avant de faire
 confiance, même discipline que Sell et Raydium.
 
+**Mode démo Coinflip (`src/lib/useCoinflipDemo.ts`, `NEXT_PUBLIC_COINFLIP_DEMO`) : échafaudage
+temporaire, à supprimer.** Demandé par l'utilisateur pour valider le ressenti du jeu avant
+d'engager du vrai argent. **Entièrement côté navigateur** : aucun wallet, aucun appel API, aucune
+écriture en base (vérifié : 0 requête réseau sur 6 flips). Ce choix est volontaire et important —
+un chemin serveur capable de résoudre une partie *sans vérifier le paiement* est exactement le
+genre de code qui devient une faille s'il survit à son usage ou part activé par erreur ; ici rien
+ne peut payer qui que ce soit parce que rien n'atteint le serveur. Mêmes odds que le vrai jeu, vrai
+commit-reveal (le seed révélé hashe réellement vers le commit affiché), solde fictif de 1 SOL avec
+bouton reset. Ignoré dès que `NEXT_PUBLIC_COINFLIP_LIVE` est actif, donc les deux modes ne peuvent
+jamais coexister. Les textes de la page (FAQ "is this real money", écran d'avertissement) sont
+rendus honnêtes en mode démo plutôt que de laisser la page affirmer un risque inexistant — même
+principe que partout ailleurs dans ce fichier. **À supprimer une fois le ressenti validé** :
+effacer `useCoinflipDemo.ts` + les blocs marqués `DEMO SCAFFOLDING` dans `coinflip/page.tsx`.
+
 **Bot Telegram de trading (signaux achat/vente + take-profits) : abandonné, pas juste reporté.**
 L'utilisateur avait mentionné vouloir réactiver des alertes de trading (achat + 3 TP, idem vente)
 via TradingView ou un fournisseur gratuit. Deux problèmes soulevés en conversation ont mené à
