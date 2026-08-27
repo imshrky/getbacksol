@@ -240,14 +240,6 @@ export default function CoinflipPage() {
                 </button>
               </div>
 
-              {degen && (
-                <p className="mb-2 text-xs text-[var(--accent)]">
-                  High stakes. A single flip can win or lose {COINFLIP_DEGEN_AMOUNTS_SOL[0]} to{" "}
-                  {COINFLIP_DEGEN_AMOUNTS_SOL[COINFLIP_DEGEN_AMOUNTS_SOL.length - 1]} SOL. Same{" "}
-                  {(COINFLIP_RTP * 100).toFixed(0)}% RTP, much bigger swings.
-                </p>
-              )}
-
               <div className="grid grid-cols-3 gap-2">
                 {presets.map((preset) => {
                   const ok = affordable(preset);

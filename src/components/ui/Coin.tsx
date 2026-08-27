@@ -81,7 +81,7 @@ export function Coin({
             width={163}
             height={191}
             priority
-            className="h-[68px] w-auto drop-shadow-sm"
+            className="h-[52px] w-auto drop-shadow-sm"
           />
         </CoinFace>
         <CoinFace label="Tails" back />
