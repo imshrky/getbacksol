@@ -128,12 +128,12 @@ export default function AdminLeaderboardPage() {
           <p className="text-sm text-[var(--muted)]">Loading…</p>
         ) : pending === null ? (
           <p className="text-sm text-[var(--muted)]">
-            Nothing pending — last week is already paid, or had no activity.
+            Nothing pending. Last week is already paid, or had no activity.
           </p>
         ) : (
           <>
             <p className="mb-3 text-sm">
-              Week of <span className="font-medium">{pending.weekStart}</span> — pool:{" "}
+              Week of <span className="font-medium">{pending.weekStart}</span>, pool:{" "}
               <span className="font-semibold text-[var(--accent)]">
                 {(Number(pending.poolLamports) / LAMPORTS_PER_SOL).toFixed(4)} SOL
               </span>

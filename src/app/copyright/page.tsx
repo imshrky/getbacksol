@@ -39,7 +39,7 @@ export default function CopyrightPage() {
         >
           GitHub
         </a>{" "}
-        so anyone can independently verify what it does before connecting a wallet — that
+        so anyone can independently verify what it does before connecting a wallet, that
         transparency doesn&apos;t grant a license to copy, redistribute, or reuse the code or brand
         elsewhere.
       </P>

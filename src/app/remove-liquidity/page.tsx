@@ -31,7 +31,7 @@ export default function RemoveLiquidityPage() {
         >
           {MOCK_POOLS.map((p) => (
             <option key={p.pair} value={p.pair}>
-              {p.pair} — {p.myLiquidity}
+              {p.pair}, {p.myLiquidity}
             </option>
           ))}
         </select>

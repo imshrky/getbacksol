@@ -64,7 +64,7 @@ export default function BurnAndEarnPage() {
           className="btn-primary mt-5 w-full"
           disabled={!Number(amount) || status === "pending"}
           onClick={() =>
-            run(`Burned ${amount} ${token.symbol} — earned ${projectedReward.toLocaleString()} pts.`)
+            run(`Burned ${amount} ${token.symbol}, earned ${projectedReward.toLocaleString()} pts.`)
           }
         >
           {status === "pending" ? "Processing…" : "Burn & Earn"}

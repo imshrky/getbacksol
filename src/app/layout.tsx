@@ -19,7 +19,7 @@ const poppins = Poppins({
 const SITE_NAME = "GetBackSOL";
 const SITE_TITLE = "GetBackSOL | Reclaim locked SOL from dormant Solana accounts";
 const SITE_DESCRIPTION =
-  "Scan your Solana wallet, close dormant token accounts, and get the locked SOL rent back — in seconds, minus a small service fee.";
+  "Scan your Solana wallet, close dormant token accounts, and get the locked SOL rent back, in seconds, minus a small service fee.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://getbacksol.com"),

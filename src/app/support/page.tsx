@@ -4,7 +4,7 @@ import { Card, SectionTitle } from "@/components/ui/Card";
 import { Faq } from "@/components/ui/Faq";
 
 const TITLE = "Support | GetBackSOL";
-const DESCRIPTION = "Get help with Reclaim Rent — reach us on Telegram, or check the FAQ.";
+const DESCRIPTION = "Get help with Reclaim Rent. Reach us on Telegram, or check the FAQ.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -37,11 +37,11 @@ const CHANNELS = [
 
 const SUPPORT_FAQ_ITEMS = [
   {
-    q: "My transaction failed — did I lose any SOL?",
-    a: "No. Every reclaim transaction is atomic — either every instruction in it succeeds (accounts close, you get the rent, we get the fee) or none of it does. A failed transaction means nothing happened on-chain; check your wallet's activity or a block explorer if you want to confirm.",
+    q: "My transaction failed, did I lose any SOL?",
+    a: "No. Every reclaim transaction is atomic. Either every instruction in it succeeds (accounts close, you get the rent, we get the fee) or none of it does. A failed transaction means nothing happened on-chain; check your wallet's activity or a block explorer if you want to confirm.",
   },
   {
-    q: "My wallet isn't supported — what can I do?",
+    q: "My wallet isn't supported, what can I do?",
     a: "GetBackSOL connects through the Solana Wallet Standard, which covers Phantom, Solflare, Backpack, and most other modern Solana wallets. If yours doesn't show up in the connect menu, let us know on Telegram and we'll look into adding support.",
   },
   {
@@ -50,7 +50,7 @@ const SUPPORT_FAQ_ITEMS = [
   },
   {
     q: "Do you ever need my private key or seed phrase?",
-    a: "Never. We will never ask for your private key, seed phrase, or wallet password — on this site or through any support channel. Every transaction is signed by your wallet, not us; anyone asking for your keys is not us.",
+    a: "Never. We will never ask for your private key, seed phrase, or wallet password, on this site or through any support channel. Every transaction is signed by your wallet, not us; anyone asking for your keys is not us.",
   },
 ];
 

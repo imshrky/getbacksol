@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "GetBackSOL — Reclaim locked SOL from dormant Solana accounts";
+export const alt = "GetBackSOL: Reclaim locked SOL from dormant Solana accounts";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -10,7 +10,7 @@ const MUTED = "#9a9aa3";
 const BG = "#09090b";
 
 const TEXT =
-  "GetBackSOL Your SOL is trapped. Refund it. Reclaim locked SOL from dormant Solana token accounts — non-custodial, in seconds. getbacksol.com";
+  "GetBackSOL Your SOL is trapped. Refund it. Reclaim locked SOL from dormant Solana token accounts, non-custodial, in seconds. getbacksol.com";
 
 /**
  * Without an explicit font, Satori (next/og's renderer) falls back to its
@@ -80,7 +80,7 @@ export default async function Image() {
             Your SOL is trapped. Refund it.
           </div>
           <div style={{ display: "flex", fontSize: 28, color: MUTED, maxWidth: 820 }}>
-            Reclaim locked SOL from dormant Solana token accounts — non-custodial, in seconds.
+            Reclaim locked SOL from dormant Solana token accounts, non-custodial, in seconds.
           </div>
         </div>
 

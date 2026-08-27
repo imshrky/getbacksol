@@ -4,7 +4,7 @@ import { DownloadPdfButton } from "@/components/ui/DownloadPdfButton";
 
 const TITLE = "Whitepaper | GetBackSOL";
 const DESCRIPTION =
-  "How GetBackSOL reclaims locked SOL from dormant Solana accounts — the problem, the non-custodial architecture, the fee model, the Token Creator, and the $GBS token.";
+  "How GetBackSOL reclaims locked SOL from dormant Solana accounts: the problem, the non-custodial architecture, the fee model, the Token Creator, and the $GBS token.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -30,7 +30,7 @@ export default function WhitepaperPage() {
       <SectionTitle
         eyebrow="Whitepaper"
         title="GetBackSOL"
-        description="Reclaim locked SOL from dormant Solana accounts — safely, transparently, non-custodially."
+        description="Reclaim locked SOL from dormant Solana accounts, safely, transparently, non-custodially."
       />
 
       <div className="mx-auto mb-6 flex max-w-2xl justify-center">
@@ -44,14 +44,14 @@ export default function WhitepaperPage() {
           long as it exists. Over time, wallets accumulate dozens of dormant, empty token accounts,
           each locking a little SOL that most users never realize is recoverable. GetBackSOL is a
           non-custodial tool that scans a wallet, closes those dead accounts, and returns the locked
-          SOL to the owner — in seconds, minus a service fee. It is live on Solana mainnet.
+          SOL to the owner, in seconds, minus a service fee. It is live on Solana mainnet.
         </P>
 
         <H2>2. The problem</H2>
         <P>
           Creating a token account on Solana requires a rent-exempt deposit that stays locked until
           the account is closed. Airdrops, one-off swaps, and abandoned memecoins all leave accounts
-          behind. The SOL isn&apos;t lost, but it&apos;s frozen — and reclaiming it manually means
+          behind. The SOL isn&apos;t lost, but it&apos;s frozen, and reclaiming it manually means
           building and signing raw instructions, which is unforgiving for non-developers.
         </P>
 
@@ -60,7 +60,7 @@ export default function WhitepaperPage() {
         <ul className="mt-3 list-disc space-y-2 pl-5">
           <LI>
             <b className="text-[var(--foreground)]">Reclaim Rent.</b> Connect a wallet, scan every
-            token account, and close the empty ones in a single transaction — the released rent goes
+            token account, and close the empty ones in a single transaction. The released rent goes
             straight to the owner.
           </LI>
           <LI>
@@ -73,7 +73,7 @@ export default function WhitepaperPage() {
           </LI>
           <LI>
             <b className="text-[var(--foreground)]">Gasless for empty wallets.</b> A wallet with no
-            SOL for network fees can still reclaim — the platform fronts the tiny network fee, so
+            SOL for network fees can still reclaim. The platform fronts the tiny network fee, so
             there is no barrier to entry.
           </LI>
         </ul>
@@ -84,7 +84,7 @@ export default function WhitepaperPage() {
           GetBackSOL never holds private keys, seed phrases, or funds, and will never ask for them.
           The reclaimed SOL is released directly to the owner by the Token Program; the service fee
           moves in the same atomic transaction, so the exact net amount is known before signing.
-          Closing an account that still holds value is impossible — it is enforced by the Solana
+          Closing an account that still holds value is impossible. It is enforced by the Solana
           network itself, not by a promise the app makes.
         </P>
 
@@ -98,7 +98,7 @@ export default function WhitepaperPage() {
         <H2>6. Fee model</H2>
         <P>
           Scanning is free. A flat service fee applies only to SOL actually reclaimed, shown in full
-          (gross, fee, net) before the user signs, and deducted in the same atomic transaction —
+          (gross, fee, net) before the user signs, and deducted in the same atomic transaction,
           nothing is charged afterward. Holders of the $GBS token receive a reduced fee.
         </P>
 

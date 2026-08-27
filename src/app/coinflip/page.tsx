@@ -56,16 +56,16 @@ const FAQ_ITEMS = [
     // practice mode is running would be exactly the kind of false statement
     // this site avoids everywhere else.
     a: COINFLIP_DEMO
-      ? "Not right now. You're in a preview mode that uses play money only — no wallet is connected and nothing reaches the blockchain. In the live game you wager real SOL from your own wallet, winning pays out double automatically, and losing means the wager is gone."
+      ? "Not right now. You're in a preview mode that uses play money only. No wallet is connected and nothing reaches the blockchain. In the live game you wager real SOL from your own wallet, winning pays out double automatically, and losing means the wager is gone."
       : "Yes. You wager real SOL from your own wallet. Winning pays out double automatically; losing means the wager is gone. There is no simulated or practice mode.",
   },
   {
     q: "How is the outcome decided?",
-    a: `A commit-reveal scheme: before you bet, the server generates a secret seed and shows you only its hash. After you bet, the outcome is computed from that seed plus your own client seed, and the original seed is revealed so you (or anyone) can independently recompute the result and confirm it matches — the server can't change the outcome after seeing your bet, because it already committed to the hash first.`,
+    a: `A commit-reveal scheme: before you bet, the server generates a secret seed and shows you only its hash. After you bet, the outcome is computed from that seed plus your own client seed, and the original seed is revealed so you (or anyone) can independently recompute the result and confirm it matches. The server can't change the outcome after seeing your bet, because it already committed to the hash first.`,
   },
   {
     q: "What are the odds?",
-    a: `${(COINFLIP_RTP * 100).toFixed(0)}% RTP (return to player) — over many flips, that's the average share of everything wagered that comes back out. Each flip is independent; past results don't affect future ones.`,
+    a: `${(COINFLIP_RTP * 100).toFixed(0)}% RTP (return to player). Over many flips, that's the average share of everything wagered that comes back out. Each flip is independent; past results don't affect future ones.`,
   },
   {
     q: "Can I lose everything?",
@@ -117,7 +117,7 @@ export default function CoinflipPage() {
         title="Flip for it"
         description={
           COINFLIP_DEMO
-            ? "Preview mode — play money only. Same odds and same flow as the real game, but nothing here touches a wallet or the blockchain."
+            ? "Preview mode, play money only. Same odds and same flow as the real game, but nothing here touches a wallet or the blockchain."
             : "A real-money game of chance. Wager SOL from your own wallet, pick a side, double it or lose it."
         }
       />
@@ -128,7 +128,7 @@ export default function CoinflipPage() {
           <div className="flex items-start gap-2.5">
             <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
             <div>
-              <p className="text-sm font-semibold text-[var(--accent)]">Demo mode — no real SOL</p>
+              <p className="text-sm font-semibold text-[var(--accent)]">Demo mode: no real SOL</p>
               <p className="mt-0.5 text-xs text-[var(--muted)]">
                 Balance: {demo.balanceSol.toFixed(4)} demo SOL
               </p>
@@ -154,7 +154,7 @@ export default function CoinflipPage() {
           {/* --- DEMO SCAFFOLDING (temporary) — the note below only --- */}
           {COINFLIP_DEMO && (
             <p className="mt-3 rounded-[8px] border border-[var(--accent)]/40 bg-[var(--accent)]/5 px-3 py-2 text-xs text-[var(--muted)]">
-              Preview of the live game&apos;s warning screen. None of it applies right now — this
+              Preview of the live game&apos;s warning screen. None of it applies right now. This
               session uses play money and never reaches a wallet or the blockchain.
             </p>
           )}
@@ -163,11 +163,11 @@ export default function CoinflipPage() {
             <li>This is a real-money game of chance, not an investment. The outcome is random.</li>
             <li>You can lose the entire amount wagered, on any flip, every time.</li>
             <li>Only play with SOL you&apos;re fully prepared to lose. Never funds you need.</li>
-            <li>All on-chain transactions are final — nothing here can be reversed or refunded.</li>
+            <li>All on-chain transactions are final. Nothing here can be reversed or refunded.</li>
             <li>You confirm you are of legal age and that this is permitted in your jurisdiction.</li>
           </ul>
           <button className="btn-primary mt-5 w-full" onClick={acceptRisk}>
-            {COINFLIP_DEMO ? "Continue to the demo" : "I understand the risk — continue"}
+            {COINFLIP_DEMO ? "Continue to the demo" : "I understand the risk, continue"}
           </button>
         </Card>
       ) : (
@@ -257,17 +257,18 @@ export default function CoinflipPage() {
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  {/* Thumbs-up on a win, a wave on a loss — cheering the
-                      player on rather than gloating, since they just lost
-                      money. Keyed on the round so the entrance replays every
-                      flip instead of only the first. */}
+                  {/* Thumbs-up on a win, visibly deflated on a loss. The 3D
+                      sheet has no sad pose (every render wears the same
+                      smile), so that one is a slumped sitting pose with the
+                      mouth mirrored into a frown. Keyed on the round so the
+                      entrance replays every flip, not just the first. */}
                   <Image
                     key={`${result.serverSeed}-${result.outcome}`}
-                    src={result.outcome === "win" ? "/lockit/win.png" : "/lockit/encourage.png"}
+                    src={result.outcome === "win" ? "/lockit/win.png" : "/lockit/sad.png"}
                     alt={
                       result.outcome === "win"
                         ? "Lockit giving a thumbs up"
-                        : "Lockit waving you on for the next flip"
+                        : "Lockit looking sad after a loss"
                     }
                     width={187}
                     height={320}

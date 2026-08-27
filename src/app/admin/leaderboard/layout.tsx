@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 // Server Component layout to carry metadata. This page is unlisted (not in
 // Header nav) and noindex — it's an operational tool, not a public page.
 export const metadata: Metadata = {
-  title: "Admin — Leaderboard payout | GetBackSOL",
+  title: "Admin: Leaderboard payout | GetBackSOL",
   robots: { index: false, follow: false },
 };
 

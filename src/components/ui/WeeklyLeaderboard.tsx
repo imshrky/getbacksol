@@ -40,7 +40,7 @@ function secondaryStat(entry: WeeklyRankingEntry, metric: Metric): string {
 }
 
 function useCountdown(resetAt: string | null) {
-  const [label, setLabel] = useState("—");
+  const [label, setLabel] = useState("-");
 
   useEffect(() => {
     if (!resetAt) return;
@@ -149,7 +149,7 @@ export function WeeklyLeaderboard({ currentWallet }: { currentWallet?: string })
         <p className="text-xs text-[var(--muted)]">Loading…</p>
       ) : rankings.length === 0 ? (
         <p className="text-xs text-[var(--muted)]">
-          No activity yet — close accounts or refer a friend to take the first spot.
+          No activity yet. Close accounts or refer a friend to take the first spot.
         </p>
       ) : (
         <>

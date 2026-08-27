@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   const pending = await getPendingPayout();
   if (!pending) {
-    return NextResponse.json({ error: "Nothing pending — already paid or no activity last week." }, { status: 400 });
+    return NextResponse.json({ error: "Nothing pending: already paid or no activity last week." }, { status: 400 });
   }
 
   const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(NETWORK);

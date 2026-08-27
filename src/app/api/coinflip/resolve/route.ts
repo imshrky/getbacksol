@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
   // confusing "wrong wager size" error.
   if (accountKeys[0]?.equals(FEE_WALLET)) {
     return NextResponse.json(
-      { error: "The house wallet can't play its own game — connect a different wallet." },
+      { error: "The house wallet can't play its own game. Connect a different wallet." },
       { status: 400 }
     );
   }
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     // funded well above the max possible payout) and needs a manual
     // top-up + refund if it ever fires.
     return NextResponse.json(
-      { error: "The house bankroll can't currently cover this payout — contact support, your bet was received but not resolved." },
+      { error: "The house bankroll can't currently cover this payout. Contact support: your bet was received but not resolved." },
       { status: 503 }
     );
   }

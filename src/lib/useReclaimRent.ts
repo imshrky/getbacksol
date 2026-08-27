@@ -72,7 +72,7 @@ export function useReclaimRent() {
         runToken.current++;
         setStatus("idle");
         setMessage(
-          "Still waiting on wallet approval when you switched away — cancelled. Ready to try again."
+          "Still waiting on wallet approval when you switched away, so it was cancelled. Ready to try again."
         );
       }
     }
@@ -127,7 +127,7 @@ export function useReclaimRent() {
           signTransaction!(tx),
           new Promise<never>((_, reject) =>
             setTimeout(
-              () => reject(new Error("Wallet approval timed out — the request may have been closed.")),
+              () => reject(new Error("Wallet approval timed out. The request may have been closed.")),
               SIGN_TIMEOUT_MS
             )
           ),
@@ -139,7 +139,7 @@ export function useReclaimRent() {
         // verification here.
         if (signed instanceof Transaction && !signed.verifySignatures(false)) {
           throw new Error(
-            "Your wallet returned a signature that doesn't verify. This is a known compatibility issue with a small number of wallets — please try Phantom, Solflare, or Backpack instead."
+            "Your wallet returned a signature that doesn't verify. This is a known compatibility issue with a small number of wallets. Please try Phantom, Solflare, or Backpack instead."
           );
         }
         return signed;
@@ -254,7 +254,7 @@ export function useReclaimRent() {
           closedCount > 0 ? `Closed ${closedCount} account${closedCount > 1 ? "s" : ""}` : null,
           soldCount > 0 ? `sold dust from ${soldCount} account${soldCount > 1 ? "s" : ""}` : null,
         ].filter(Boolean);
-        setMessage(`${parts.join(" and ")} — ~${net.toFixed(6)} SOL sent to your wallet.`);
+        setMessage(`${parts.join(" and ")}. ~${net.toFixed(6)} SOL sent to your wallet.`);
       } catch (e) {
         if (isStale()) return;
 

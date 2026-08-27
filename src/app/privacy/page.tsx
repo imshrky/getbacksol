@@ -36,7 +36,7 @@ export default function PrivacyPage() {
       />
 
       <P>
-        GetBackSOL is a non-custodial tool — most of what it does never touches personal data at
+        GetBackSOL is a non-custodial tool. Most of what it does never touches personal data at
         all, because a Solana wallet address is public blockchain information, not something we
         collect about you. This page explains the few places where that isn&apos;t true.
       </P>
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
           <b>Wallet addresses and transaction data.</b> When you connect a wallet, we read its
           public address and token account balances to determine what&apos;s reclaimable. Every
           confirmed reclaim (wallet, amount, transaction signature) is stored so it can be shown in
-          the public reclaim history and weekly leaderboard — the same information anyone could
+          the public reclaim history and weekly leaderboard, the same information anyone could
           already look up on Solscan.
         </li>
         <li>
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
             /partners
           </a>
           , we store your name, email, optional website, and payout wallet address, plus the IP
-          address of the signup request — used only to enforce a daily signup limit and prevent
+          address of the signup request, used only to enforce a daily signup limit and prevent
           abuse.
         </li>
         <li>
@@ -70,7 +70,7 @@ export default function PrivacyPage() {
       <H2>What we never collect</H2>
       <Ul>
         <li>
-          Your private key or seed phrase — ever, under any circumstance. Every transaction is
+          Your private key or seed phrase, ever, under any circumstance. Every transaction is
           built by GetBackSOL but signed only by your own wallet.
         </li>
         <li>Your name, physical address, or other personal identifiers, unless you volunteer them (e.g. the partner signup form or a support message).</li>
@@ -78,8 +78,8 @@ export default function PrivacyPage() {
 
       <H2>Cookies and tracking</H2>
       <P>
-        We use Google Tag Manager to record a small set of product events — wallet connected,
-        reclaim completed, referral link shared, partner signup — so we can tell whether the
+        We use Google Tag Manager to record a small set of product events (wallet connected,
+        reclaim completed, referral link shared, partner signup) so we can tell whether the
         product is actually being used, not to build an advertising profile of you. It may set its
         own cookies or browser storage under Google&apos;s control, separate from the
         local/session storage described above. We don&apos;t run any advertising or retargeting
@@ -89,11 +89,11 @@ export default function PrivacyPage() {
 
       <H2>Third parties involved in using GetBackSOL</H2>
       <Ul>
-        <li>Our RPC provider and the Solana network itself process any transaction you submit — inherent to using any Solana application, not specific to us.</li>
+        <li>Our RPC provider and the Solana network itself process any transaction you submit, inherent to using any Solana application, not specific to us.</li>
         <li>Jupiter&apos;s swap infrastructure is used only if you opt in to &quot;Sell dust for SOL.&quot;</li>
         <li>Our hosting provider (Vercel) and database provider (Neon) may log standard technical data (like IP addresses) as part of normal infrastructure operation, outside our direct control.</li>
         <li>
-          Google Tag Manager records the product events listed above — see{" "}
+          Google Tag Manager records the product events listed above. See{" "}
           <a
             href="https://policies.google.com/privacy"
             target="_blank"
@@ -109,7 +109,7 @@ export default function PrivacyPage() {
       <H2>Data retention and deletion</H2>
       <P>
         Partner account data is kept while the account is active; contact us to request deletion.
-        On-chain data — wallet addresses, transaction signatures, amounts — is permanently recorded
+        On-chain data (wallet addresses, transaction signatures, amounts) is permanently recorded
         on the Solana blockchain itself and can&apos;t be deleted regardless of what happens to our
         own database.
       </P>
@@ -117,7 +117,7 @@ export default function PrivacyPage() {
       <H2>Your rights</H2>
       <P>
         Depending on where you live, you may have rights to access, correct, or delete personal
-        data we hold about you (this applies to partner account details, not on-chain data — see
+        data we hold about you (this applies to partner account details, not on-chain data, see
         above). Reach us on{" "}
         <a href="https://telegram.me/GetBackSOL" className="text-[var(--accent)] hover:underline">
           Telegram

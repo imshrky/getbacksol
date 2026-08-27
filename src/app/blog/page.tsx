@@ -5,7 +5,7 @@ import { BLOG_POSTS } from "@/lib/blogPosts";
 
 const TITLE = "Blog | GetBackSOL";
 const DESCRIPTION =
-  "Guides and explainers on Solana rent, dormant token accounts, and reclaiming locked SOL — written to actually answer the question, not just rank for it.";
+  "Guides and explainers on Solana rent, dormant token accounts, and reclaiming locked SOL, written to actually answer the question, not just rank for it.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -23,7 +23,7 @@ export default function BlogIndexPage() {
       <SectionTitle
         eyebrow="Blog"
         title="Guides on Solana rent & dormant accounts"
-        description="Straight explainers, not filler — how rent works, what's safe, and what to expect before you reclaim anything."
+        description="Straight explainers, not filler: how rent works, what's safe, and what to expect before you reclaim anything."
       />
       <div className="mx-auto flex max-w-2xl flex-col divide-y divide-[var(--border)] rounded-[10px] border border-[var(--border)] bg-[var(--surface)]">
         {posts.map((post) => (

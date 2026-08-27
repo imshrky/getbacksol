@@ -23,7 +23,7 @@ const TOTAL_FEES_SOL = RAYDIUM_PROTOCOL_FEE_SOL + OUR_FEE_SOL;
 const FAQ_ITEMS = [
   {
     q: "What does creating a pool actually do?",
-    a: "It pairs your SPL token with native SOL in a real Raydium CPMM (constant-product) pool, seeded with the amounts you choose from your own wallet. That pool is what lets anyone buy or sell your token — without one, your token can't be traded anywhere.",
+    a: "It pairs your SPL token with native SOL in a real Raydium CPMM (constant-product) pool, seeded with the amounts you choose from your own wallet. That pool is what lets anyone buy or sell your token. Without one, your token can't be traded anywhere.",
   },
   {
     q: "How does Jupiter pick it up?",
@@ -31,15 +31,15 @@ const FAQ_ITEMS = [
   },
   {
     q: "What does it cost?",
-    a: `Raydium's own protocol fee for creating a pool (currently ~${RAYDIUM_PROTOCOL_FEE_SOL} SOL, set by Raydium, not us) plus our ${OUR_FEE_SOL} SOL platform fee — both shown before you sign, on top of the tokens and SOL you're choosing to seed the pool with. You keep 100% of the LP position; nothing here is custodial.`,
+    a: `Raydium's own protocol fee for creating a pool (currently ~${RAYDIUM_PROTOCOL_FEE_SOL} SOL, set by Raydium, not us) plus our ${OUR_FEE_SOL} SOL platform fee, both shown before you sign, on top of the tokens and SOL you're choosing to seed the pool with. You keep 100% of the LP position; nothing here is custodial.`,
   },
   {
     q: "Is this reversible?",
-    a: "No. Once the pool exists on-chain, it exists permanently — you can withdraw your liquidity later, but the pool itself can't be deleted. Double-check the amounts before signing.",
+    a: "No. Once the pool exists on-chain, it exists permanently. You can withdraw your liquidity later, but the pool itself can't be deleted. Double-check the amounts before signing.",
   },
   {
     q: "Do I need to revoke freeze authority first?",
-    a: "Yes — Raydium (and most aggregators) won't route through a pool whose token can still be frozen by its creator. Revoke it in the Token Creator before coming here.",
+    a: "Yes. Raydium (and most aggregators) won't route through a pool whose token can still be frozen by its creator. Revoke it in the Token Creator before coming here.",
   },
 ];
 

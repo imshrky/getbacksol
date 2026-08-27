@@ -87,7 +87,7 @@ export function useCoinflip() {
         setMessage(
           resolveBody.outcome === "win"
             ? `You doubled it! +${(resolveBody.payoutLamports / LAMPORTS_PER_SOL).toFixed(4)} SOL.`
-            : "Zeroed — better luck next flip."
+            : "Zeroed. Better luck next flip."
         );
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Flip failed.";

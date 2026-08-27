@@ -67,7 +67,7 @@ export function useCoinflipDemo() {
     async (side: CoinflipSide, wagerSol: number) => {
       if (wagerSol > balanceSol) {
         setStatus("error");
-        setMessage("Not enough demo SOL for that wager — reset the demo balance to keep going.");
+        setMessage("Not enough demo SOL for that wager. Reset the demo balance to keep going.");
         return;
       }
 
@@ -102,7 +102,7 @@ export function useCoinflipDemo() {
       setMessage(
         won
           ? `You doubled it! +${(wagerSol * 2).toFixed(4)} demo SOL.`
-          : "Zeroed — better luck next flip."
+          : "Zeroed. Better luck next flip."
       );
     },
     [balanceSol]

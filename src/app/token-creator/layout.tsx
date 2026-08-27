@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 // /token-creator silently inherited the homepage's title/description/canonical.
 const TITLE = "Token Creator | GetBackSOL";
 const DESCRIPTION =
-  "Create your own Solana SPL token with a guided, no-code flow — ready in minutes.";
+  "Create your own Solana SPL token with a guided, no-code flow, ready in minutes.";
 
 export const metadata: Metadata = {
   title: TITLE,

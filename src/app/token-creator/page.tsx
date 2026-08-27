@@ -38,7 +38,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Is it safe to create tokens here?",
-    a: "The whole transaction is built in your browser and signed by your own wallet — we never touch your keys. You start as the mint authority and can revoke it in the same transaction. The token is a standard SPL token; anyone can verify the mint on a block explorer afterwards.",
+    a: "The whole transaction is built in your browser and signed by your own wallet, so we never touch your keys. You start as the mint authority and can revoke it in the same transaction. The token is a standard SPL token; anyone can verify the mint on a block explorer afterwards.",
   },
   {
     q: "How long does it take?",
@@ -46,7 +46,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How much does it cost?",
-    a: "A small service fee shown as 'Total cost' before you sign, plus the usual Solana network and rent costs for creating a mint. The exact amount is displayed up front — nothing is charged afterwards.",
+    a: "A small service fee shown as 'Total cost' before you sign, plus the usual Solana network and rent costs for creating a mint. The exact amount is displayed up front, and nothing is charged afterwards.",
   },
   {
     q: "Which wallets are supported?",
@@ -54,7 +54,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How do I make my token tradeable / list it on Jupiter?",
-    a: "Creating the token just mints it into your wallet — it isn't tradeable until it has a liquidity pool. After creation we point you to Raydium to add liquidity (pairing your token with SOL). Once the pool exists, Jupiter and other aggregators pick it up automatically, so it becomes swappable everywhere, with its logo. Native in-app pool creation is coming later.",
+    a: "Creating the token just mints it into your wallet, but it isn't tradeable until it has a liquidity pool. After creation we point you to Raydium to add liquidity (pairing your token with SOL). Once the pool exists, Jupiter and other aggregators pick it up automatically, so it becomes swappable everywhere, with its logo. Native in-app pool creation is coming later.",
   },
 ];
 
@@ -308,7 +308,7 @@ export default function TokenCreatorPage() {
             </a>
             <p className="mt-2 text-center text-xs text-[var(--muted)]">
               {RAYDIUM_POOL_LIVE
-                ? "Your mint address is prefilled — just choose the amounts."
+                ? "Your mint address is prefilled, just choose the amounts."
                 : "Paste the mint address above into Raydium's pool creator."}
             </p>
           </div>

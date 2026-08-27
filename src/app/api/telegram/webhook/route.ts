@@ -52,7 +52,7 @@ function buildEmojiCaptcha(userId: number, name: string): { text: string; keyboa
     text: emoji,
     callback_data: `cap:${userId}:${emoji === target ? "1" : "0"}`,
   }));
-  const text = `Welcome ${name}! 👋\n\nQuick anti-bot check — tap the ${target} below to unlock the chat.\n\n⚠️ We will NEVER ask you to connect a wallet or sign anything to verify. Anyone who does is a scammer.`;
+  const text = `Welcome ${name}! 👋\n\nQuick anti-bot check: tap the ${target} below to unlock the chat.\n\n⚠️ We will NEVER ask you to connect a wallet or sign anything to verify. Anyone who does is a scammer.`;
   return { text, keyboard: [buttons.slice(0, 3), buttons.slice(3, 6)] };
 }
 
@@ -104,7 +104,7 @@ async function alertsListView(chatId: number): Promise<{ text: string; keyboard:
   const wallets = await getChatSubscriptions(chatId);
   if (wallets.length === 0) {
     return {
-      text: "🔕 You have no wallet alerts set up.\n\nConnect your wallet on the site and tap “Get Telegram alerts” — I'll then watch it and ping you here whenever it has new reclaimable SOL.",
+      text: "🔕 You have no wallet alerts set up.\n\nConnect your wallet on the site and tap “Get Telegram alerts”. I'll then watch it and ping you here whenever it has new reclaimable SOL.",
       keyboard: [
         [{ text: "🔍 Open GetBackSOL", url: SITE_URL }],
         [{ text: "⬅️ Back", callback_data: "back_to_menu" }],
@@ -216,10 +216,10 @@ export async function POST(req: NextRequest) {
           await answerCallbackQuery(callback.id, "This verification isn't for you.");
         } else if (correct === "1") {
           await unmuteChatMember(chatId, targetId);
-          await answerCallbackQuery(callback.id, "Verified — welcome! 🎉");
+          await answerCallbackQuery(callback.id, "Verified! Welcome 🎉");
           if (messageId) await deleteTelegramMessage(chatId, messageId);
         } else {
-          await answerCallbackQuery(callback.id, "❌ Wrong one — look again and tap the right emoji.");
+          await answerCallbackQuery(callback.id, "❌ Wrong one. Look again and tap the right emoji.");
         }
       } catch {
         // best-effort — e.g. the bot lost its admin/restrict rights
@@ -335,7 +335,7 @@ export async function POST(req: NextRequest) {
           (promptMessageId ? `&msg=${encodeURIComponent(promptMessageId)}` : "");
         await sendTelegramMessage(
           chatId,
-          "One quick check to unlock the chat — tap below and solve the captcha. We never ask you to connect a wallet.",
+          "One quick check to unlock the chat: tap below and solve the captcha. We never ask you to connect a wallet.",
           [[{ text: "🔓 Verify I'm human", web_app: { url: verifyUrl } }]]
         );
       } else if (payload?.startsWith("wallet_")) {
@@ -368,7 +368,7 @@ export async function POST(req: NextRequest) {
           const short = `${walletParam.slice(0, 4)}…${walletParam.slice(-4)}`;
           await sendTelegramMessage(
             chatId,
-            `🔔 Alerts on!\n\nI'll watch ${short} and message you here whenever it has new reclaimable SOL — no need to check yourself.\n\nReclaim anytime at ${SITE_URL}\n\nManage your alerts any time with /alerts.\n\n⚠️ I will NEVER ask you to connect a wallet or sign anything here. Anyone who does is a scammer.`,
+            `🔔 Alerts on!\n\nI'll watch ${short} and message you here whenever it has new reclaimable SOL, no need to check yourself.\n\nReclaim anytime at ${SITE_URL}\n\nManage your alerts any time with /alerts.\n\n⚠️ I will NEVER ask you to connect a wallet or sign anything here. Anyone who does is a scammer.`,
             [
               [{ text: "💰 Reclaim now", url: SITE_URL }],
               [{ text: "🔕 Turn off alerts", callback_data: `alerts_off:${walletParam}` }],

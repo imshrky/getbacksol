@@ -35,8 +35,8 @@ export default function Footer() {
           </Link>
           <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
             {IS_MAINNET
-              ? "GetBackSOL is live on Solana mainnet — transactions are real and final. The code has passed an external security audit."
-              : "GetBackSOL is currently a devnet preview — no real transactions are executed and no funds are at risk until mainnet integration and a security review are complete."}
+              ? "GetBackSOL is live on Solana mainnet. Transactions are real and final. The code has passed an external security audit."
+              : "GetBackSOL is currently a devnet preview. No real transactions are executed and no funds are at risk until mainnet integration and a security review are complete."}
           </p>
         </div>
 

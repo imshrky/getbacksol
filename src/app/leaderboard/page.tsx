@@ -50,7 +50,7 @@ export default function LeaderboardPage() {
 
       <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-[var(--muted)]">
         Sample data shown. A live leaderboard requires an indexer that watches burn transactions
-        on-chain and aggregates them per wallet — see the backend architecture doc.
+        on-chain and aggregates them per wallet. See the backend architecture doc.
       </p>
     </div>
   );

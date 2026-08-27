@@ -67,7 +67,7 @@ const STEPS = [
   {
     icon: Wallet,
     title: "Connect your wallet",
-    body: "Phantom, Solflare or Backpack — connect in one click, non-custodial the whole way through.",
+    body: "Phantom, Solflare or Backpack. Connect in one click, non-custodial the whole way through.",
   },
   {
     icon: ScanSearch,
@@ -90,12 +90,12 @@ const SECURITY_POINTS = [
   {
     icon: Lock,
     title: "Enforced on-chain, not by us",
-    body: "The Solana Token Program itself rejects any attempt to close an account that still holds value — it's a network-level rule, not a promise our app makes.",
+    body: "The Solana Token Program itself rejects any attempt to close an account that still holds value. It's a network-level rule, not a promise our app makes.",
   },
   {
     icon: Eye,
     title: "Fees are explicit",
-    body: "The exact amount you'll receive — gross, fee, net — is shown before you sign. The fee transfer happens in the same atomic transaction, nothing is deducted afterwards.",
+    body: "The exact amount you'll receive (gross, fee, net) is shown before you sign. The fee transfer happens in the same atomic transaction, nothing is deducted afterwards.",
   },
   {
     icon: BadgeCheck,
@@ -125,7 +125,7 @@ const SHIPPED_ACHIEVEMENTS = [
   { date: "Jul 2026", text: "Automatic wallet affiliate program" },
   { date: "Jul 2026", text: "External security audit passed" },
   { date: "Jul 2026", text: "Rate limiting on the Partner API" },
-  { date: "Jul 2026", text: "Interactive Telegram bot — wallet checks, FAQ, menu" },
+  { date: "Jul 2026", text: "Interactive Telegram bot: wallet checks, FAQ, menu" },
   { date: "Aug 2026", text: "Anti-scam captcha verification for the community" },
   { date: "Aug 2026", text: "Discord community server launched" },
   { date: "Aug 2026", text: "Fee wallet ownership verified on Solscan" },
@@ -251,7 +251,7 @@ export default function HomePage() {
       <section id="reclaim" className="scroll-mt-24 pb-16 pt-6 text-center sm:pb-20">
         <span className="mx-auto mb-5 flex w-fit items-center gap-2 rounded-full border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-4 py-1.5 text-xs font-semibold text-[var(--accent)]">
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
-          Reclaim locked SOL — safely, in seconds
+          Reclaim locked SOL, safely, in seconds
         </span>
         <span className="eyebrow mx-auto mb-3 justify-center">
           <span className="index">01</span>
@@ -264,12 +264,12 @@ export default function HomePage() {
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-sm text-[var(--muted)] sm:text-base">
           Every token purchase on Solana locks 0.00204 SOL in rent fees. Even after selling, that
-          SOL stays trapped in empty token accounts. Get your SOL back — we close them safely and
+          SOL stays trapped in empty token accounts. Get your SOL back. We close them safely and
           instantly.
         </p>
 
         <p className="mx-auto mt-8 max-w-2xl text-xs text-[var(--muted)]">
-          Live amounts pulled from your wallet — a standard account returns ~
+          Live amounts pulled from your wallet. A standard account returns ~
           {RENT_PER_ACCOUNT.toFixed(6)} SOL.
         </p>
         <Card className="mx-auto mt-3 max-w-2xl !p-0 overflow-hidden text-left">
@@ -326,7 +326,7 @@ export default function HomePage() {
               </p>
               {isMobile && wallets.length === 0 && (
                 <div className="mt-1 flex flex-col items-center gap-2 sm:flex-row" onClick={(e) => e.stopPropagation()}>
-                  <span className="text-xs text-[var(--muted)]">No wallet browser detected —</span>
+                  <span className="text-xs text-[var(--muted)]">No wallet browser detected.</span>
                   <div className="flex gap-2">
                     <a href={mobileWalletLinks.phantom} className="btn-outline px-3 py-1.5 text-xs">
                       Open in Phantom
@@ -360,7 +360,7 @@ export default function HomePage() {
                     <span className="text-lg font-semibold">
                       {portfolio.totalUsdValue != null
                         ? `$${portfolio.totalUsdValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                        : "—"}
+                        : "-"}
                     </span>
                   </div>
                   <div className="divide-y divide-[var(--border)]">
@@ -419,7 +419,7 @@ export default function HomePage() {
             <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
               <PartyPopper className="h-6 w-6 text-[var(--accent)]" />
               <p className="text-sm text-[var(--muted)]">
-                No closable accounts found — this wallet is already clean.
+                No closable accounts found. This wallet is already clean.
               </p>
             </div>
           ) : (
@@ -533,7 +533,7 @@ export default function HomePage() {
                       checked={sellDust}
                       onChange={setSellDust}
                       label="Sell dust for SOL instead of burning"
-                      hint="Tries to sell dust tokens via Jupiter first — only works when a token has a real market and your wallet already holds wrapped SOL. Falls back to burning otherwise. The same service fee applies to the sale proceeds as to the rent."
+                      hint="Tries to sell dust tokens via Jupiter first. Only works when a token has a real market and your wallet already holds wrapped SOL. Falls back to burning otherwise. The same service fee applies to the sale proceeds as to the rent."
                     />
                   </div>
                 )}
@@ -590,8 +590,8 @@ export default function HomePage() {
         <p className="pill mx-auto mt-8 inline-flex w-fit items-center gap-1.5">
           <ShieldCheck className="h-3.5 w-3.5" />
           {IS_MAINNET
-            ? "Live on Solana mainnet — non-custodial, externally audited"
-            : "Devnet preview — non-custodial, no funds at risk"}
+            ? "Live on Solana mainnet: non-custodial, externally audited"
+            : "Devnet preview: non-custodial, no funds at risk"}
         </p>
         {IS_MAINNET && (
           <a
@@ -628,7 +628,7 @@ export default function HomePage() {
           index="03"
           eyebrow="How it works"
           title="Three steps, one transaction"
-          description="No accounts, no sign-up — just your wallet."
+          description="No accounts, no sign-up, just your wallet."
         />
         <div className="grid gap-4 sm:grid-cols-3">
           {STEPS.map((step, i) => (
@@ -651,7 +651,7 @@ export default function HomePage() {
           index="04"
           eyebrow="Security"
           title="Built to be verifiable, not just trusted"
-          description="No custody, no hidden steps — and we're upfront about what hasn't happened yet."
+          description="No custody, no hidden steps, and we're upfront about what hasn't happened yet."
         />
         <div className="grid gap-4 sm:grid-cols-2">
           {SECURITY_POINTS.map((point) => (
@@ -711,7 +711,7 @@ export default function HomePage() {
             <Rocket className="h-5 w-5 shrink-0 text-[var(--accent)]" />
             <span>
               <span className="block text-base font-semibold">GetBackSOL token launch</span>
-              <span className="block text-sm text-[var(--muted)]">Mark your calendar — it&apos;s coming soon.</span>
+              <span className="block text-sm text-[var(--muted)]">Mark your calendar, it&apos;s coming soon.</span>
             </span>
           </span>
           <span className="text-2xl font-bold tracking-tight text-[var(--accent)]">Aug 20, 2026</span>
