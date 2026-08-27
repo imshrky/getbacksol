@@ -3,11 +3,14 @@ import { Connection, SystemProgram, Transaction, clusterApiUrl, type Cluster } f
 import { getSql } from "@/lib/db";
 import { FEE_WALLET } from "@/lib/feeWallet";
 import { getFeeWalletKeypair } from "@/lib/feeWalletSigner";
-import { COINFLIP_PRESET_AMOUNTS_SOL, computeOutcome } from "@/lib/coinflip";
+import { COINFLIP_ALL_AMOUNTS_SOL, computeOutcome } from "@/lib/coinflip";
 
 const NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || "devnet";
 const LAMPORTS_PER_SOL = 1_000_000_000;
-const ALLOWED_WAGER_LAMPORTS = new Set(COINFLIP_PRESET_AMOUNTS_SOL.map((s) => Math.round(s * LAMPORTS_PER_SOL)));
+// Standard and degen stakes both count as valid wagers here; the UI
+// decides which set a player is offered, the server just checks the amount
+// that actually arrived is one of them.
+const ALLOWED_WAGER_LAMPORTS = new Set(COINFLIP_ALL_AMOUNTS_SOL.map((s) => Math.round(s * LAMPORTS_PER_SOL)));
 // Extra headroom on top of what a payout could cost, so a payout attempt
 // never gets to "insufficient funds" mid-flight because of network fee
 // variance — this is a bankroll-health check, not a real cost.

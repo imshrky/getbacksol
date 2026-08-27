@@ -3,7 +3,13 @@ import { createHash, randomBytes } from "crypto";
 import { getSql } from "./db";
 import { COINFLIP_WIN_PROBABILITY } from "./coinflipConfig";
 
-export { COINFLIP_RTP, COINFLIP_WIN_PROBABILITY, COINFLIP_PRESET_AMOUNTS_SOL } from "./coinflipConfig";
+export {
+  COINFLIP_RTP,
+  COINFLIP_WIN_PROBABILITY,
+  COINFLIP_PRESET_AMOUNTS_SOL,
+  COINFLIP_DEGEN_AMOUNTS_SOL,
+  COINFLIP_ALL_AMOUNTS_SOL,
+} from "./coinflipConfig";
 
 // Real-money, provably-fair coin flip. "Provably fair" here means a
 // standard commit-reveal scheme: the server picks a secret seed and

@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, ExternalLink, FlaskConical, RotateCcw } from "lucide-react";
+import { AlertTriangle, ExternalLink, Flame, FlaskConical, RotateCcw } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import Image from "next/image";
 import { Coin } from "@/components/ui/Coin";
 import { Faq } from "@/components/ui/Faq";
 import { useCoinflip, type CoinflipSide } from "@/lib/useCoinflip";
-import { COINFLIP_PRESET_AMOUNTS_SOL, COINFLIP_RTP } from "@/lib/coinflipConfig";
+import {
+  COINFLIP_DEGEN_AMOUNTS_SOL,
+  COINFLIP_PRESET_AMOUNTS_SOL,
+  COINFLIP_RTP,
+  isAmountAffordable,
+} from "@/lib/coinflipConfig";
 // --- DEMO SCAFFOLDING (temporary) — remove with useCoinflipDemo.ts ---
 import { useCoinflipDemo } from "@/lib/useCoinflipDemo";
 // --- end demo scaffolding ---
@@ -75,9 +80,13 @@ const FAQ_ITEMS = [
 
 export default function CoinflipPage() {
   const [ackRisk, setAckRisk] = useState(false);
+  const [degen, setDegen] = useState(false);
   const [amount, setAmount] = useState<number>(COINFLIP_PRESET_AMOUNTS_SOL[0]);
   const [side, setSide] = useState<CoinflipSide>("heads");
   const [flips, setFlips] = useState<RecentFlip[]>([]);
+  // null means "capacity unknown" (endpoint unreachable), in which case the
+  // server stays the authority rather than the UI blocking play.
+  const [maxWagerLamports, setMaxWagerLamports] = useState<number | null>(null);
   const real = useCoinflip();
   // --- DEMO SCAFFOLDING (temporary) ---
   // Both hooks are always called (React requires unconditional hook calls);
@@ -104,6 +113,40 @@ export default function CoinflipPage() {
       cancelled = true;
     };
   }, [result]);
+
+  // What the house can actually pay out on right now. Refreshed after each
+  // round, since a win drains the float. Skipped in demo mode, which never
+  // touches the real bankroll.
+  useEffect(() => {
+    if (COINFLIP_DEMO) return;
+    let cancelled = false;
+    fetch("/api/coinflip/limits")
+      .then((r) => r.json())
+      .then((body) => {
+        if (!cancelled) setMaxWagerLamports(body?.maxWagerLamports ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setMaxWagerLamports(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [result]);
+
+  const presets = degen ? COINFLIP_DEGEN_AMOUNTS_SOL : COINFLIP_PRESET_AMOUNTS_SOL;
+  // In demo mode the house balance is irrelevant, so nothing is ever gated.
+  const affordable = (sol: number) =>
+    COINFLIP_DEMO ? true : isAmountAffordable(sol, maxWagerLamports);
+  const amountAffordable = affordable(amount);
+
+  function toggleDegen() {
+    const next = !degen;
+    setDegen(next);
+    // Snap to the first stake of the mode being switched into, so the
+    // selected amount can never be one the visible buttons don't offer.
+    setAmount(next ? COINFLIP_DEGEN_AMOUNTS_SOL[0] : COINFLIP_PRESET_AMOUNTS_SOL[0]);
+    reset();
+  }
 
   function acceptRisk() {
     window.localStorage.setItem(RISK_ACK_KEY, "true");
@@ -180,22 +223,60 @@ export default function CoinflipPage() {
             />
 
             <div>
-              <p className="mb-2 text-xs font-medium text-[var(--muted)]">Wager</p>
-              <div className="grid grid-cols-3 gap-2">
-                {COINFLIP_PRESET_AMOUNTS_SOL.map((preset) => (
-                  <button
-                    key={preset}
-                    onClick={() => setAmount(preset)}
-                    className={`rounded-[8px] border px-3 py-2 text-sm font-medium transition-colors ${
-                      amount === preset
-                        ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                        : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--border-strong)]"
-                    }`}
-                  >
-                    {preset} SOL
-                  </button>
-                ))}
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-medium text-[var(--muted)]">Wager</p>
+                <button
+                  type="button"
+                  onClick={toggleDegen}
+                  aria-pressed={degen}
+                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                    degen
+                      ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)]"
+                      : "border-[var(--border-strong)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  }`}
+                >
+                  <Flame className="h-3.5 w-3.5" />
+                  Degen mode
+                </button>
               </div>
+
+              {degen && (
+                <p className="mb-2 text-xs text-[var(--accent)]">
+                  High stakes. A single flip can win or lose {COINFLIP_DEGEN_AMOUNTS_SOL[0]} to{" "}
+                  {COINFLIP_DEGEN_AMOUNTS_SOL[COINFLIP_DEGEN_AMOUNTS_SOL.length - 1]} SOL. Same{" "}
+                  {(COINFLIP_RTP * 100).toFixed(0)}% RTP, much bigger swings.
+                </p>
+              )}
+
+              <div className="grid grid-cols-3 gap-2">
+                {presets.map((preset) => {
+                  const ok = affordable(preset);
+                  return (
+                    <button
+                      key={preset}
+                      onClick={() => setAmount(preset)}
+                      disabled={!ok}
+                      // Stakes the house couldn't pay out on are shown but
+                      // disabled, rather than hidden: seeing the ceiling is
+                      // more honest than silently offering fewer options.
+                      title={ok ? undefined : "The house can't cover this payout right now"}
+                      className={`rounded-[8px] border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                        amount === preset
+                          ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                          : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--border-strong)]"
+                      }`}
+                    >
+                      {preset} SOL
+                    </button>
+                  );
+                })}
+              </div>
+
+              {!amountAffordable && (
+                <p className="mt-2 text-xs text-amber-400">
+                  The house can&apos;t cover a payout at this stake right now. Pick a smaller one.
+                </p>
+              )}
             </div>
 
             <div>
@@ -224,7 +305,7 @@ export default function CoinflipPage() {
 
             <button
               className="btn-primary w-full"
-              disabled={(!COINFLIP_LIVE && !COINFLIP_DEMO) || status === "pending"}
+              disabled={(!COINFLIP_LIVE && !COINFLIP_DEMO) || status === "pending" || !amountAffordable}
               onClick={() => {
                 reset();
                 run(side, amount);

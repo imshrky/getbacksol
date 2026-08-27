@@ -63,14 +63,17 @@ export function Coin({
   return (
     <div className="coin-scene flex justify-center py-2">
       <div
-        className={`coin-inner h-24 w-24 ${spinning ? "is-spinning" : ""}`}
+        className={`coin-inner h-28 w-28 ${spinning ? "is-spinning" : ""}`}
         style={spinning ? undefined : { transform: `rotateY(${rotation}deg)` }}
         aria-hidden="true"
       >
-        {/* Heads carries Lockit, tails is left plain — the faces need telling
+        {/* Heads carries Lockit, tails is left plain: the faces need telling
             apart at a glance mid-spin, so they differ in colour and content
             rather than only in their label. Heads sits on the light ground so
-            the red character reads against it instead of disappearing. */}
+            the red character reads against it instead of disappearing.
+            The head is pulled up slightly and the label overlaid at the
+            bottom, so Lockit sits centred in the circle instead of being
+            squeezed above the text. */}
         <CoinFace label="Heads">
           <Image
             src="/lockit/head.png"
@@ -78,7 +81,7 @@ export function Coin({
             width={163}
             height={191}
             priority
-            className="h-12 w-auto drop-shadow-sm"
+            className="h-[68px] w-auto drop-shadow-sm"
           />
         </CoinFace>
         <CoinFace label="Tails" back />
@@ -98,7 +101,9 @@ function CoinFace({
 }) {
   return (
     <div
-      className={`coin-face ${back ? "coin-face-back" : ""} flex-col gap-0.5 border-2`}
+      // pb leaves room for the absolutely-positioned label, so the centred
+      // artwork sits above it instead of butting against it.
+      className={`coin-face ${back ? "coin-face-back" : ""} border-2 pb-4`}
       style={{
         borderColor: "var(--accent)",
         background: back ? "var(--accent)" : "var(--surface)",
@@ -107,7 +112,9 @@ function CoinFace({
       }}
     >
       {children}
-      <span className="text-[10px] font-semibold uppercase tracking-widest">{label}</span>
+      <span className="absolute bottom-2.5 text-[9px] font-semibold uppercase tracking-widest">
+        {label}
+      </span>
     </div>
   );
 }
