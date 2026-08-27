@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, ExternalLink, FlaskConical, RotateCcw } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
+import Image from "next/image";
+import { Coin } from "@/components/ui/Coin";
 import { Faq } from "@/components/ui/Faq";
 import { useCoinflip, type CoinflipSide } from "@/lib/useCoinflip";
 import { COINFLIP_PRESET_AMOUNTS_SOL, COINFLIP_RTP } from "@/lib/coinflipConfig";
@@ -171,6 +173,12 @@ export default function CoinflipPage() {
       ) : (
         <Card className="mx-auto max-w-lg">
           <div className="space-y-4">
+            <Coin
+              spinning={status === "pending"}
+              chosenSide={side}
+              outcome={status === "resolved" && result ? result.outcome : null}
+            />
+
             <div>
               <p className="mb-2 text-xs font-medium text-[var(--muted)]">Wager</p>
               <div className="grid grid-cols-3 gap-2">
@@ -248,10 +256,42 @@ export default function CoinflipPage() {
                     : "border-red-500/40 bg-red-500/5"
                 }`}
               >
-                <h3 className={`text-sm font-semibold ${result.outcome === "win" ? "text-emerald-400" : "text-red-400"}`}>
-                  {result.outcome === "win" ? "You doubled it!" : "Zeroed"}
-                </h3>
-                <p className="mt-1 text-sm text-[var(--muted)]">{message}</p>
+                <div className="flex items-start gap-3">
+                  {/* Thumbs-up on a win, a wave on a loss — cheering the
+                      player on rather than gloating, since they just lost
+                      money. Keyed on the round so the entrance replays every
+                      flip instead of only the first. */}
+                  <Image
+                    key={`${result.serverSeed}-${result.outcome}`}
+                    src={result.outcome === "win" ? "/lockit/win.png" : "/lockit/encourage.png"}
+                    alt={
+                      result.outcome === "win"
+                        ? "Lockit giving a thumbs up"
+                        : "Lockit waving you on for the next flip"
+                    }
+                    width={187}
+                    height={320}
+                    // Eager, not lazy: this appears in direct response to the
+                    // flip resolving, so it has to be on screen immediately —
+                    // lazy-loading would fade it in a beat late, or not at all
+                    // if the result sits below the fold.
+                    loading="eager"
+                    className="mascot-pop h-20 w-auto shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <h3
+                      className={`text-sm font-semibold ${
+                        result.outcome === "win" ? "text-emerald-400" : "text-red-400"
+                      }`}
+                    >
+                      {result.outcome === "win" ? "You doubled it!" : "Zeroed"}
+                    </h3>
+                    <p className="mt-1 text-sm text-[var(--muted)]">
+                      {message}
+                      {result.outcome === "loss" && " Your next flip has exactly the same odds."}
+                    </p>
+                  </div>
+                </div>
                 {result.payoutSignature && (
                   <a
                     href={`https://solscan.io/tx/${result.payoutSignature}`}
